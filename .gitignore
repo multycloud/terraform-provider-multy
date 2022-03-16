@@ -2,6 +2,7 @@
 terraform-provider-multy
 bin
 vendor
+.idea
 
 # Local .terraform directories
 **/.terraform/*
