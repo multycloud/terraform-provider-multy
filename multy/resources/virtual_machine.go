@@ -5,6 +5,13 @@ import (
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"terraform-provider-multy/multy/common"
+)
+
+var (
+	operatingSystem = []string{"linux"}
+	size            = []string{"micro", "small"}
 )
 
 func VirtualMachine() *schema.Resource {
@@ -19,12 +26,14 @@ func VirtualMachine() *schema.Resource {
 				Required: true,
 			},
 			"operating_system": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice(operatingSystem, true),
 			},
 			"size": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice(size, true),
 			},
 			"subnet_id": &schema.Schema{
 				Type:     schema.TypeString,
@@ -57,9 +66,11 @@ func VirtualMachine() *schema.Resource {
 				Optional: true,
 			},
 			"public_ip": &schema.Schema{
-				Type:     schema.TypeString,
+				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"clouds":  common.CloudsSchema,
+			"rg_vars": common.RgVarsSchema,
 		},
 	}
 }
@@ -67,10 +78,11 @@ func VirtualMachine() *schema.Resource {
 func virtualMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	pIpId := d.Get("public_ip_id")
-	pIp := d.Get("public_ip")
+	pIpId := d.Get("public_ip_id").(string)
+	pIp := d.Get("public_ip").(bool)
 
-	if pIp != "" && pIpId != "" {
+	// fixme check isnt working
+	if pIp == true && pIpId != "" {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "conflict between public_ip and public_ip_id",

@@ -21,11 +21,29 @@ func Provider() *schema.Provider {
 				Required:  true,
 				Sensitive: true,
 			},
+			"clouds": &schema.Schema{
+				Type:     schema.TypeList,
+				Required: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				//ValidateFunc: validation.StringInSlice(common.Clouds, true),
+			},
+			"location": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+				//ValidateFunc: validation.StringInSlice(common.Locations, true),
+			},
+			"default_resource_group_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"multy_virtual_network": resources.VirtualNetwork(),
-			"multy_subnet":          resources.Subnet(),
-			"multy_virtual_machine": resources.VirtualMachine(),
+			"multy_virtual_network":        resources.VirtualNetwork(),
+			"multy_subnet":                 resources.Subnet(),
+			"multy_virtual_machine":        resources.VirtualMachine(),
+			"multy_network_security_group": resources.NetworkSecurityGroup(),
 		},
 		DataSourcesMap:       map[string]*schema.Resource{},
 		ConfigureContextFunc: providerConfigure,

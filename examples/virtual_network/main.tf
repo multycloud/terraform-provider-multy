@@ -1,17 +1,19 @@
 terraform {
   required_providers {
     multy = {
-      version = "1.0.0"
+      version = "0.0.1"
       source  = "hashicorp.com/dev/multy"
     }
   }
 }
 
-provider "multy"{
-  api_key = "123"
+provider "multy" {
+  api_key  = "123"
+  clouds   = ["aws"]
+  location = "ireland"
 }
 
 resource multy_virtual_network vn {
-  name = "test"
-  cidr_block = "10.0.0.0/10"
+  name       = "test"
+  cidr_block = "10.0.0.0/16"
 }

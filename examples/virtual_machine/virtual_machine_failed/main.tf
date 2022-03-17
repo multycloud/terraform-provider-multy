@@ -23,3 +23,12 @@ resource multy_subnet subnet {
   cidr_block         = "10.0.10.0/24"
   virtual_network_id = multy_virtual_network.vn.id
 }
+
+resource multy_virtual_machine vm {
+  name             = "test_vm"
+  size             = "micro"
+  operating_system = "xx"
+  subnet_id        = multy_subnet.subnet.id
+  public_ip_id     = "123"
+  public_ip        = false
+}

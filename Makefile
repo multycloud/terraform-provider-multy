@@ -3,8 +3,9 @@ HOSTNAME=hashicorp.com
 NAMESPACE=dev
 NAME=multy
 BINARY=terraform-provider-${NAME}
-VERSION=1.0.0
-OS_ARCH=linux_amd64
+VERSION=0.0.1
+OS_ARCH=darwin_amd64
+OS_ARCH2=linux_amd64
 
 default: install
 
@@ -16,7 +17,9 @@ release:
 
 install: build
 	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
-	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
+	cp ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
+	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH2}
+	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH2}
 
 test:
 	go test -i $(TEST) || exit 1

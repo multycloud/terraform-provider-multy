@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	common_proto "github.com/multycloud/multy/api/proto/common"
 	"github.com/multycloud/multy/api/proto/resources"
 	"strings"
@@ -21,10 +22,10 @@ func VirtualNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"cidr_block": {
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: common.ValidateCidr,
+			"cidr_block": &schema.Schema{
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.IsCIDR,
 			},
 			"aws": {
 				Type:     schema.TypeMap,
@@ -35,6 +36,8 @@ func VirtualNetwork() *schema.Resource {
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
+			"clouds":  common.CloudsSchema,
+			"rg_vars": common.RgVarsSchema,
 		},
 	}
 }
@@ -87,10 +90,25 @@ func virtualNetworkRead(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func virtualNetworkUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*common.ProviderConfig)
+	ctx = c.AddHeaders(ctx)
+
+	_, err := c.Client.UpdateVirtualNetwork(ctx, &resources.UpdateVirtualNetworkRequest{ResourceId: d.Id()})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return virtualNetworkRead(ctx, d, m)
 }
 
 func virtualNetworkDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-	return diags
+	c := m.(*common.ProviderConfig)
+	ctx = c.AddHeaders(ctx)
+
+	_, err := c.Client.DeleteVirtualNetwork(ctx, &resources.DeleteVirtualNetworkRequest{ResourceId: d.Id()})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
 }

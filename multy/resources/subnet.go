@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"terraform-provider-multy/multy/common"
 )
 
@@ -20,14 +21,16 @@ func Subnet() *schema.Resource {
 				Required: true,
 			},
 			"cidr_block": &schema.Schema{
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: common.ValidateCidr,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.IsCIDR,
 			},
 			"virtual_network_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"clouds":  common.CloudsSchema,
+			"rg_vars": common.RgVarsSchema,
 		},
 	}
 }
