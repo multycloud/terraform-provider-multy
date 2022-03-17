@@ -2,8 +2,12 @@ package provider
 
 import (
 	"context"
-	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/resources"
+
+	"github.com/multycloud/multy/api/proto"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -29,22 +33,16 @@ func Provider() *schema.Provider {
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	c := common.ProviderConfig{}
 	apiKey := d.Get("api_key").(string)
 
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
+	conn, err := grpc.Dial("localhost:8000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
 
-	//c, err := hashicups.NewClient(apiKey)
-	//if err != nil {
-	//	diags = append(diags, diag.Diagnostic{
-	//		Severity: diag.Error,
-	//		Summary:  "Unable to create HashiCups client",
-	//		Detail:   "Unable to create anonymous HashiCups client",
-	//	})
-	//	return nil, diags
-	//}
-
-	//return c, diags
-	fmt.Sprintf("LOGIN: %s", apiKey)
-	return nil, diags
+	client := proto.NewMultyResourceServiceClient(conn)
+	c.Client = client
+	c.ApiKey = apiKey
+	return &c, nil
 }
