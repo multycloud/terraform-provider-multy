@@ -19,7 +19,9 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"multy_virtual_network": resources.VirtualMachine(),
+			"multy_virtual_network": resources.VirtualNetwork(),
+			"multy_subnet":          resources.Subnet(),
+			"multy_virtual_machine": resources.VirtualMachine(),
 		},
 		DataSourcesMap:       map[string]*schema.Resource{},
 		ConfigureContextFunc: providerConfigure,

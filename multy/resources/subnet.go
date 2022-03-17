@@ -8,12 +8,12 @@ import (
 	"terraform-provider-multy/multy/common"
 )
 
-func VirtualNetwork() *schema.Resource {
+func Subnet() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: virtualNetworkCreate,
-		ReadContext:   virtualNetworkRead,
-		UpdateContext: virtualNetworkUpdate,
-		DeleteContext: virtualNetworkDelete,
+		CreateContext: subnetCreate,
+		ReadContext:   subnetRead,
+		UpdateContext: subnetUpdate,
+		DeleteContext: subnetDelete,
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -24,32 +24,36 @@ func VirtualNetwork() *schema.Resource {
 				Required:         true,
 				ValidateDiagFunc: common.ValidateCidr,
 			},
+			"virtual_network_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
 		},
 	}
 }
 
-func virtualNetworkCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func subnetCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	id, _ := uuid.GenerateUUID()
 
 	d.SetId(id)
 
-	virtualNetworkRead(ctx, d, m)
+	subnetRead(ctx, d, m)
 
 	return diags
 }
 
-func virtualNetworkRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func subnetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	return diags
 }
 
-func virtualNetworkUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return virtualNetworkRead(ctx, d, m)
+func subnetUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return subnetRead(ctx, d, m)
 }
 
-func virtualNetworkDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func subnetDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	return diags
 }
