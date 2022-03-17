@@ -13,7 +13,6 @@ provider "multy" {
   location = "ireland"
 }
 
-resource multy_virtual_network vn {
-  name       = "test"
-  cidr_block = "10.0.0.0/16"
+data multy_virtual_network vn {
+  id = "OGZkNTkyZmItYzVhMi00YTM1LWE2NjItZTFiOWJlYWM2OGVj"
 }

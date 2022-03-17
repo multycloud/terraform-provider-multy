@@ -5,7 +5,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"terraform-provider-multy/multy/common"
-	"terraform-provider-multy/multy/resources"
+	"terraform-provider-multy/multy/data"
+	"terraform-provider-multy/multy/resource"
 
 	"github.com/multycloud/multy/api/proto"
 
@@ -40,12 +41,14 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"multy_virtual_network":        resources.VirtualNetwork(),
-			"multy_subnet":                 resources.Subnet(),
-			"multy_virtual_machine":        resources.VirtualMachine(),
-			"multy_network_security_group": resources.NetworkSecurityGroup(),
+			"multy_virtual_network":        resource.VirtualNetwork(),
+			"multy_subnet":                 resource.Subnet(),
+			"multy_virtual_machine":        resource.VirtualMachine(),
+			"multy_network_security_group": resource.NetworkSecurityGroup(),
 		},
-		DataSourcesMap:       map[string]*schema.Resource{},
+		DataSourcesMap: map[string]*schema.Resource{
+			"multy_virtual_network": data.DataVirtualNetwork(),
+		},
 		ConfigureContextFunc: providerConfigure,
 	}
 }
