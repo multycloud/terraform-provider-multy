@@ -43,16 +43,15 @@ func VirtualNetwork() *schema.Resource {
 }
 
 func virtualNetworkCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
 	c := m.(*common.ProviderConfig)
 	ctx = c.AddHeaders(ctx)
 
 	clouds := c.GetClouds(d)
 
-	var vnResources []*resources.CloudSpecificCreateVirtualNetworkRequest
+	var vnResources []*resources.CloudSpecificVirtualNetworkArgs
 	for _, cloud := range clouds {
-		vnResources = append(vnResources, &resources.CloudSpecificCreateVirtualNetworkRequest{
-			CommonParameters: &common_proto.CloudSpecificCreateResourceCommonParameters{
+		vnResources = append(vnResources, &resources.CloudSpecificVirtualNetworkArgs{
+			CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
 				//ResourceGroupId: "vn-rg",
 				Location:      c.GetLocation(d),
 				CloudProvider: cloud,
@@ -70,7 +69,7 @@ func virtualNetworkCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	d.SetId(vn.CommonParameters.ResourceId)
-	return diags
+	return nil
 }
 
 func virtualNetworkRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
