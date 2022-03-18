@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"terraform-provider-multy/multy/common"
@@ -26,18 +27,14 @@ func Provider() *schema.Provider {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringInSlice(common.GetCloudNames(), true),
 				},
-				//ValidateFunc: validation.StringInSlice(common.Clouds, true),
 			},
 			"location": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				//ValidateFunc: validation.StringInSlice(common.Locations, true),
-			},
-			"default_resource_group_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice(common.GetLocationNames(), true),
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -56,6 +53,8 @@ func Provider() *schema.Provider {
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	c := common.ProviderConfig{}
 	apiKey := d.Get("api_key").(string)
+	clouds := common.InterfaceToStringMap(d.Get("clouds").([]interface{}))
+	location := d.Get("location").(string)
 
 	conn, err := grpc.Dial("localhost:8000", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -65,5 +64,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	client := proto.NewMultyResourceServiceClient(conn)
 	c.Client = client
 	c.ApiKey = apiKey
+	c.Location = common.StringToLocation(location)
+	c.Clouds = common.ListToCloudList(clouds)
 	return &c, nil
 }

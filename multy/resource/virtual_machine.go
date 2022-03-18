@@ -21,56 +21,55 @@ func VirtualMachine() *schema.Resource {
 		UpdateContext: virtualMachineUpdate,
 		DeleteContext: virtualMachineDelete,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"operating_system": &schema.Schema{
+			"operating_system": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(operatingSystem, true),
 			},
-			"size": &schema.Schema{
+			"size": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(size, true),
 			},
-			"subnet_id": &schema.Schema{
+			"subnet_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"network_interface_ids": &schema.Schema{
+			"network_interface_ids": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
-			"network_security_group_ids": &schema.Schema{
+			"network_security_group_ids": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
-			"user_data": &schema.Schema{
+			"user_data": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"ssh_key": &schema.Schema{
+			"ssh_key": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"public_ip_id": &schema.Schema{
+			"public_ip_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"public_ip": &schema.Schema{
+			"public_ip": {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"clouds":  common.CloudsSchema,
-			"rg_vars": common.RgVarsSchema,
+			"clouds": common.CloudsSchema,
 		},
 	}
 }

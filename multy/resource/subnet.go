@@ -29,8 +29,7 @@ func Subnet() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"clouds":  common.CloudsSchema,
-			"rg_vars": common.RgVarsSchema,
+			"clouds": common.CloudsSchema,
 		},
 	}
 }

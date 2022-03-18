@@ -32,7 +32,7 @@ func dataVirtualNetworkRead(ctx context.Context, d *schema.ResourceData, m inter
 	for _, cloudR := range vn.Resources {
 		err = d.Set(strings.ToLower(cloudR.CommonParameters.CloudProvider.String()), map[string]any{
 			"name":       cloudR.Name,
-			"cidr_block": cloudR.,
+			"cidr_block": cloudR.CidrBlock,
 		})
 
 		if err != nil {

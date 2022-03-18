@@ -22,7 +22,7 @@ func VirtualNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"cidr_block": &schema.Schema{
+			"cidr_block": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.IsCIDR,
@@ -36,35 +36,41 @@ func VirtualNetwork() *schema.Resource {
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
-			"clouds":  common.CloudsSchema,
-			"rg_vars": common.RgVarsSchema,
+			"clouds":   common.CloudsSchema,
+			"location": common.LocationSchema,
 		},
 	}
 }
 
 func virtualNetworkCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	c := m.(*common.ProviderConfig)
 	ctx = c.AddHeaders(ctx)
 
-	vn, err := c.Client.CreateVirtualNetwork(ctx, &resources.CreateVirtualNetworkRequest{
-		Resources: []*resources.CloudSpecificCreateVirtualNetworkRequest{
-			{
-				CommonParameters: &common_proto.CloudSpecificCreateResourceCommonParameters{
-					ResourceGroupId: "vn-rg",
-					Location:        common_proto.Location_IRELAND,
-					CloudProvider:   common_proto.CloudProvider_AWS,
-				},
-				Name:      d.Get("name").(string),
-				CidrBlock: d.Get("cidr_block").(string),
+	clouds := c.GetClouds(d)
+
+	var vnResources []*resources.CloudSpecificCreateVirtualNetworkRequest
+	for _, cloud := range clouds {
+		vnResources = append(vnResources, &resources.CloudSpecificCreateVirtualNetworkRequest{
+			CommonParameters: &common_proto.CloudSpecificCreateResourceCommonParameters{
+				//ResourceGroupId: "vn-rg",
+				Location:      c.GetLocation(d),
+				CloudProvider: cloud,
 			},
-		},
+			Name:      d.Get("name").(string),
+			CidrBlock: d.Get("cidr_block").(string),
+		})
+	}
+
+	vn, err := c.Client.CreateVirtualNetwork(ctx, &resources.CreateVirtualNetworkRequest{
+		Resources: vnResources,
 	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(vn.CommonParameters.ResourceId)
-	return nil
+	return diags
 }
 
 func virtualNetworkRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -78,7 +84,7 @@ func virtualNetworkRead(ctx context.Context, d *schema.ResourceData, m interface
 	for _, cloudR := range vn.Resources {
 		err = d.Set(strings.ToLower(cloudR.CommonParameters.CloudProvider.String()), map[string]any{
 			"name":       cloudR.Name,
-			"cidr_block": cloudR.Name,
+			"cidr_block": cloudR.CidrBlock,
 		})
 
 		if err != nil {
