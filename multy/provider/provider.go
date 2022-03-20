@@ -18,12 +18,12 @@ import (
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"api_key": &schema.Schema{
+			"api_key": {
 				Type:      schema.TypeString,
 				Required:  true,
 				Sensitive: true,
 			},
-			"clouds": &schema.Schema{
+			"clouds": {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Schema{
@@ -31,7 +31,7 @@ func Provider() *schema.Provider {
 					ValidateFunc: validation.StringInSlice(common.GetCloudNames(), true),
 				},
 			},
-			"location": &schema.Schema{
+			"location": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(common.GetLocationNames(), true),

@@ -98,11 +98,28 @@ func virtualNetworkUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	c := m.(*common.ProviderConfig)
 	ctx = c.AddHeaders(ctx)
 
-	_, err := c.Client.UpdateVirtualNetwork(ctx, &resources.UpdateVirtualNetworkRequest{ResourceId: d.Id()})
+	clouds := c.GetClouds(d)
+	var vnResources []*resources.CloudSpecificVirtualNetworkArgs
+	for _, cloud := range clouds {
+		vnResources = append(vnResources, &resources.CloudSpecificVirtualNetworkArgs{
+			CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+				Location:      c.GetLocation(d),
+				CloudProvider: cloud,
+			},
+			Name:      d.Get("name").(string),
+			CidrBlock: d.Get("cidr_block").(string),
+		})
+	}
+
+	vn, err := c.Client.UpdateVirtualNetwork(ctx, &resources.UpdateVirtualNetworkRequest{
+		ResourceId: d.Id(),
+		Resources:  vnResources,
+	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	d.SetId(vn.CommonParameters.ResourceId)
 	return virtualNetworkRead(ctx, d, m)
 }
 
