@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/hashicorp/go-uuid v1.0.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.11.0
-	github.com/multycloud/multy v0.1.10-alpha
+	github.com/multycloud/multy v0.1.11-alpha
 	google.golang.org/grpc v1.45.0
 )
 

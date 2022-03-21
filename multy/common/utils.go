@@ -21,8 +21,32 @@ func GetCloudNames() []string {
 	return keys
 }
 
+func GetVmOperatingSystem() []string {
+	var keys []string
+	for l, _ := range common_proto.OperatingSystem_Enum_value {
+		keys = append(keys, strings.ToLower(l))
+	}
+	return keys
+}
+
+func GetVmSize() []string {
+	var keys []string
+	for l, _ := range common_proto.VmSize_Enum_value {
+		keys = append(keys, strings.ToLower(l))
+	}
+	return keys
+}
+
 func StringToLocation(loc string) common_proto.Location {
 	return common_proto.Location(common_proto.Location_value[strings.ToUpper(loc)])
+}
+
+func StringToVmOperatingSystem(os string) common_proto.OperatingSystem_Enum {
+	return common_proto.OperatingSystem_Enum(common_proto.OperatingSystem_Enum_value[strings.ToUpper(os)])
+}
+
+func StringToVmSize(os string) common_proto.VmSize_Enum {
+	return common_proto.VmSize_Enum(common_proto.OperatingSystem_Enum_value[strings.ToUpper(os)])
 }
 
 func ListToCloudList(clouds []string) []common_proto.CloudProvider {
