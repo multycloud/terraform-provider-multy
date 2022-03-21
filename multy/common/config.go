@@ -33,3 +33,17 @@ func (c *ProviderConfig) GetClouds(d *schema.ResourceData) []common_proto.CloudP
 	}
 	return c.Clouds
 }
+
+func (c *ProviderConfig) GetOperatingSystem(d *schema.ResourceData) common_proto.OperatingSystem_Enum {
+	if loc, check := d.GetOk("operating_system"); check {
+		return StringToVmOperatingSystem(loc.(string))
+	}
+	return common_proto.OperatingSystem_UNKNOWN_OS
+}
+
+func (c *ProviderConfig) GetVmSize(d *schema.ResourceData) common_proto.VmSize_Enum {
+	if loc, check := d.GetOk("size"); check {
+		return StringToVmSize(loc.(string))
+	}
+	return common_proto.VmSize_UNKNOWN_VM_SIZE
+}

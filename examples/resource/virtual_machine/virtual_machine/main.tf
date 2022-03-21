@@ -15,7 +15,7 @@ provider "multy" {
 
 resource multy_virtual_network vn {
   name       = "test"
-  cidr_block = "10.0.0.0/10"
+  cidr_block = "10.0.0.0/16"
 }
 
 resource multy_subnet subnet {
