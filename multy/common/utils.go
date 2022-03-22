@@ -49,6 +49,10 @@ func StringToVmSize(os string) common_proto.VmSize_Enum {
 	return common_proto.VmSize_Enum(common_proto.OperatingSystem_Enum_value[strings.ToUpper(os)])
 }
 
+func StringToCloud(cloud string) common_proto.CloudProvider {
+	return common_proto.CloudProvider(common_proto.CloudProvider_value[strings.ToUpper(cloud)])
+}
+
 func ListToCloudList(clouds []string) []common_proto.CloudProvider {
 	var cloudList []common_proto.CloudProvider
 	for _, c := range clouds {

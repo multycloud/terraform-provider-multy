@@ -115,6 +115,8 @@ github.com/hashicorp/logutils v1.0.0 h1:dLEQVugN8vlakKOUE3ihGLTZJRB4j+M2cdTm/ORI
 github.com/hashicorp/logutils v1.0.0/go.mod h1:QIAnNjmIWmVIIkWDTG1z5v++HQmx9WQRO+LraFDTW64=
 github.com/hashicorp/terraform-exec v0.16.0/go.mod h1:wB5JHmjxZ/YVNZuv9npAXKmz5pGyxy8PSi0GRR0+YjA=
 github.com/hashicorp/terraform-json v0.13.0/go.mod h1:y5OdLBCT+rxbwnpxZs9kGL7R9ExU76+cpdY8zHwoazk=
+github.com/hashicorp/terraform-plugin-framework v0.6.0 h1:XLqZllW47OjWqTxBN5wfqrl76sGSoekqg3keyNqBUwI=
+github.com/hashicorp/terraform-plugin-framework v0.6.0/go.mod h1:dgISV1z4CKDmi3uu/YpcvHeCSLtaKgena9Ix27tkKIQ=
 github.com/hashicorp/terraform-plugin-go v0.8.0 h1:MvY43PcDj9VlBjYifBWCO/6j1wf106xU8d5Tob/WRs0=
 github.com/hashicorp/terraform-plugin-go v0.8.0/go.mod h1:E3GuvfX0Pz2Azcl6BegD6t51StXsVZMOYQoGO8mkHM0=
 github.com/hashicorp/terraform-plugin-log v0.3.0 h1:NPENNOjaJSVX0f7JJTl4f/2JKRPQ7S2ZN9B4NSqq5kA=
@@ -173,8 +175,6 @@ github.com/mitchellh/mapstructure v1.4.3 h1:OVowDSCllw/YjdLkam3/sm7wEtOy59d8ndGg
 github.com/mitchellh/mapstructure v1.4.3/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zxSIeXaQ=
 github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
-github.com/multycloud/multy v0.1.10-alpha h1:OucXttxg5EC8R/V2jx1unDqAFymYb3Y7UuTDw05QhSQ=
-github.com/multycloud/multy v0.1.10-alpha/go.mod h1:ty2MRRtKNDMwwmR5ykxVB1BhEPoyTDi7MUTKGLpKBEc=
 github.com/multycloud/multy v0.1.11-alpha h1:4ljhwQE9JH0ZPo6evUQ7Z3xuuzS4BF4tLbgdEyFH9sQ=
 github.com/multycloud/multy v0.1.11-alpha/go.mod h1:9QeC5HYvsjiZ8qeLAG9seVV7AfyCeJWKzbE2Cc3Ot0Y=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=

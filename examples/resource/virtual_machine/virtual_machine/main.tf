@@ -9,19 +9,20 @@ terraform {
 
 provider "multy" {
   api_key  = "123"
-  clouds   = ["aws"]
   location = "ireland"
 }
 
 resource multy_virtual_network vn {
   name       = "test"
   cidr_block = "10.0.0.0/16"
+  cloud      = "aws"
 }
 
 resource multy_subnet subnet {
   name               = "test_subnet"
   cidr_block         = "10.0.10.0/24"
   virtual_network_id = multy_virtual_network.vn.id
+  cloud              = "aws"
 }
 
 resource multy_virtual_machine vm {
@@ -33,4 +34,5 @@ resource multy_virtual_machine vm {
   public_ip        = false
   user_data        = "echo HelloWorld"
   ssh_key          = file("./ssh_key.pub")
+  cloud            = "aws"
 }
