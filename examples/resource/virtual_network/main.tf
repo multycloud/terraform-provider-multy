@@ -13,7 +13,7 @@ provider "multy" {
 }
 
 resource multy_virtual_network vn {
-  name       = "test2"
+  name       = "vn_test3"
   cidr_block = "10.0.0.0/16"
   location   = "ireland"
   cloud      = "aws"

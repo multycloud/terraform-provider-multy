@@ -2,6 +2,7 @@ package common
 
 import (
 	common_proto "github.com/multycloud/multy/api/proto/common"
+	"github.com/multycloud/multy/api/proto/resources"
 	"strings"
 )
 
@@ -51,6 +52,13 @@ func StringToVmSize(os string) common_proto.VmSize_Enum {
 
 func StringToCloud(cloud string) common_proto.CloudProvider {
 	return common_proto.CloudProvider(common_proto.CloudProvider_value[strings.ToUpper(cloud)])
+}
+
+func StringToRuleDirection(dir string) resources.Direction {
+	if strings.EqualFold(dir, "both") {
+		dir = "both_directions"
+	}
+	return resources.Direction(resources.Direction_value[strings.ToUpper(dir)])
 }
 
 func ListToCloudList(clouds []string) []common_proto.CloudProvider {

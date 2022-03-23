@@ -27,6 +27,11 @@ var LocationSchema = tfsdk.Attribute{
 	Validators: []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: GetLocationNames()}},
 }
 
+var ProviderLocationSchema = tfsdk.Attribute{
+	Type:     types.StringType,
+	Computed: true,
+}
+
 var AwsSchema = tfsdk.Attribute{
 	Type:     types.MapType{},
 	Computed: true,
