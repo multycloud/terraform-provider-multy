@@ -6,36 +6,29 @@ import (
 	"strings"
 )
 
-func GetLocationNames() []string {
+func GetEnumNames(vals map[string]int32) []string {
 	var keys []string
-	for l, _ := range common_proto.Location_value {
+	for l := range vals {
 		keys = append(keys, strings.ToLower(l))
 	}
 	return keys
+}
+
+func GetLocationNames() []string {
+	return GetEnumNames(common_proto.Location_value)
 }
 
 func GetCloudNames() []string {
-	var keys []string
-	for l, _ := range common_proto.CloudProvider_value {
-		keys = append(keys, strings.ToLower(l))
-	}
-	return keys
+	return GetEnumNames(common_proto.CloudProvider_value)
 }
 
 func GetVmOperatingSystem() []string {
-	var keys []string
-	for l, _ := range common_proto.OperatingSystem_Enum_value {
-		keys = append(keys, strings.ToLower(l))
-	}
-	return keys
+	return GetEnumNames(common_proto.OperatingSystem_Enum_value)
 }
 
 func GetVmSize() []string {
-	var keys []string
-	for l, _ := range common_proto.VmSize_Enum_value {
-		keys = append(keys, strings.ToLower(l))
-	}
-	return keys
+	return GetEnumNames(common_proto.VmSize_Enum_value)
+
 }
 
 func StringToLocation(loc string) common_proto.Location {

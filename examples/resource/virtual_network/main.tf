@@ -8,14 +8,13 @@ terraform {
 }
 
 provider "multy" {
-  api_key  = "123"
+  api_key  = "multy_local"
   location = "us_east"
 }
 
 resource multy_virtual_network vn {
-  name       = "vn_test3"
+  name       = "vn_test4"
   cidr_block = "10.0.0.0/16"
-  location   = "ireland"
   cloud      = "aws"
 }
 

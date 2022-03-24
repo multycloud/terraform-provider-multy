@@ -31,9 +31,9 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Required: true,
 				//ValidateFunc: validation.IsCIDR,
 			},
-			"cloud":             common.CloudsSchema,
-			"location":          common.LocationSchema,
-			"provider_location": common.ProviderLocationSchema,
+			"cloud":              common.CloudsSchema,
+			"location":           common.LocationSchema,
+			"effective_location": common.EffectiveLocationSchema,
 		},
 	}, nil
 }
@@ -87,14 +87,7 @@ func (r resourceVirtualNetwork) Create(ctx context.Context, req tfsdk.CreateReso
 	tflog.Trace(ctx, "created virtual network", map[string]interface{}{"virtual_network_id": vn.CommonParameters.ResourceId})
 
 	// Map response body to resource schema attribute
-	state := convertResponseToVn(vn)
-	if plan.Location.Null {
-		state.Location.Null = true
-		state.ProviderLocation.Value = strings.ToLower(c.Location.String())
-	} else {
-		state.ProviderLocation.Null = true
-		state.Location.Value = strings.ToLower(state.Location.Value)
-	}
+	state := r.convertResponseToVn(vn)
 
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
@@ -123,12 +116,7 @@ func (r resourceVirtualNetwork) Read(ctx context.Context, req tfsdk.ReadResource
 	}
 
 	// Map response body to resource schema attribute & Set state
-	state = convertResponseToVn(vn)
-	if state.ProviderLocation.Null {
-		state.Location.Value = vn.Resources[0].CommonParameters.Location.String()
-	} else {
-		state.Location.Null = true
-	}
+	state = r.convertResponseToVn(vn)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -173,14 +161,7 @@ func (r resourceVirtualNetwork) Update(ctx context.Context, req tfsdk.UpdateReso
 	tflog.Trace(ctx, "updated virtual_network", map[string]interface{}{"virtual_network_id": state.Id.Value})
 
 	// Map response body to resource schema attribute & Set state
-	state = convertResponseToVn(vn)
-	if plan.Location.Null {
-		state.Location.Null = true
-		state.ProviderLocation.Value = strings.ToLower(c.Location.String())
-	} else {
-		state.ProviderLocation.Null = true
-		state.Location.Value = strings.ToLower(vn.Resources[0].CommonParameters.Location.String())
-	}
+	state = r.convertResponseToVn(vn)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
@@ -219,26 +200,21 @@ func (r resourceVirtualNetwork) ImportState(ctx context.Context, req tfsdk.Impor
 }
 
 type VirtualNetwork struct {
-	Id               types.String `tfsdk:"id"`
-	Name             types.String `tfsdk:"name"`
-	CidrBlock        types.String `tfsdk:"cidr_block"`
-	Cloud            types.String `tfsdk:"cloud"`
-	Location         types.String `tfsdk:"location"`
-	ProviderLocation types.String `tfsdk:"provider_location"`
+	Id                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	CidrBlock         types.String `tfsdk:"cidr_block"`
+	Cloud             types.String `tfsdk:"cloud"`
+	Location          types.String `tfsdk:"location"`
+	EffectiveLocation types.String `tfsdk:"effective_location"`
 }
 
-//type CommonResourceParams struct {
-//	Cloud    types.String `tfsdk:"cloud"`
-//	Location types.String `tfsdk:"location"`
-//}
-
-func convertResponseToVn(res *resources.VirtualNetworkResource) VirtualNetwork {
-	return VirtualNetwork{
-		Id:               types.String{Value: res.CommonParameters.ResourceId},
-		Name:             types.String{Value: res.Resources[0].Name},
-		CidrBlock:        types.String{Value: res.Resources[0].CidrBlock},
-		Cloud:            types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
-		Location:         types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
-		ProviderLocation: types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
+func (r resourceVirtualNetwork) convertResponseToVn(res *resources.VirtualNetworkResource) VirtualNetwork {
+	result := VirtualNetwork{
+		Id:        types.String{Value: res.CommonParameters.ResourceId},
+		Name:      types.String{Value: res.Resources[0].Name},
+		CidrBlock: types.String{Value: res.Resources[0].CidrBlock},
+		Cloud:     types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
 	}
+	common.SetLocation(r.p.Client.Location, res.Resources[0].CommonParameters.Location, &result.EffectiveLocation, &result.Location)
+	return result
 }
