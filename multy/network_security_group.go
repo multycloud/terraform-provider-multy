@@ -168,7 +168,6 @@ func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.Upda
 	ctx = c.AddHeaders(ctx)
 
 	request := convertPlanToUpdateRequest(plan, c)
-	request.ResourceId = state.Id.Value
 
 	// Update network_security_group
 	vn, err := c.Client.UpdateNetworkSecurityGroup(ctx, request)
@@ -271,35 +270,19 @@ func convertResponseToNsg(res *resources.NetworkSecurityGroupResource) NetworkSe
 }
 
 func convertPlanToCreateRequest(plan NetworkSecurityGroup, c *common.ProviderConfig) *resources.CreateNetworkSecurityGroupRequest {
-	var rules []*resources.NetworkSecurityRule
-	for _, item := range plan.Rules {
-		ruleDirection := common.StringToRuleDirection(item.Direction.Value)
-		rules = append(rules, &resources.NetworkSecurityRule{
-			Protocol: item.Protocol.Value,
-			Priority: item.Priority.Value,
-			PortRange: &resources.PortRange{
-				From: int32(item.FromPort.Value),
-				To:   int32(item.FromPort.Value),
-			},
-			CidrBlock: item.CidrBlock.Value,
-			Direction: ruleDirection,
-		})
-	}
-
 	return &resources.CreateNetworkSecurityGroupRequest{
-		Resources: []*resources.CloudSpecificNetworkSecurityGroupArgs{{
-			CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
-				Location:      c.GetLocation(plan.Location),
-				CloudProvider: common.StringToCloud(plan.Cloud.Value),
-			},
-			Name:             plan.Name.Value,
-			VirtualNetworkId: plan.VirtualNetworkId.Value,
-			Rules:            rules,
-		}},
+		Resources: convertPlanToArgs(plan, c),
 	}
 }
 
 func convertPlanToUpdateRequest(plan NetworkSecurityGroup, c *common.ProviderConfig) *resources.UpdateNetworkSecurityGroupRequest {
+	return &resources.UpdateNetworkSecurityGroupRequest{
+		ResourceId: plan.Id.Value,
+		Resources:  convertPlanToArgs(plan, c),
+	}
+}
+
+func convertPlanToArgs(plan NetworkSecurityGroup, c *common.ProviderConfig) []*resources.CloudSpecificNetworkSecurityGroupArgs {
 	var rules []*resources.NetworkSecurityRule
 	for _, item := range plan.Rules {
 		ruleDirection := common.StringToRuleDirection(item.Direction.Value)
@@ -314,16 +297,13 @@ func convertPlanToUpdateRequest(plan NetworkSecurityGroup, c *common.ProviderCon
 			Direction: ruleDirection,
 		})
 	}
-
-	return &resources.UpdateNetworkSecurityGroupRequest{
-		Resources: []*resources.CloudSpecificNetworkSecurityGroupArgs{{
-			CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
-				Location:      c.GetLocation(plan.Location),
-				CloudProvider: common.StringToCloud(plan.Cloud.Value),
-			},
-			Name:             plan.Name.Value,
-			VirtualNetworkId: plan.VirtualNetworkId.Value,
-			Rules:            rules,
-		}},
-	}
+	return []*resources.CloudSpecificNetworkSecurityGroupArgs{{
+		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+			Location:      c.GetLocation(plan.Location),
+			CloudProvider: common.StringToCloud(plan.Cloud.Value),
+		},
+		Name:             plan.Name.Value,
+		VirtualNetworkId: plan.VirtualNetworkId.Value,
+		Rules:            rules,
+	}}
 }
