@@ -177,6 +177,8 @@ github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zx
 github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/multycloud/multy v0.1.11-alpha h1:4ljhwQE9JH0ZPo6evUQ7Z3xuuzS4BF4tLbgdEyFH9sQ=
 github.com/multycloud/multy v0.1.11-alpha/go.mod h1:9QeC5HYvsjiZ8qeLAG9seVV7AfyCeJWKzbE2Cc3Ot0Y=
+github.com/multycloud/multy v0.1.12 h1:VLhQn9ZGbJyJJ0OaID1HM7HvBNWBMTrUosbdwWQtW+c=
+github.com/multycloud/multy v0.1.12/go.mod h1:9QeC5HYvsjiZ8qeLAG9seVV7AfyCeJWKzbE2Cc3Ot0Y=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce h1:RPclfga2SEJmgMmz2k+Mg7cowZ8yv4Trqw9UsJby758=
 github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce/go.mod h1:uFMI8w+ref4v2r9jz+c9i1IfIttS/OkmLfrk1jne5hs=

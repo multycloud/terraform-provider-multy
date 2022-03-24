@@ -7,7 +7,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.8.0
 	github.com/hashicorp/terraform-plugin-log v0.3.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.11.0
-	github.com/multycloud/multy v0.1.11-alpha
+	github.com/multycloud/multy v0.1.12
 	google.golang.org/grpc v1.45.0
 )
 

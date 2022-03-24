@@ -80,7 +80,7 @@ func (r resourceVirtualNetwork) Create(ctx context.Context, req tfsdk.CreateReso
 		}},
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating virtual_network", err.Error())
+		resp.Diagnostics.AddError("Error creating virtual_network", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -111,7 +111,7 @@ func (r resourceVirtualNetwork) Read(ctx context.Context, req tfsdk.ReadResource
 	// Get virtual_network from API and then update what is in state from what the API returns
 	vn, err := r.p.Client.Client.ReadVirtualNetwork(ctx, &resources.ReadVirtualNetworkRequest{ResourceId: state.Id.Value})
 	if err != nil {
-		resp.Diagnostics.AddError("Error getting virtual_network", err.Error())
+		resp.Diagnostics.AddError("Error getting virtual_network", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -154,7 +154,7 @@ func (r resourceVirtualNetwork) Update(ctx context.Context, req tfsdk.UpdateReso
 		}},
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating virtual_network", err.Error())
+		resp.Diagnostics.AddError("Error creating virtual_network", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -185,7 +185,7 @@ func (r resourceVirtualNetwork) Delete(ctx context.Context, req tfsdk.DeleteReso
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting virtual_network",
-			err.Error(),
+			common.ParseGrpcErrors(err),
 		)
 		return
 	}

@@ -2,7 +2,10 @@ package common
 
 import (
 	common_proto "github.com/multycloud/multy/api/proto/common"
+	"github.com/multycloud/multy/api/proto/errors"
 	"github.com/multycloud/multy/api/proto/resources"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"strings"
 )
 
@@ -60,4 +63,29 @@ func ListToCloudList(clouds []string) []common_proto.CloudProvider {
 		cloudList = append(cloudList, common_proto.CloudProvider(common_proto.CloudProvider_value[strings.ToUpper(c)]))
 	}
 	return cloudList
+}
+
+func ParseGrpcErrors(err error) string {
+	s, ok := status.FromError(err)
+	if !ok {
+		return err.Error()
+	}
+
+	str := ""
+
+	// user screwed up
+	if s.Code() == codes.InvalidArgument {
+		str += s.Message()
+		for _, detail := range s.Details() {
+			if e, ok := detail.(*errors.ResourceValidationError); ok {
+				str += "\n" + e.ErrorMessage
+			}
+		}
+	} else if s.Code() == codes.Internal {
+		str += "something went wrong: " + s.Message()
+	} else {
+		str += s.String()
+	}
+
+	return str
 }

@@ -38,9 +38,11 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 			"availability_zone": {
 				Type:     types.Int64Type,
 				Optional: true,
+				Computed: true,
 			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
+			"cloud":              common.CloudsSchema,
+			"location":           common.LocationSchema,
+			"effective_location": common.EffectiveLocationSchema,
 		},
 	}, nil
 }
@@ -96,7 +98,7 @@ func (r resourceSubnet) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 	tflog.Trace(ctx, "created subnet", map[string]interface{}{"subnet_id": subnet.CommonParameters.ResourceId})
 
 	// Map response body to resource schema attribute
-	state := convertResponseToSubnet(subnet)
+	state := r.convertResponseToSubnet(subnet)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -124,7 +126,7 @@ func (r resourceSubnet) Read(ctx context.Context, req tfsdk.ReadResourceRequest,
 	}
 
 	// Map response body to resource schema attribute & Set state
-	state = convertResponseToSubnet(subnet)
+	state = r.convertResponseToSubnet(subnet)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -171,7 +173,7 @@ func (r resourceSubnet) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 	tflog.Trace(ctx, "updated subnet", map[string]interface{}{"subnet_id": state.Id.Value})
 
 	// Map response body to resource schema attribute & Set state
-	state = convertResponseToSubnet(vn)
+	state = r.convertResponseToSubnet(vn)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -209,13 +211,14 @@ func (r resourceSubnet) ImportState(ctx context.Context, req tfsdk.ImportResourc
 }
 
 type Subnet struct {
-	Id               types.String `tfsdk:"id"`
-	Name             types.String `tfsdk:"name"`
-	CidrBlock        types.String `tfsdk:"cidr_block"`
-	VirtualNetworkId types.String `tfsdk:"virtual_network_id"`
-	AvailabilityZone types.Int64  `tfsdk:"availability_zone"`
-	Cloud            types.String `tfsdk:"cloud"`
-	Location         types.String `tfsdk:"location"`
+	Id                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	CidrBlock         types.String `tfsdk:"cidr_block"`
+	VirtualNetworkId  types.String `tfsdk:"virtual_network_id"`
+	AvailabilityZone  types.Int64  `tfsdk:"availability_zone"`
+	Cloud             types.String `tfsdk:"cloud"`
+	Location          types.String `tfsdk:"location"`
+	EffectiveLocation types.String `tfsdk:"effective_location"`
 }
 
 //type CommonResourceParams struct {
@@ -223,14 +226,16 @@ type Subnet struct {
 //	Location types.String `tfsdk:"location"`
 //}
 
-func convertResponseToSubnet(res *resources.SubnetResource) Subnet {
-	return Subnet{
+func (r resourceSubnet) convertResponseToSubnet(res *resources.SubnetResource) Subnet {
+	result := Subnet{
 		Id:               types.String{Value: res.CommonParameters.ResourceId},
 		Name:             types.String{Value: res.Resources[0].Name},
 		CidrBlock:        types.String{Value: res.Resources[0].CidrBlock},
 		AvailabilityZone: types.Int64{Value: int64(res.Resources[0].AvailabilityZone)},
 		VirtualNetworkId: types.String{Value: res.Resources[0].VirtualNetworkId},
 		Cloud:            types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
-		Location:         types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
 	}
+
+	common.SetLocation(r.p.Client.Location, res.Resources[0].CommonParameters.Location, &result.EffectiveLocation, &result.Location)
+	return result
 }
