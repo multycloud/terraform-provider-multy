@@ -12,10 +12,10 @@ provider "multy" {
 }
 
 resource multy_virtual_network vn {
-  name       = "test"
+  name       = "test_subnet"
   cidr_block = "10.0.0.0/16"
   cloud      = "aws"
-  location   = "ireland"
+  location   = "us_east"
 }
 
 resource multy_subnet subnet {
@@ -23,5 +23,4 @@ resource multy_subnet subnet {
   cidr_block         = "10.0.10.0/24"
   virtual_network_id = multy_virtual_network.vn.id
   cloud              = "aws"
-  location           = "ireland"
 }

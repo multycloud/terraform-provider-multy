@@ -59,6 +59,13 @@ func StringToRuleDirection(dir string) resources.Direction {
 	return resources.Direction(resources.Direction_value[strings.ToUpper(dir)])
 }
 
+func RuleDirectionToString(dir resources.Direction) string {
+	if strings.EqualFold(dir.String(), "BOTH_DIRECTIONS") {
+		return "both"
+	}
+	return strings.ToLower(dir.String())
+}
+
 func ListToCloudList(clouds []string) []common_proto.CloudProvider {
 	var cloudList []common_proto.CloudProvider
 	for _, c := range clouds {

@@ -32,16 +32,16 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				//ValidateFunc: validation.IsCIDR,
 			},
 			"virtual_network_id": {
-				Type:     types.StringType,
-				Required: true,
+				Type:          types.StringType,
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"availability_zone": {
 				Type:     types.Int64Type,
 				Optional: true,
 				Computed: true,
 			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
+			"cloud": common.CloudsSchema,
 		},
 	}, nil
 }
@@ -198,7 +198,6 @@ type Subnet struct {
 	VirtualNetworkId types.String `tfsdk:"virtual_network_id"`
 	AvailabilityZone types.Int64  `tfsdk:"availability_zone"`
 	Cloud            types.String `tfsdk:"cloud"`
-	Location         types.String `tfsdk:"location"`
 }
 
 //type CommonResourceParams struct {
@@ -214,7 +213,6 @@ func (r resourceSubnet) convertResponseToSubnet(res *resources.SubnetResource) S
 		AvailabilityZone: types.Int64{Value: int64(res.Resources[0].AvailabilityZone)},
 		VirtualNetworkId: types.String{Value: res.Resources[0].VirtualNetworkId},
 		Cloud:            types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
-		Location:         types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
 	}
 
 	return result
@@ -223,7 +221,6 @@ func (r resourceSubnet) convertResponseToSubnet(res *resources.SubnetResource) S
 func convertSubnetPlanToArgs(plan Subnet) []*resources.CloudSpecificSubnetArgs {
 	return []*resources.CloudSpecificSubnetArgs{{
 		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
-			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},
 		Name:             plan.Name.Value,

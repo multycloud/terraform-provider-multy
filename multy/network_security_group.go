@@ -3,11 +3,11 @@ package multy
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	common_proto "github.com/multycloud/multy/api/proto/common"
 	"github.com/multycloud/multy/api/proto/resources"
 	"strconv"
@@ -38,9 +38,13 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 				Type:     types.StringType,
 				Required: true,
 			},
+			"cloud":    common.CloudsSchema,
+			"location": common.LocationSchema,
+		},
+		Blocks: map[string]tfsdk.Block{
 			"rule": {
-				Optional: true,
-				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
+				//Optional: true,
+				Attributes: map[string]tfsdk.Attribute{
 					"protocol": {
 						Type:       types.StringType,
 						Required:   true,
@@ -51,12 +55,12 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 						Required: true,
 					},
 					"from_port": {
-						Type:     types.StringType,
+						Type:     types.Int64Type,
 						Required: true,
 						//Validators: validateRulePort,
 					},
 					"to_port": {
-						Type:     types.StringType,
+						Type:     types.Int64Type,
 						Required: true,
 						//Validators: validateRulePort,
 					},
@@ -70,9 +74,9 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 						Required:   true,
 						Validators: []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: ruleDirections}},
 					},
-				}, tfsdk.ListNestedAttributesOptions{})},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
+				},
+				NestingMode: tfsdk.BlockNestingModeSet,
+			},
 		},
 	}, nil
 }
@@ -262,7 +266,7 @@ func convertResponseToNsg(res *resources.NetworkSecurityGroupResource) NetworkSe
 			FromPort:  types.Int64{Value: int64(rule.PortRange.From)},
 			ToPort:    types.Int64{Value: int64(rule.PortRange.To)},
 			CidrBlock: types.String{Value: rule.CidrBlock},
-			Direction: types.String{Value: rule.Direction.String()},
+			Direction: types.String{Value: common.RuleDirectionToString(rule.Direction)},
 		})
 	}
 	return NetworkSecurityGroup{

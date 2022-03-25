@@ -97,10 +97,10 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 
 func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
 	return map[string]tfsdk.ResourceType{
-		"multy_virtual_network": ResourceVirtualNetworkType{},
-		"multy_subnet":          ResourceSubnetType{},
-		"multy_virtual_machine": ResourceVirtualMachineType{},
-		//"multy_network_security_group": resource.NetworkSecurityGroup(),
+		"multy_virtual_network":        ResourceVirtualNetworkType{},
+		"multy_subnet":                 ResourceSubnetType{},
+		"multy_virtual_machine":        ResourceVirtualMachineType{},
+		"multy_network_security_group": ResourceNetworkSecurityGroupType{},
 	}, nil
 }
 
