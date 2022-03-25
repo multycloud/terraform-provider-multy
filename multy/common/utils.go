@@ -8,6 +8,7 @@ import (
 	"github.com/multycloud/multy/api/proto/resources"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"strings"
 )
 
@@ -106,6 +107,18 @@ func DefaultToNull[OutT attr.Value](t any) OutT {
 		}
 	}
 	return s.(OutT)
+}
+
+type protoEnum interface {
+	String() string
+	Number() protoreflect.EnumNumber
+}
+
+func DefaultEnumToNull(p protoEnum) types.String {
+	return types.String{
+		Null:  p.Number() == 0,
+		Value: strings.ToLower(p.String()),
+	}
 }
 
 func DefaultSliceToNull[T attr.Value](t []T) []T {

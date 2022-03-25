@@ -233,7 +233,7 @@ func convertResponseToVm(res *resources.VirtualMachineResource) VirtualMachine {
 		Id:                      types.String{Value: res.CommonParameters.ResourceId},
 		Name:                    types.String{Value: res.Resources[0].Name},
 		OperatingSystem:         types.String{Value: strings.ToLower(res.Resources[0].OperatingSystem.String())},
-		Size:                    types.String{Value: strings.ToLower(res.Resources[0].VmSize.String())},
+		Size:                    common.DefaultEnumToNull(res.Resources[0].VmSize),
 		SubnetId:                types.String{Value: res.Resources[0].SubnetId},
 		NetworkInterfaceIds:     common.DefaultSliceToNull(common.TypesStringToStringSlice(res.Resources[0].NetworkInterfaceIds)),
 		NetworkSecurityGroupIds: common.DefaultSliceToNull(common.TypesStringToStringSlice(res.Resources[0].NetworkSecurityGroupIds)),
