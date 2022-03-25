@@ -40,9 +40,8 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				Optional: true,
 				Computed: true,
 			},
-			"cloud":              common.CloudsSchema,
-			"location":           common.LocationSchema,
-			"effective_location": common.EffectiveLocationSchema,
+			"cloud":    common.CloudsSchema,
+			"location": common.LocationSchema,
 		},
 	}, nil
 }
@@ -79,16 +78,7 @@ func (r resourceSubnet) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 
 	// Create new order from plan values
 	subnet, err := c.Client.CreateSubnet(ctx, &resources.CreateSubnetRequest{
-		Resources: []*resources.CloudSpecificSubnetArgs{{
-			CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
-				Location:      c.GetLocation(plan.Location),
-				CloudProvider: common.StringToCloud(plan.Cloud.Value),
-			},
-			Name:             plan.Name.Value,
-			CidrBlock:        plan.CidrBlock.Value,
-			VirtualNetworkId: plan.VirtualNetworkId.Value,
-			AvailabilityZone: int32(plan.AvailabilityZone.Value),
-		}},
+		Resources: convertSubnetPlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating subnet", err.Error())
@@ -154,16 +144,7 @@ func (r resourceSubnet) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 	vn, err := c.Client.UpdateSubnet(ctx, &resources.UpdateSubnetRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources: []*resources.CloudSpecificSubnetArgs{{
-			CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
-				Location:      c.GetLocation(plan.Location),
-				CloudProvider: common.StringToCloud(plan.Cloud.Value),
-			},
-			Name:             plan.Name.Value,
-			CidrBlock:        plan.CidrBlock.Value,
-			VirtualNetworkId: plan.VirtualNetworkId.Value,
-			AvailabilityZone: int32(plan.AvailabilityZone.Value),
-		}},
+		Resources:  convertSubnetPlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating subnet", err.Error())
@@ -234,8 +215,21 @@ func (r resourceSubnet) convertResponseToSubnet(res *resources.SubnetResource) S
 		AvailabilityZone: types.Int64{Value: int64(res.Resources[0].AvailabilityZone)},
 		VirtualNetworkId: types.String{Value: res.Resources[0].VirtualNetworkId},
 		Cloud:            types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
+		Location:         types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
 	}
 
-	common.SetLocation(r.p.Client.Location, res.Resources[0].CommonParameters.Location, &result.EffectiveLocation, &result.Location)
 	return result
+}
+
+func convertSubnetPlanToArgs(plan Subnet) []*resources.CloudSpecificSubnetArgs {
+	return []*resources.CloudSpecificSubnetArgs{{
+		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+			Location:      common.StringToLocation(plan.Location.Value),
+			CloudProvider: common.StringToCloud(plan.Cloud.Value),
+		},
+		Name:             plan.Name.Value,
+		CidrBlock:        plan.CidrBlock.Value,
+		VirtualNetworkId: plan.VirtualNetworkId.Value,
+		AvailabilityZone: int32(plan.AvailabilityZone.Value),
+	}}
 }

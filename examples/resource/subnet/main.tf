@@ -8,14 +8,14 @@ terraform {
 }
 
 provider "multy" {
-  api_key  = "multy_local"
-  location = "ireland"
+  api_key = "multy_local"
 }
 
 resource multy_virtual_network vn {
   name       = "test"
   cidr_block = "10.0.0.0/16"
   cloud      = "aws"
+  location   = "ireland"
 }
 
 resource multy_subnet subnet {
@@ -23,4 +23,5 @@ resource multy_subnet subnet {
   cidr_block         = "10.0.10.0/24"
   virtual_network_id = multy_virtual_network.vn.id
   cloud              = "aws"
+  location           = "ireland"
 }

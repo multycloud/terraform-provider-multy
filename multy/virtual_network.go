@@ -31,9 +31,8 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Required: true,
 				//ValidateFunc: validation.IsCIDR,
 			},
-			"cloud":              common.CloudsSchema,
-			"location":           common.LocationSchema,
-			"effective_location": common.EffectiveLocationSchema,
+			"cloud":    common.CloudsSchema,
+			"location": common.LocationSchema,
 		},
 	}, nil
 }
@@ -70,14 +69,7 @@ func (r resourceVirtualNetwork) Create(ctx context.Context, req tfsdk.CreateReso
 
 	// Create new order from plan values
 	vn, err := c.Client.CreateVirtualNetwork(ctx, &resources.CreateVirtualNetworkRequest{
-		Resources: []*resources.CloudSpecificVirtualNetworkArgs{{
-			CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
-				Location:      c.GetLocation(plan.Location),
-				CloudProvider: common.StringToCloud(plan.Cloud.Value),
-			},
-			Name:      plan.Name.Value,
-			CidrBlock: plan.CidrBlock.Value,
-		}},
+		Resources: convertVnPlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating virtual_network", common.ParseGrpcErrors(err))
@@ -144,17 +136,10 @@ func (r resourceVirtualNetwork) Update(ctx context.Context, req tfsdk.UpdateReso
 	vn, err := c.Client.UpdateVirtualNetwork(ctx, &resources.UpdateVirtualNetworkRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources: []*resources.CloudSpecificVirtualNetworkArgs{{
-			CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
-				Location:      c.GetLocation(plan.Location),
-				CloudProvider: common.StringToCloud(plan.Cloud.Value),
-			},
-			Name:      plan.Name.Value,
-			CidrBlock: plan.CidrBlock.Value,
-		}},
+		Resources:  convertVnPlanToArgs(plan),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating virtual_network", common.ParseGrpcErrors(err))
+		resp.Diagnostics.AddError("Error updating virtual_network", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -200,21 +185,30 @@ func (r resourceVirtualNetwork) ImportState(ctx context.Context, req tfsdk.Impor
 }
 
 type VirtualNetwork struct {
-	Id                types.String `tfsdk:"id"`
-	Name              types.String `tfsdk:"name"`
-	CidrBlock         types.String `tfsdk:"cidr_block"`
-	Cloud             types.String `tfsdk:"cloud"`
-	Location          types.String `tfsdk:"location"`
-	EffectiveLocation types.String `tfsdk:"effective_location"`
+	Id        types.String `tfsdk:"id"`
+	Name      types.String `tfsdk:"name"`
+	CidrBlock types.String `tfsdk:"cidr_block"`
+	Cloud     types.String `tfsdk:"cloud"`
+	Location  types.String `tfsdk:"location"`
 }
 
 func (r resourceVirtualNetwork) convertResponseToVn(res *resources.VirtualNetworkResource) VirtualNetwork {
-	result := VirtualNetwork{
+	return VirtualNetwork{
 		Id:        types.String{Value: res.CommonParameters.ResourceId},
 		Name:      types.String{Value: res.Resources[0].Name},
 		CidrBlock: types.String{Value: res.Resources[0].CidrBlock},
 		Cloud:     types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
+		Location:  types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
 	}
-	common.SetLocation(r.p.Client.Location, res.Resources[0].CommonParameters.Location, &result.EffectiveLocation, &result.Location)
-	return result
+}
+
+func convertVnPlanToArgs(plan VirtualNetwork) []*resources.CloudSpecificVirtualNetworkArgs {
+	return []*resources.CloudSpecificVirtualNetworkArgs{{
+		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+			Location:      common.StringToLocation(plan.Location.Value),
+			CloudProvider: common.StringToCloud(plan.Cloud.Value),
+		},
+		Name:      plan.Name.Value,
+		CidrBlock: plan.CidrBlock.Value,
+	}}
 }

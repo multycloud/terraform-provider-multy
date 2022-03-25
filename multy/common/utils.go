@@ -31,7 +31,6 @@ func GetVmOperatingSystem() []string {
 
 func GetVmSize() []string {
 	return GetEnumNames(common_proto.VmSize_Enum_value)
-
 }
 
 func StringToLocation(loc string) common_proto.Location {

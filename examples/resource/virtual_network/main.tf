@@ -8,14 +8,14 @@ terraform {
 }
 
 provider "multy" {
-  api_key  = "multy_local"
-  location = "us_east"
+  api_key = "multy_local"
 }
 
 resource multy_virtual_network vn {
   name       = "vn_test4"
-  cidr_block = ""
+  cidr_block = "10.0.0.0/16"
   cloud      = "aws"
+  location   = "us_east"
 }
 
 output vn {

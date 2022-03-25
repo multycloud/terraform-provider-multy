@@ -23,14 +23,9 @@ var CloudsSchema = tfsdk.Attribute{
 
 var LocationSchema = tfsdk.Attribute{
 	Type:          types.StringType,
-	Optional:      true,
+	Required:      true,
 	Validators:    []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: GetLocationNames()}},
 	PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
-}
-
-var EffectiveLocationSchema = tfsdk.Attribute{
-	Type:     types.StringType,
-	Computed: true,
 }
 
 var AwsSchema = tfsdk.Attribute{

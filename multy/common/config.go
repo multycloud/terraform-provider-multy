@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/multycloud/multy/api/proto"
 	common_proto "github.com/multycloud/multy/api/proto/common"
@@ -10,21 +9,13 @@ import (
 )
 
 type ProviderConfig struct {
-	Client   proto.MultyResourceServiceClient
-	ApiKey   string
-	Location common_proto.Location
+	Client proto.MultyResourceServiceClient
+	ApiKey string
 }
 
 func (c *ProviderConfig) AddHeaders(ctx context.Context) context.Context {
 	// TODO: retrieve user id from api key
 	return metadata.AppendToOutgoingContext(ctx, "user_id", c.ApiKey)
-}
-
-func (c *ProviderConfig) GetLocation(location types.String) common_proto.Location {
-	if !location.Null && !location.Unknown && location.Value != "" {
-		return StringToLocation(location.Value)
-	}
-	return c.Location
 }
 
 //

@@ -2,6 +2,7 @@ package multy
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto"
@@ -9,9 +10,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"os"
 	"terraform-provider-multy/multy/common"
-	"terraform-provider-multy/multy/validators"
-
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
 func New() tfsdk.Provider {
@@ -31,18 +29,12 @@ func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Optional:  true,
 				Sensitive: true,
 			},
-			"location": {
-				Type:       types.StringType,
-				Required:   true,
-				Validators: []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: common.GetLocationNames()}},
-			},
 		},
 	}, nil
 }
 
 type providerData struct {
-	ApiKey   types.String `tfsdk:"api_key"`
-	Location types.String `tfsdk:"location"`
+	ApiKey types.String `tfsdk:"api_key"`
 }
 
 func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
@@ -80,7 +72,7 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to create Client",
-			"Unable to create hashicups Client:\n\n"+err.Error(),
+			"Unable to create multy Client:\n\n"+err.Error(),
 		)
 		return
 	}
@@ -91,14 +83,13 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to create Client",
-			"Unable to create hashicups Client:\n\n"+err.Error(),
+			"Unable to create multy Client:\n\n"+err.Error(),
 		)
 		return
 	}
 
 	c.Client = client
 	c.ApiKey = apiKey
-	c.Location = common.StringToLocation(config.Location.Value)
 
 	p.Client = &c
 	p.Configured = true

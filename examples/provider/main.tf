@@ -8,6 +8,5 @@ terraform {
 }
 
 provider "multy" {
-  api_key  = "123"
-  location = "ireland"
+  api_key = "123"
 }

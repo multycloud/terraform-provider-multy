@@ -71,7 +71,8 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 						Validators: []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: ruleDirections}},
 					},
 				}, tfsdk.ListNestedAttributesOptions{})},
-			"cloud": common.CloudsSchema,
+			"cloud":    common.CloudsSchema,
+			"location": common.LocationSchema,
 		},
 	}, nil
 }
@@ -106,7 +107,9 @@ func (r resourceNetworkSecurityGroup) Create(ctx context.Context, req tfsdk.Crea
 	c := r.p.Client
 	ctx = c.AddHeaders(ctx)
 
-	nsg, err := c.Client.CreateNetworkSecurityGroup(ctx, convertPlanToCreateRequest(plan, c))
+	nsg, err := c.Client.CreateNetworkSecurityGroup(ctx, &resources.CreateNetworkSecurityGroupRequest{
+		Resources: convertNsgPlanToArgs(plan),
+	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating network_security_group", err.Error())
 		return
@@ -167,7 +170,10 @@ func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.Upda
 	c := r.p.Client
 	ctx = c.AddHeaders(ctx)
 
-	request := convertPlanToUpdateRequest(plan, c)
+	request := &resources.UpdateNetworkSecurityGroupRequest{
+		ResourceId: plan.Id.Value,
+		Resources:  convertNsgPlanToArgs(plan),
+	}
 
 	// Update network_security_group
 	vn, err := c.Client.UpdateNetworkSecurityGroup(ctx, request)
@@ -269,20 +275,7 @@ func convertResponseToNsg(res *resources.NetworkSecurityGroupResource) NetworkSe
 	}
 }
 
-func convertPlanToCreateRequest(plan NetworkSecurityGroup, c *common.ProviderConfig) *resources.CreateNetworkSecurityGroupRequest {
-	return &resources.CreateNetworkSecurityGroupRequest{
-		Resources: convertPlanToArgs(plan, c),
-	}
-}
-
-func convertPlanToUpdateRequest(plan NetworkSecurityGroup, c *common.ProviderConfig) *resources.UpdateNetworkSecurityGroupRequest {
-	return &resources.UpdateNetworkSecurityGroupRequest{
-		ResourceId: plan.Id.Value,
-		Resources:  convertPlanToArgs(plan, c),
-	}
-}
-
-func convertPlanToArgs(plan NetworkSecurityGroup, c *common.ProviderConfig) []*resources.CloudSpecificNetworkSecurityGroupArgs {
+func convertNsgPlanToArgs(plan NetworkSecurityGroup) []*resources.CloudSpecificNetworkSecurityGroupArgs {
 	var rules []*resources.NetworkSecurityRule
 	for _, item := range plan.Rules {
 		ruleDirection := common.StringToRuleDirection(item.Direction.Value)
@@ -299,7 +292,7 @@ func convertPlanToArgs(plan NetworkSecurityGroup, c *common.ProviderConfig) []*r
 	}
 	return []*resources.CloudSpecificNetworkSecurityGroupArgs{{
 		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
-			Location:      c.GetLocation(plan.Location),
+			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},
 		Name:             plan.Name.Value,
