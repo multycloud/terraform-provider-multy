@@ -11,6 +11,7 @@ import (
 	"github.com/multycloud/multy/api/proto/resources"
 	"strings"
 	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/validators"
 )
 
 type ResourceSubnetType struct{}
@@ -31,7 +32,7 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				Type:        types.StringType,
 				Description: "CIDR block of Subnet",
 				Required:    true,
-				//ValidateFunc: validation.IsCIDR,
+				Validators:  []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
 			},
 			"virtual_network_id": {
 				Type:          types.StringType,
@@ -82,7 +83,7 @@ func (r resourceSubnet) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 
 	// Create new order from plan values
 	subnet, err := c.Client.CreateSubnet(ctx, &resources.CreateSubnetRequest{
-		Resources: convertSubnetPlanToArgs(plan),
+		Resources: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating subnet", err.Error())
@@ -92,7 +93,7 @@ func (r resourceSubnet) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 	tflog.Trace(ctx, "created subnet", map[string]interface{}{"subnet_id": subnet.CommonParameters.ResourceId})
 
 	// Map response body to resource schema attribute
-	state := r.convertResponseToSubnet(subnet)
+	state := r.convertResponseToResource(subnet)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -120,7 +121,7 @@ func (r resourceSubnet) Read(ctx context.Context, req tfsdk.ReadResourceRequest,
 	}
 
 	// Map response body to resource schema attribute & Set state
-	state = r.convertResponseToSubnet(subnet)
+	state = r.convertResponseToResource(subnet)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -148,7 +149,7 @@ func (r resourceSubnet) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 	vn, err := c.Client.UpdateSubnet(ctx, &resources.UpdateSubnetRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  convertSubnetPlanToArgs(plan),
+		Resources:  r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating subnet", err.Error())
@@ -158,7 +159,7 @@ func (r resourceSubnet) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 	tflog.Trace(ctx, "updated subnet", map[string]interface{}{"subnet_id": state.Id.Value})
 
 	// Map response body to resource schema attribute & Set state
-	state = r.convertResponseToSubnet(vn)
+	state = r.convertResponseToResource(vn)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -209,7 +210,7 @@ type Subnet struct {
 //	Location types.String `tfsdk:"location"`
 //}
 
-func (r resourceSubnet) convertResponseToSubnet(res *resources.SubnetResource) Subnet {
+func (r resourceSubnet) convertResponseToResource(res *resources.SubnetResource) Subnet {
 	result := Subnet{
 		Id:               types.String{Value: res.CommonParameters.ResourceId},
 		Name:             types.String{Value: res.Resources[0].Name},
@@ -222,7 +223,7 @@ func (r resourceSubnet) convertResponseToSubnet(res *resources.SubnetResource) S
 	return result
 }
 
-func convertSubnetPlanToArgs(plan Subnet) []*resources.CloudSpecificSubnetArgs {
+func (r resourceSubnet) convertResourcePlanToArgs(plan Subnet) []*resources.CloudSpecificSubnetArgs {
 	return []*resources.CloudSpecificSubnetArgs{{
 		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),

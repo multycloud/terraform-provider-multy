@@ -126,7 +126,7 @@ func (r resourceVirtualMachine) Create(ctx context.Context, req tfsdk.CreateReso
 
 	// Create new order from plan values
 	vm, err := c.Client.CreateVirtualMachine(ctx, &resources.CreateVirtualMachineRequest{
-		Resources: convertVmPlanToArgs(plan),
+		Resources: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating virtual_machine", common.ParseGrpcErrors(err))
@@ -136,7 +136,7 @@ func (r resourceVirtualMachine) Create(ctx context.Context, req tfsdk.CreateReso
 	tflog.Trace(ctx, "created virtual network", map[string]interface{}{"virtual_machine_id": vm.CommonParameters.ResourceId})
 
 	// Map response body to resource schema attribute
-	state := convertResponseToVm(vm)
+	state := r.convertResponseToResource(vm)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -164,7 +164,7 @@ func (r resourceVirtualMachine) Read(ctx context.Context, req tfsdk.ReadResource
 	}
 
 	// Map response body to resource schema attribute & Set state
-	state = convertResponseToVm(vm)
+	state = r.convertResponseToResource(vm)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -192,7 +192,7 @@ func (r resourceVirtualMachine) Update(ctx context.Context, req tfsdk.UpdateReso
 	vm, err := c.Client.UpdateVirtualMachine(ctx, &resources.UpdateVirtualMachineRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  convertVmPlanToArgs(plan),
+		Resources:  r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating virtual_machine", common.ParseGrpcErrors(err))
@@ -202,7 +202,7 @@ func (r resourceVirtualMachine) Update(ctx context.Context, req tfsdk.UpdateReso
 	tflog.Trace(ctx, "updated virtual_machine", map[string]interface{}{"virtual_machine_id": state.Id.Value})
 
 	// Map response body to resource schema attribute & Set state
-	state = convertResponseToVm(vm)
+	state = r.convertResponseToResource(vm)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
@@ -240,7 +240,7 @@ func (r resourceVirtualMachine) ImportState(ctx context.Context, req tfsdk.Impor
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }
 
-func convertResponseToVm(res *resources.VirtualMachineResource) VirtualMachine {
+func (r resourceVirtualMachine) convertResponseToResource(res *resources.VirtualMachineResource) VirtualMachine {
 	return VirtualMachine{
 		Id:                      types.String{Value: res.CommonParameters.ResourceId},
 		Name:                    types.String{Value: res.Resources[0].Name},
@@ -258,7 +258,7 @@ func convertResponseToVm(res *resources.VirtualMachineResource) VirtualMachine {
 	}
 }
 
-func convertVmPlanToArgs(plan VirtualMachine) []*resources.CloudSpecificVirtualMachineArgs {
+func (r resourceVirtualMachine) convertResourcePlanToArgs(plan VirtualMachine) []*resources.CloudSpecificVirtualMachineArgs {
 	return []*resources.CloudSpecificVirtualMachineArgs{{
 		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),

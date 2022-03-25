@@ -75,7 +75,7 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 						Type:        types.StringType,
 						Description: "CIDR block of network rule",
 						Required:    true,
-						//Validators: validation.IsCIDR,
+						Validators:  []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
 					},
 					"direction": {
 						Type:        types.StringType,
@@ -121,7 +121,7 @@ func (r resourceNetworkSecurityGroup) Create(ctx context.Context, req tfsdk.Crea
 	ctx = c.AddHeaders(ctx)
 
 	nsg, err := c.Client.CreateNetworkSecurityGroup(ctx, &resources.CreateNetworkSecurityGroupRequest{
-		Resources: convertNsgPlanToArgs(plan),
+		Resources: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating network_security_group", err.Error())
@@ -131,7 +131,7 @@ func (r resourceNetworkSecurityGroup) Create(ctx context.Context, req tfsdk.Crea
 	tflog.Trace(ctx, "created nsg", map[string]interface{}{"network_security_group_id": nsg.CommonParameters.ResourceId})
 
 	// Map response body to resource schema attribute
-	state := convertResponseToNsg(nsg)
+	state := r.convertResponseToResource(nsg)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -159,7 +159,7 @@ func (r resourceNetworkSecurityGroup) Read(ctx context.Context, req tfsdk.ReadRe
 	}
 
 	// Map response body to resource schema attribute & Set state
-	state = convertResponseToNsg(nsg)
+	state = r.convertResponseToResource(nsg)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -185,11 +185,11 @@ func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.Upda
 
 	request := &resources.UpdateNetworkSecurityGroupRequest{
 		ResourceId: plan.Id.Value,
-		Resources:  convertNsgPlanToArgs(plan),
+		Resources:  r.convertResourcePlanToArgs(plan),
 	}
 
 	// Update network_security_group
-	vn, err := c.Client.UpdateNetworkSecurityGroup(ctx, request)
+	nsg, err := c.Client.UpdateNetworkSecurityGroup(ctx, request)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating network_security_group", err.Error())
 		return
@@ -198,7 +198,7 @@ func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.Upda
 	tflog.Trace(ctx, "updated network_security_group", map[string]interface{}{"network_security_group_id": state.Id.Value})
 
 	// Map response body to resource schema attribute & Set state
-	state = convertResponseToNsg(vn)
+	state = r.convertResponseToResource(nsg)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -266,7 +266,7 @@ type Rule struct {
 	Direction types.String `tfsdk:"direction"`
 }
 
-func convertResponseToNsg(res *resources.NetworkSecurityGroupResource) NetworkSecurityGroup {
+func (r resourceNetworkSecurityGroup) convertResponseToResource(res *resources.NetworkSecurityGroupResource) NetworkSecurityGroup {
 	var rules []Rule
 	for _, rule := range res.Resources[0].Rules {
 		rules = append(rules, Rule{
@@ -288,7 +288,7 @@ func convertResponseToNsg(res *resources.NetworkSecurityGroupResource) NetworkSe
 	}
 }
 
-func convertNsgPlanToArgs(plan NetworkSecurityGroup) []*resources.CloudSpecificNetworkSecurityGroupArgs {
+func (r resourceNetworkSecurityGroup) convertResourcePlanToArgs(plan NetworkSecurityGroup) []*resources.CloudSpecificNetworkSecurityGroupArgs {
 	var rules []*resources.NetworkSecurityRule
 	for _, item := range plan.Rules {
 		ruleDirection := common.StringToRuleDirection(item.Direction.Value)

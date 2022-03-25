@@ -11,6 +11,7 @@ import (
 	"github.com/multycloud/multy/api/proto/resources"
 	"strings"
 	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/validators"
 )
 
 type ResourceVirtualNetworkType struct{}
@@ -24,14 +25,14 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 			},
 			"name": {
 				Type:        types.StringType,
-				Description: "Name of Virtual Machine",
+				Description: "Name of Virtual Network",
 				Required:    true,
 			},
 			"cidr_block": {
 				Type:        types.StringType,
 				Description: "CIDR Block of Virtual Network",
 				Required:    true,
-				//ValidateFunc: validation.IsCIDR,
+				Validators:  []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
@@ -71,17 +72,17 @@ func (r resourceVirtualNetwork) Create(ctx context.Context, req tfsdk.CreateReso
 
 	// Create new order from plan values
 	vn, err := c.Client.CreateVirtualNetwork(ctx, &resources.CreateVirtualNetworkRequest{
-		Resources: convertVnPlanToArgs(plan),
+		Resources: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating virtual_network", common.ParseGrpcErrors(err))
 		return
 	}
 
-	tflog.Trace(ctx, "created virtual network", map[string]interface{}{"virtual_network_id": vn.CommonParameters.ResourceId})
+	tflog.Trace(ctx, "created virtual_network", map[string]interface{}{"virtual_network_id": vn.CommonParameters.ResourceId})
 
 	// Map response body to resource schema attribute
-	state := r.convertResponseToVn(vn)
+	state := r.convertResponseToResource(vn)
 
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
@@ -110,7 +111,7 @@ func (r resourceVirtualNetwork) Read(ctx context.Context, req tfsdk.ReadResource
 	}
 
 	// Map response body to resource schema attribute & Set state
-	state = r.convertResponseToVn(vn)
+	state = r.convertResponseToResource(vn)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -138,7 +139,7 @@ func (r resourceVirtualNetwork) Update(ctx context.Context, req tfsdk.UpdateReso
 	vn, err := c.Client.UpdateVirtualNetwork(ctx, &resources.UpdateVirtualNetworkRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  convertVnPlanToArgs(plan),
+		Resources:  r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating virtual_network", common.ParseGrpcErrors(err))
@@ -148,7 +149,7 @@ func (r resourceVirtualNetwork) Update(ctx context.Context, req tfsdk.UpdateReso
 	tflog.Trace(ctx, "updated virtual_network", map[string]interface{}{"virtual_network_id": state.Id.Value})
 
 	// Map response body to resource schema attribute & Set state
-	state = r.convertResponseToVn(vn)
+	state = r.convertResponseToResource(vn)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
@@ -194,7 +195,7 @@ type VirtualNetwork struct {
 	Location  types.String `tfsdk:"location"`
 }
 
-func (r resourceVirtualNetwork) convertResponseToVn(res *resources.VirtualNetworkResource) VirtualNetwork {
+func (r resourceVirtualNetwork) convertResponseToResource(res *resources.VirtualNetworkResource) VirtualNetwork {
 	return VirtualNetwork{
 		Id:        types.String{Value: res.CommonParameters.ResourceId},
 		Name:      types.String{Value: res.Resources[0].Name},
@@ -204,7 +205,7 @@ func (r resourceVirtualNetwork) convertResponseToVn(res *resources.VirtualNetwor
 	}
 }
 
-func convertVnPlanToArgs(plan VirtualNetwork) []*resources.CloudSpecificVirtualNetworkArgs {
+func (r resourceVirtualNetwork) convertResourcePlanToArgs(plan VirtualNetwork) []*resources.CloudSpecificVirtualNetworkArgs {
 	return []*resources.CloudSpecificVirtualNetworkArgs{{
 		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),

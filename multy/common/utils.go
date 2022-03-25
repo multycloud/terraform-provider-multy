@@ -36,6 +36,10 @@ func GetVmSize() []string {
 	return GetEnumNames(common_proto.VmSize_Enum_value)
 }
 
+func GetRouteDestinations() []string {
+	return GetEnumNames(resources.RouteDestination_value)
+}
+
 func StringToLocation(loc string) common_proto.Location {
 	return common_proto.Location(common_proto.Location_value[strings.ToUpper(loc)])
 }
@@ -50,6 +54,10 @@ func StringToVmSize(os string) common_proto.VmSize_Enum {
 
 func StringToCloud(cloud string) common_proto.CloudProvider {
 	return common_proto.CloudProvider(common_proto.CloudProvider_value[strings.ToUpper(cloud)])
+}
+
+func StringToRouteDestination(route string) resources.RouteDestination {
+	return resources.RouteDestination(resources.RouteDestination_value[strings.ToUpper(route)])
 }
 
 func StringToRuleDirection(dir string) resources.Direction {
