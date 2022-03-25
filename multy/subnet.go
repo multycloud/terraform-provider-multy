@@ -192,14 +192,13 @@ func (r resourceSubnet) ImportState(ctx context.Context, req tfsdk.ImportResourc
 }
 
 type Subnet struct {
-	Id                types.String `tfsdk:"id"`
-	Name              types.String `tfsdk:"name"`
-	CidrBlock         types.String `tfsdk:"cidr_block"`
-	VirtualNetworkId  types.String `tfsdk:"virtual_network_id"`
-	AvailabilityZone  types.Int64  `tfsdk:"availability_zone"`
-	Cloud             types.String `tfsdk:"cloud"`
-	Location          types.String `tfsdk:"location"`
-	EffectiveLocation types.String `tfsdk:"effective_location"`
+	Id               types.String `tfsdk:"id"`
+	Name             types.String `tfsdk:"name"`
+	CidrBlock        types.String `tfsdk:"cidr_block"`
+	VirtualNetworkId types.String `tfsdk:"virtual_network_id"`
+	AvailabilityZone types.Int64  `tfsdk:"availability_zone"`
+	Cloud            types.String `tfsdk:"cloud"`
+	Location         types.String `tfsdk:"location"`
 }
 
 //type CommonResourceParams struct {

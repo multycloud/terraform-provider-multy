@@ -99,7 +99,7 @@ func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 	return map[string]tfsdk.ResourceType{
 		"multy_virtual_network": ResourceVirtualNetworkType{},
 		"multy_subnet":          ResourceSubnetType{},
-		//"multy_virtual_machine":        resource.VirtualMachine(),
+		"multy_virtual_machine": ResourceVirtualMachineType{},
 		//"multy_network_security_group": resource.NetworkSecurityGroup(),
 	}, nil
 }

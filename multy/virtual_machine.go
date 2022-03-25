@@ -60,10 +60,13 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 			"public_ip_id": {
 				Type:     types.StringType,
 				Optional: true,
+				// TODO: validate if not empty string
 			},
 			"public_ip": {
 				Type:     types.BoolType,
 				Optional: true,
+				// defaults to false
+				Computed: true,
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
@@ -229,14 +232,14 @@ func convertResponseToVm(res *resources.VirtualMachineResource) VirtualMachine {
 	return VirtualMachine{
 		Id:                      types.String{Value: res.CommonParameters.ResourceId},
 		Name:                    types.String{Value: res.Resources[0].Name},
-		OperatingSystem:         types.String{Value: res.Resources[0].OperatingSystem.String()},
-		Size:                    types.String{Value: res.Resources[0].VmSize.String()},
+		OperatingSystem:         types.String{Value: strings.ToLower(res.Resources[0].OperatingSystem.String())},
+		Size:                    types.String{Value: strings.ToLower(res.Resources[0].VmSize.String())},
 		SubnetId:                types.String{Value: res.Resources[0].SubnetId},
-		NetworkInterfaceIds:     common.TypesStringToStringSlice(res.Resources[0].NetworkInterfaceIds),
-		NetworkSecurityGroupIds: common.TypesStringToStringSlice(res.Resources[0].NetworkSecurityGroupIds),
+		NetworkInterfaceIds:     common.DefaultSliceToNull(common.TypesStringToStringSlice(res.Resources[0].NetworkInterfaceIds)),
+		NetworkSecurityGroupIds: common.DefaultSliceToNull(common.TypesStringToStringSlice(res.Resources[0].NetworkSecurityGroupIds)),
 		UserData:                types.String{Value: res.Resources[0].UserData},
 		SshKey:                  types.String{Value: res.Resources[0].PublicSshKey},
-		PublicIpId:              types.String{Value: res.Resources[0].PublicIpId},
+		PublicIpId:              common.DefaultToNull[types.String](res.Resources[0].PublicIpId),
 		PublicIp:                types.Bool{Value: res.Resources[0].GeneratePublicIp},
 		Cloud:                   types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
 		Location:                types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},

@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "multy" {
-  api_key = "123"
+  api_key = "multy_local"
 }
 
 resource multy_virtual_network vn {
@@ -31,7 +31,6 @@ resource multy_virtual_machine vm {
   size             = "micro"
   operating_system = "linux"
   subnet_id        = multy_subnet.subnet.id
-  public_ip_id     = "123"
   public_ip        = false
   user_data        = "echo HelloWorld"
   ssh_key          = file("./ssh_key.pub")

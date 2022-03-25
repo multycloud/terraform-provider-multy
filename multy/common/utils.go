@@ -1,6 +1,8 @@
 package common
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	common_proto "github.com/multycloud/multy/api/proto/common"
 	"github.com/multycloud/multy/api/proto/errors"
 	"github.com/multycloud/multy/api/proto/resources"
@@ -85,6 +87,30 @@ func ParseGrpcErrors(err error) string {
 	} else {
 		str += s.String()
 	}
-
 	return str
+
+}
+
+func DefaultToNull[OutT attr.Value](t any) OutT {
+	var s attr.Value
+	switch t.(type) {
+	case string:
+		s = types.String{
+			Null:  t.(string) == "",
+			Value: t.(string),
+		}
+	case int, int64, int32:
+		s = types.Int64{
+			Null:  t.(int64) == 0,
+			Value: t.(int64),
+		}
+	}
+	return s.(OutT)
+}
+
+func DefaultSliceToNull[T attr.Value](t []T) []T {
+	if len(t) == 0 {
+		return nil
+	}
+	return t
 }
