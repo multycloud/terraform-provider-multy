@@ -25,9 +25,10 @@ func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"api_key": {
-				Type:      types.StringType,
-				Optional:  true,
-				Sensitive: true,
+				Type:        types.StringType,
+				Description: "The Multy API Key necessary to deploy Multy resources. Value can be passed through the `MULTY_API_KEY` environmnet variable",
+				Optional:    true,
+				Sensitive:   true,
 			},
 		},
 	}, nil

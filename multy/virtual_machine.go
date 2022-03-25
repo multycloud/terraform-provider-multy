@@ -2,6 +2,7 @@ package multy
 
 import (
 	"context"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -24,47 +25,58 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Computed: true,
 			},
 			"name": {
-				Type:     types.StringType,
-				Required: true,
+				Type:        types.StringType,
+				Description: "Name of Virtual Machine",
+				Required:    true,
 			},
 			"operating_system": {
-				Type:       types.StringType,
-				Required:   true,
-				Validators: []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: common.GetVmOperatingSystem()}},
+				Type:        types.StringType,
+				Description: fmt.Sprintf("Operating System of Virtual Machine. Accepted values are %s", common.GetVmOperatingSystem()),
+				Required:    true,
+				Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: common.GetVmOperatingSystem()}},
 			},
 			"size": {
-				Type:       types.StringType,
-				Required:   true,
-				Validators: []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: common.GetVmSize()}},
+				Type:        types.StringType,
+				Description: fmt.Sprintf("Size of Virtual Machine. Accepted values are %s", common.GetVmSize()),
+				Required:    true,
+				Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: common.GetVmSize()}},
 			},
 			"subnet_id": {
-				Type:     types.StringType,
-				Required: true,
+				Type:        types.StringType,
+				Description: "ID of `subnet` resource",
+				Required:    true,
 			},
 			"network_interface_ids": {
-				Type:     types.ListType{ElemType: types.StringType},
-				Optional: true,
+				Type:        types.ListType{ElemType: types.StringType},
+				Description: "IDs of `network_interface` resource",
+				Optional:    true,
 			},
 			"network_security_group_ids": {
-				Type:     types.ListType{ElemType: types.StringType},
-				Optional: true,
+				Type:        types.ListType{ElemType: types.StringType},
+				Description: "IDs of `network_security_group` resource",
+				Optional:    true,
 			},
 			"user_data": {
-				Type:     types.StringType,
-				Optional: true,
+				Type: types.StringType,
+				// fixme check instance launch or boot
+				Description: "User Data script of Virtual Machine that will run on instance launch",
+				Optional:    true,
 			},
-			"ssh_key": {
-				Type:     types.StringType,
-				Optional: true,
+			"public_ssh_key": {
+				Type:        types.StringType,
+				Description: "Public SSH Key of Virtual Machine",
+				Optional:    true,
 			},
 			"public_ip_id": {
-				Type:     types.StringType,
-				Optional: true,
+				Type:        types.StringType,
+				Description: "ID of `public_ip` resource. Cannot be used with `public_ip`",
+				Optional:    true,
 				// TODO: validate if not empty string
 			},
 			"public_ip": {
-				Type:     types.BoolType,
-				Optional: true,
+				Type:        types.BoolType,
+				Description: "If true, a public IP will be automatically generated. Cannot be used with `public_ip_id`",
+				Optional:    true,
 				// defaults to false
 				Computed: true,
 			},
@@ -238,7 +250,7 @@ func convertResponseToVm(res *resources.VirtualMachineResource) VirtualMachine {
 		NetworkInterfaceIds:     common.DefaultSliceToNull(common.TypesStringToStringSlice(res.Resources[0].NetworkInterfaceIds)),
 		NetworkSecurityGroupIds: common.DefaultSliceToNull(common.TypesStringToStringSlice(res.Resources[0].NetworkSecurityGroupIds)),
 		UserData:                types.String{Value: res.Resources[0].UserData},
-		SshKey:                  types.String{Value: res.Resources[0].PublicSshKey},
+		PublicSshKey:            types.String{Value: res.Resources[0].PublicSshKey},
 		PublicIpId:              common.DefaultToNull[types.String](res.Resources[0].PublicIpId),
 		PublicIp:                types.Bool{Value: res.Resources[0].GeneratePublicIp},
 		Cloud:                   types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
@@ -259,7 +271,7 @@ func convertVmPlanToArgs(plan VirtualMachine) []*resources.CloudSpecificVirtualM
 		VmSize:                  common.StringToVmSize(plan.Size.Value),
 		UserData:                plan.UserData.Value,
 		SubnetId:                plan.SubnetId.Value,
-		PublicSshKey:            plan.SshKey.Value,
+		PublicSshKey:            plan.PublicSshKey.Value,
 		PublicIpId:              plan.PublicIpId.Value,
 		GeneratePublicIp:        plan.PublicIp.Value,
 	}}
@@ -274,7 +286,7 @@ type VirtualMachine struct {
 	NetworkInterfaceIds     []types.String `tfsdk:"network_interface_ids"`
 	NetworkSecurityGroupIds []types.String `tfsdk:"network_security_group_ids"`
 	UserData                types.String   `tfsdk:"user_data"`
-	SshKey                  types.String   `tfsdk:"ssh_key"`
+	PublicSshKey            types.String   `tfsdk:"ssh_key"`
 	PublicIpId              types.String   `tfsdk:"public_ip_id"`
 	PublicIp                types.Bool     `tfsdk:"public_ip"`
 	Cloud                   types.String   `tfsdk:"cloud"`
