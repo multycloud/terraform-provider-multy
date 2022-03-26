@@ -286,7 +286,7 @@ type VirtualMachine struct {
 	NetworkInterfaceIds     []types.String `tfsdk:"network_interface_ids"`
 	NetworkSecurityGroupIds []types.String `tfsdk:"network_security_group_ids"`
 	UserData                types.String   `tfsdk:"user_data"`
-	PublicSshKey            types.String   `tfsdk:"ssh_key"`
+	PublicSshKey            types.String   `tfsdk:"public_ssh_key"`
 	PublicIpId              types.String   `tfsdk:"public_ip_id"`
 	PublicIp                types.Bool     `tfsdk:"public_ip"`
 	Cloud                   types.String   `tfsdk:"cloud"`

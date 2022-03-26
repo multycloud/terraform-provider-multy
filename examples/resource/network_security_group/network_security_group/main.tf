@@ -53,14 +53,14 @@ resource "multy_network_security_group" nsg {
     from_port  = 22
     to_port    = 22
     cidr_block = "0.0.0.0/0"
-    direction  = "ingress"
+    direction  = "both"
   }
   rule {
     protocol   = "tcp"
-    priority   = 130
+    priority   = 131
     from_port  = 443
     to_port    = 443
     cidr_block = "0.0.0.0/0"
-    direction  = "egress"
+    direction  = "both"
   }
 }

@@ -49,7 +49,7 @@ func StringToVmOperatingSystem(os string) common_proto.OperatingSystem_Enum {
 }
 
 func StringToVmSize(os string) common_proto.VmSize_Enum {
-	return common_proto.VmSize_Enum(common_proto.OperatingSystem_Enum_value[strings.ToUpper(os)])
+	return common_proto.VmSize_Enum(common_proto.VmSize_Enum_value[strings.ToUpper(os)])
 }
 
 func StringToCloud(cloud string) common_proto.CloudProvider {

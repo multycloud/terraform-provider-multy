@@ -84,7 +84,7 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 						Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: ruleDirections}},
 					},
 				},
-				NestingMode: tfsdk.BlockNestingModeSet,
+				NestingMode: tfsdk.BlockNestingModeList,
 			},
 		},
 	}, nil
@@ -184,7 +184,7 @@ func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.Upda
 	ctx = c.AddHeaders(ctx)
 
 	request := &resources.UpdateNetworkSecurityGroupRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: state.Id.Value,
 		Resources:  r.convertResourcePlanToArgs(plan),
 	}
 
