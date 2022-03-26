@@ -52,7 +52,7 @@ resource "multy_network_security_group" nsg {
     priority   = 120
     from_port  = 22
     to_port    = 22
-    cidr_block = "1.1.1.1/0"
+    cidr_block = "0.0.0.0/0"
     direction  = "ingress"
   }
   rule {

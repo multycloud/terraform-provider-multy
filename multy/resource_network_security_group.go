@@ -165,8 +165,6 @@ func (r resourceNetworkSecurityGroup) Read(ctx context.Context, req tfsdk.ReadRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	resp.Diagnostics.AddError("Error getting network_security_group", fmt.Sprintf("%+v", state))
-	return
 }
 
 func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {

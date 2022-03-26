@@ -78,11 +78,11 @@ func (r resourceObjectStorage) Create(ctx context.Context, req tfsdk.CreateResou
 		Resources: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating virtual_network", common.ParseGrpcErrors(err))
+		resp.Diagnostics.AddError("Error creating object_storage", common.ParseGrpcErrors(err))
 		return
 	}
 
-	tflog.Trace(ctx, "created virtual_network", map[string]interface{}{"virtual_network_id": vn.CommonParameters.ResourceId})
+	tflog.Trace(ctx, "created object_storage", map[string]interface{}{"object_storage_id": vn.CommonParameters.ResourceId})
 
 	// Map response body to resource schema attribute
 	state := r.convertResponseToResource(vn)
@@ -106,10 +106,10 @@ func (r resourceObjectStorage) Read(ctx context.Context, req tfsdk.ReadResourceR
 	c := r.p.Client
 	ctx = c.AddHeaders(ctx)
 
-	// Get virtual_network from API and then update what is in state from what the API returns
+	// Get object_storage from API and then update what is in state from what the API returns
 	vn, err := r.p.Client.Client.ReadObjectStorage(ctx, &resources.ReadObjectStorageRequest{ResourceId: state.Id.Value})
 	if err != nil {
-		resp.Diagnostics.AddError("Error getting virtual_network", common.ParseGrpcErrors(err))
+		resp.Diagnostics.AddError("Error getting object_storage", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -138,18 +138,18 @@ func (r resourceObjectStorage) Update(ctx context.Context, req tfsdk.UpdateResou
 	c := r.p.Client
 	ctx = c.AddHeaders(ctx)
 
-	// Update virtual_network
+	// Update object_storage
 	vn, err := c.Client.UpdateObjectStorage(ctx, &resources.UpdateObjectStorageRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
 		Resources:  r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error updating virtual_network", common.ParseGrpcErrors(err))
+		resp.Diagnostics.AddError("Error updating object_storage", common.ParseGrpcErrors(err))
 		return
 	}
 
-	tflog.Trace(ctx, "updated virtual_network", map[string]interface{}{"virtual_network_id": state.Id.Value})
+	tflog.Trace(ctx, "updated object_storage", map[string]interface{}{"object_storage_id": state.Id.Value})
 
 	// Map response body to resource schema attribute & Set state
 	state = r.convertResponseToResource(vn)
@@ -170,12 +170,12 @@ func (r resourceObjectStorage) Delete(ctx context.Context, req tfsdk.DeleteResou
 	c := r.p.Client
 	ctx = c.AddHeaders(ctx)
 
-	// Delete virtual_network
+	// Delete object_storage
 	_, err := c.Client.DeleteObjectStorage(ctx, &resources.DeleteObjectStorageRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error deleting virtual_network",
+			"Error deleting object_storage",
 			common.ParseGrpcErrors(err),
 		)
 		return
