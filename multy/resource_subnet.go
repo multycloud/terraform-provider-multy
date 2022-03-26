@@ -7,10 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	common_proto "github.com/multycloud/multy/api/proto/common"
 	"github.com/multycloud/multy/api/proto/resources"
-	"strings"
-	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/validators"
 )
 
@@ -46,7 +43,6 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				Optional:    true,
 				Computed:    true,
 			},
-			"cloud": common.CloudsSchema,
 		},
 	}, nil
 }
@@ -202,7 +198,6 @@ type Subnet struct {
 	CidrBlock        types.String `tfsdk:"cidr_block"`
 	VirtualNetworkId types.String `tfsdk:"virtual_network_id"`
 	AvailabilityZone types.Int64  `tfsdk:"availability_zone"`
-	Cloud            types.String `tfsdk:"cloud"`
 }
 
 //type CommonResourceParams struct {
@@ -217,7 +212,6 @@ func (r resourceSubnet) convertResponseToResource(res *resources.SubnetResource)
 		CidrBlock:        types.String{Value: res.Resources[0].CidrBlock},
 		AvailabilityZone: types.Int64{Value: int64(res.Resources[0].AvailabilityZone)},
 		VirtualNetworkId: types.String{Value: res.Resources[0].VirtualNetworkId},
-		Cloud:            types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
 	}
 
 	return result
@@ -225,9 +219,6 @@ func (r resourceSubnet) convertResponseToResource(res *resources.SubnetResource)
 
 func (r resourceSubnet) convertResourcePlanToArgs(plan Subnet) []*resources.CloudSpecificSubnetArgs {
 	return []*resources.CloudSpecificSubnetArgs{{
-		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
-			CloudProvider: common.StringToCloud(plan.Cloud.Value),
-		},
 		Name:             plan.Name.Value,
 		CidrBlock:        plan.CidrBlock.Value,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,
