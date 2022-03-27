@@ -59,7 +59,7 @@ resource "multy_network_security_group" nsg {
     protocol   = "tcp"
     priority   = 131
     from_port  = 443
-    to_port    = 443
+    to_port    = 444
     cidr_block = "0.0.0.0/0"
     direction  = "both"
   }

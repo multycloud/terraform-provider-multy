@@ -2,13 +2,16 @@ package multy
 
 import (
 	"context"
+	"crypto/x509"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"os"
+	"strings"
 	"terraform-provider-multy/multy/common"
 )
 
@@ -30,12 +33,19 @@ func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Optional:    true,
 				Sensitive:   true,
 			},
+			"server_endpoint": {
+				Type:        types.StringType,
+				Description: "Address of the multy server. If local, it will be run without SSL.",
+				Optional:    true,
+				Sensitive:   true,
+			},
 		},
 	}, nil
 }
 
 type providerData struct {
-	ApiKey types.String `tfsdk:"api_key"`
+	ApiKey         types.String `tfsdk:"api_key"`
+	ServerEndpoint types.String `tfsdk:"server_endpoint"`
 }
 
 func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
@@ -68,8 +78,25 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		)
 		return
 	}
+	endpoint := "api.multy.dev:443"
+	if !config.ServerEndpoint.Null {
+		endpoint = config.ServerEndpoint.Value
+	}
 
-	conn, err := grpc.Dial("localhost:8000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	creds := insecure.NewCredentials()
+	if !strings.HasPrefix(endpoint, "localhost") {
+		cp, err := x509.SystemCertPool()
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Unable to create multy client",
+				"Unable to get system cert pool: "+err.Error(),
+			)
+			return
+		}
+		creds = credentials.NewClientTLSFromCert(cp, "")
+	}
+
+	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to create Client",
