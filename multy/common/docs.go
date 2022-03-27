@@ -16,3 +16,7 @@ func StringSliceToDocsMarkdown(arr []string) string {
 	}
 	return md
 }
+
+func HelperValueViaEnvVar(env string) string {
+	return fmt.Sprintf("Can be provided via the `%s` environment variable", env)
+}

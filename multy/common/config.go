@@ -11,6 +11,8 @@ import (
 type ProviderConfig struct {
 	Client proto.MultyResourceServiceClient
 	ApiKey string
+	Aws    AwsConfig
+	Azure  AzureConfig
 }
 
 func (c *ProviderConfig) AddHeaders(ctx context.Context) context.Context {
@@ -38,4 +40,16 @@ func (c *ProviderConfig) GetVmSize(d *schema.ResourceData) common_proto.VmSize_E
 		return StringToVmSize(loc.(string))
 	}
 	return common_proto.VmSize_UNKNOWN_VM_SIZE
+}
+
+type AwsConfig struct {
+	AccessKeyId     string
+	AccessKeySecret string
+}
+
+type AzureConfig struct {
+	SubscriptionId string
+	ClientId       string
+	ClientSecret   string
+	TenantId       string
 }
