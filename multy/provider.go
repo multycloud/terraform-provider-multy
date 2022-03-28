@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/hashicorp/go-azure-helpers/authentication"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -40,13 +41,13 @@ func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Description: "Credentials for AWS Cloud",
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"access_key_id": {
-						Required:    true,
+						Optional:    true,
 						Description: "AWS Access Key ID. " + common.HelperValueViaEnvVar("AWS_ACCESS_KEY_ID"),
 						Type:        types.StringType,
 						Sensitive:   true,
 					},
 					"secret_access_key": {
-						Required:    true,
+						Optional:    true,
 						Description: "AWS Secret Access Key. " + common.HelperValueViaEnvVar("AWS_SECRET_ACCESS_KEY"),
 						Type:        types.StringType,
 						Sensitive:   true,
@@ -58,25 +59,25 @@ func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Description: "Credentials for Azure Cloud. See how to authenticate through Service Principal in the [Azure docs](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret#creating-a-service-principal)",
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"subscription_id": {
-						Required:    true,
+						Optional:    true,
 						Description: "Azure Subscription ID. " + common.HelperValueViaEnvVar("ARM_SUBSCRIPTION_ID"),
 						Type:        types.StringType,
 						Sensitive:   true,
 					},
 					"client_id": {
-						Required:    true,
+						Optional:    true,
 						Description: "Azure Client ID " + common.HelperValueViaEnvVar("ARM_CLIENT_ID"),
 						Type:        types.StringType,
 						Sensitive:   true,
 					},
 					"client_secret": {
-						Required:    true,
+						Optional:    true,
 						Description: "Azure Client Secret " + common.HelperValueViaEnvVar("ARM_CLIENT_SECRET"),
 						Type:        types.StringType,
 						Sensitive:   true,
 					},
 					"tenant_id": {
-						Required:    true,
+						Optional:    true,
 						Description: "Azure Tenant ID " + common.HelperValueViaEnvVar("ARM_TENANT_ID"),
 						Type:        types.StringType,
 						Sensitive:   true,
@@ -296,6 +297,25 @@ func (p *Provider) validateAzureConfig(config *providerAzureConfig) (*common.Azu
 	azureConfig.ClientId = os.Getenv("ARM_CLIENT_ID")
 	azureConfig.ClientSecret = os.Getenv("ARM_CLIENT_SECRET")
 	azureConfig.TenantId = os.Getenv("ARM_TENANT_ID")
+
+	if azureConfig.SubscriptionId != "" && azureConfig.ClientId != "" && azureConfig.ClientSecret != "" && azureConfig.TenantId != "" {
+		return &azureConfig, nil
+	}
+
+	// terraform-helper for azure authentication
+	azConfig := authentication.Builder{
+		SupportsClientCertAuth:   true,
+		SupportsClientSecretAuth: true,
+		SupportsAzureCliToken:    true,
+	}
+	creds, err := azConfig.Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to authenticate to azure")
+	}
+	azureConfig.SubscriptionId = creds.SubscriptionID
+	azureConfig.ClientId = creds.ClientID
+	azureConfig.TenantId = creds.TenantID
+	//azureConfig.ClientSecret = creds.ClientSecret
 
 	if azureConfig.SubscriptionId != "" && azureConfig.ClientId != "" && azureConfig.ClientSecret != "" && azureConfig.TenantId != "" {
 		return &azureConfig, nil

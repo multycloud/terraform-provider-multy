@@ -7,15 +7,22 @@ terraform {
   }
 }
 
+variable clouds {
+  type    = list(string)
+  default = ["aws", "azure"]
+}
+
 provider "multy" {
   api_key         = "multy_local"
   server_endpoint = "localhost:8000"
 }
 
 resource multy_virtual_network vn {
-  name       = "vn_test4"
+  for_each = toset(var.clouds)
+
+  name       = "vn_test"
   cidr_block = "10.0.0.0/16"
-  cloud      = "aws"
+  cloud      = each.key
   location   = "us_east"
 }
 
