@@ -75,7 +75,11 @@ func (r resourceSubnet) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Create new order from plan values
 	subnet, err := c.Client.CreateSubnet(ctx, &resources.CreateSubnetRequest{
@@ -107,7 +111,11 @@ func (r resourceSubnet) Read(ctx context.Context, req tfsdk.ReadResourceRequest,
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Get subnet from API and then update what is in state from what the API returns
 	subnet, err := r.p.Client.Client.ReadSubnet(ctx, &resources.ReadSubnetRequest{ResourceId: state.Id.Value})
@@ -139,7 +147,11 @@ func (r resourceSubnet) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Update subnet
 	vn, err := c.Client.UpdateSubnet(ctx, &resources.UpdateSubnetRequest{
@@ -170,10 +182,14 @@ func (r resourceSubnet) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Delete subnet
-	_, err := c.Client.DeleteSubnet(ctx, &resources.DeleteSubnetRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteSubnet(ctx, &resources.DeleteSubnetRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(

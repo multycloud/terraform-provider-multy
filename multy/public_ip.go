@@ -66,7 +66,11 @@ func (r resourcePublicIp) Create(ctx context.Context, req tfsdk.CreateResourceRe
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Create new order from plan values
 	vn, err := c.Client.CreatePublicIp(ctx, &resources.CreatePublicIpRequest{
@@ -99,7 +103,11 @@ func (r resourcePublicIp) Read(ctx context.Context, req tfsdk.ReadResourceReques
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Get public_ip from API and then update what is in state from what the API returns
 	vn, err := r.p.Client.Client.ReadPublicIp(ctx, &resources.ReadPublicIpRequest{ResourceId: state.Id.Value})
@@ -131,7 +139,11 @@ func (r resourcePublicIp) Update(ctx context.Context, req tfsdk.UpdateResourceRe
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Update public_ip
 	vn, err := c.Client.UpdatePublicIp(ctx, &resources.UpdatePublicIpRequest{
@@ -163,10 +175,14 @@ func (r resourcePublicIp) Delete(ctx context.Context, req tfsdk.DeleteResourceRe
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Delete public_ip
-	_, err := c.Client.DeletePublicIp(ctx, &resources.DeletePublicIpRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeletePublicIp(ctx, &resources.DeletePublicIpRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(

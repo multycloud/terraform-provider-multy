@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	awscfg "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -93,10 +94,10 @@ func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 }
 
 type providerData struct {
-	ApiKey         types.String        `tfsdk:"api_key"`
-	ServerEndpoint types.String        `tfsdk:"server_endpoint"`
-	Aws            providerAwsConfig   `tfsdk:"aws"`
-	Azure          providerAzureConfig `tfsdk:"azure"`
+	ApiKey         types.String         `tfsdk:"api_key"`
+	ServerEndpoint types.String         `tfsdk:"server_endpoint"`
+	Aws            *providerAwsConfig   `tfsdk:"aws"`
+	Azure          *providerAzureConfig `tfsdk:"azure"`
 }
 
 type providerAwsConfig struct {
@@ -142,22 +143,24 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		return
 	}
 
-	awsConfig, err := p.validateAwsConfig(config.Aws)
+	awsConfig, err := p.validateAwsConfig(ctx, config.Aws)
+	// TODO: handle case where we don't need azure
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to connect to AWS",
-			err.Error(),
-		)
-		return
+		//resp.Diagnostics.AddError(
+		//	"Unable to connect to AWS",
+		//	err.Error(),
+		//)
+		//return
 	}
 
 	azureConfig, err := p.validateAzureConfig(config.Azure)
+	// TODO: handle case where we don't need azure
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to connect to AWS",
-			err.Error(),
-		)
-		return
+		//resp.Diagnostics.AddError(
+		//	"Unable to connect to Azure",
+		//	err.Error(),
+		//)
+		//return
 	}
 
 	endpoint := "api.multy.dev:443"
@@ -201,8 +204,8 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 
 	c.Client = client
 	c.ApiKey = apiKey
-	c.Aws = *awsConfig
-	c.Azure = *azureConfig
+	c.Aws = awsConfig
+	c.Azure = azureConfig
 
 	p.Client = &c
 	p.Configured = true
@@ -227,86 +230,77 @@ func (p *Provider) GetDataSources(_ context.Context) (map[string]tfsdk.DataSourc
 	}, nil
 }
 
-func (p *Provider) validateAwsConfig(config providerAwsConfig) (*common.AwsConfig, error) {
+func (p *Provider) validateAwsConfig(ctx context.Context, config *providerAwsConfig) (*common.AwsConfig, error) {
 	var awsConfig common.AwsConfig
-	if config.AccessKeyId.Unknown {
+	if config != nil && config.AccessKeyId.Unknown {
 		return nil, fmt.Errorf("cannot use unknown value as access_key_id")
 	}
-	if config.AccessKeyId.Null {
-		awsConfig.AccessKeyId = os.Getenv("AWS_ACCESS_KEY_ID")
-	} else {
-		awsConfig.AccessKeyId = config.AccessKeyId.Value
-	}
-	if awsConfig.AccessKeyId == "" {
-		return nil, fmt.Errorf("access_key_id cannot be an empty string")
+	if config != nil {
+		if config.AccessKeyId.Unknown {
+			return nil, fmt.Errorf("cannot use unknown value as access_key_id")
+		}
+		if config.AccessKeySecret.Unknown {
+			return nil, fmt.Errorf("cannot use unknown value as access_key_id")
+		}
+
+		return &common.AwsConfig{
+			AccessKeyId:     config.AccessKeyId.Value,
+			AccessKeySecret: config.AccessKeySecret.Value,
+		}, nil
 	}
 
-	if config.AccessKeySecret.Unknown {
-		return nil, fmt.Errorf("cannot use unknown value as access_key_id")
-	}
-	if config.AccessKeySecret.Null {
-		awsConfig.AccessKeySecret = os.Getenv("AWS_SECRET_ACCESS_KEY")
-	} else {
-		awsConfig.AccessKeySecret = config.AccessKeySecret.Value
-	}
-	if awsConfig.AccessKeySecret == "" {
-		return nil, fmt.Errorf("access_secret_key cannot be an empty string")
+	awsConfig.AccessKeyId = os.Getenv("AWS_ACCESS_KEY_ID")
+	awsConfig.AccessKeySecret = os.Getenv("AWS_SECRET_ACCESS_KEY")
+	if awsConfig.AccessKeyId != "" && awsConfig.AccessKeySecret != "" {
+		return &awsConfig, nil
 	}
 
-	// todo check if access is valid by calling sts.GetCallerIdentity
+	defaultConfig, err := awscfg.LoadDefaultConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("aws credentials not set, unable to retrieve default config: %s", err.Error())
+	}
+	awsCreds, err := defaultConfig.Credentials.Retrieve(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("aws credentials not set, unable to retrieve default config: %s", err.Error())
+	}
+	awsConfig.AccessKeyId = awsCreds.AccessKeyID
+	awsConfig.AccessKeySecret = awsCreds.SecretAccessKey
 	return &awsConfig, nil
 }
 
-func (p *Provider) validateAzureConfig(config providerAzureConfig) (*common.AzureConfig, error) {
+func (p *Provider) validateAzureConfig(config *providerAzureConfig) (*common.AzureConfig, error) {
 	var azureConfig common.AzureConfig
-	if config.SubscriptionId.Unknown {
-		return nil, fmt.Errorf("cannot use unknown value as subscription_id")
-	}
-	if config.SubscriptionId.Null {
-		azureConfig.SubscriptionId = os.Getenv("ARM_SUBSCRIPTION_ID")
-	} else {
-		azureConfig.SubscriptionId = config.SubscriptionId.Value
-	}
-	if azureConfig.SubscriptionId == "" {
-		return nil, fmt.Errorf("subscription_id cannot be an empty string")
+	if config != nil {
+		if config.SubscriptionId.Unknown {
+			return nil, fmt.Errorf("cannot use unknown value as subscription_id")
+		}
+		if config.ClientId.Unknown {
+			return nil, fmt.Errorf("cannot use unknown value as client_id")
+		}
+		if config.ClientSecret.Unknown {
+			return nil, fmt.Errorf("cannot use unknown value as client_secret")
+		}
+		if config.TenantId.Unknown {
+			return nil, fmt.Errorf("cannot use unknown value as tenant_id")
+		}
+
+		return &common.AzureConfig{
+			SubscriptionId: config.SubscriptionId.Value,
+			ClientId:       config.ClientId.Value,
+			ClientSecret:   config.ClientSecret.Value,
+			TenantId:       config.TenantId.Value,
+		}, nil
 	}
 
-	if config.ClientId.Unknown {
-		return nil, fmt.Errorf("cannot use unknown value as client_id")
-	}
-	if config.ClientId.Null {
-		azureConfig.ClientId = os.Getenv("ARM_CLIENT_ID")
-	} else {
-		azureConfig.ClientId = config.ClientId.Value
-	}
-	if azureConfig.ClientId == "" {
-		return nil, fmt.Errorf("client_id cannot be an empty string")
-	}
+	azureConfig.SubscriptionId = os.Getenv("ARM_SUBSCRIPTION_ID")
+	azureConfig.ClientId = os.Getenv("ARM_CLIENT_ID")
+	azureConfig.ClientSecret = os.Getenv("ARM_CLIENT_SECRET")
+	azureConfig.TenantId = os.Getenv("ARM_TENANT_ID")
 
-	if config.ClientSecret.Unknown {
-		return nil, fmt.Errorf("cannot use unknown value as client_secret")
-	}
-	if config.ClientSecret.Null {
-		azureConfig.ClientSecret = os.Getenv("ARM_CLIENT_SECRET")
-	} else {
-		azureConfig.ClientSecret = config.ClientSecret.Value
-	}
-	if azureConfig.ClientSecret == "" {
-		return nil, fmt.Errorf("client_secret cannot be an empty string")
-	}
-
-	if config.TenantId.Unknown {
-		return nil, fmt.Errorf("cannot use unknown value as tenant_id")
-	}
-	if config.TenantId.Null {
-		azureConfig.TenantId = os.Getenv("ARM_TENANT_ID")
-	} else {
-		azureConfig.TenantId = config.TenantId.Value
-	}
-	if azureConfig.TenantId == "" {
-		return nil, fmt.Errorf("tenant_id cannot be an empty string")
+	if azureConfig.SubscriptionId != "" && azureConfig.ClientId != "" && azureConfig.ClientSecret != "" && azureConfig.TenantId != "" {
+		return &azureConfig, nil
 	}
 
 	// todo check if access is valid by calling sts.GetCallerIdentity
-	return &azureConfig, nil
+	return &azureConfig, fmt.Errorf("azure credentials not set")
 }

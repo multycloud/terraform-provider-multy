@@ -65,7 +65,11 @@ func (r resourceNetworkInterface) Create(ctx context.Context, req tfsdk.CreateRe
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Create new order from plan values
 	vn, err := c.Client.CreateNetworkInterface(ctx, &resources.CreateNetworkInterfaceRequest{
@@ -98,7 +102,11 @@ func (r resourceNetworkInterface) Read(ctx context.Context, req tfsdk.ReadResour
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Get network_interface from API and then update what is in state from what the API returns
 	vn, err := r.p.Client.Client.ReadNetworkInterface(ctx, &resources.ReadNetworkInterfaceRequest{ResourceId: state.Id.Value})
@@ -130,7 +138,11 @@ func (r resourceNetworkInterface) Update(ctx context.Context, req tfsdk.UpdateRe
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Update network_interface
 	vn, err := c.Client.UpdateNetworkInterface(ctx, &resources.UpdateNetworkInterfaceRequest{
@@ -162,10 +174,14 @@ func (r resourceNetworkInterface) Delete(ctx context.Context, req tfsdk.DeleteRe
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Delete network_interface
-	_, err := c.Client.DeleteNetworkInterface(ctx, &resources.DeleteNetworkInterfaceRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteNetworkInterface(ctx, &resources.DeleteNetworkInterfaceRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(

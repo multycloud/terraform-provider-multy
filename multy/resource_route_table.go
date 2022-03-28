@@ -89,7 +89,11 @@ func (r resourceRouteTable) Create(ctx context.Context, req tfsdk.CreateResource
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Create new order from plan values
 	route_table, err := c.Client.CreateRouteTable(ctx, &resources.CreateRouteTableRequest{
@@ -121,7 +125,11 @@ func (r resourceRouteTable) Read(ctx context.Context, req tfsdk.ReadResourceRequ
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Get route_table from API and then update what is in state from what the API returns
 	rt, err := r.p.Client.Client.ReadRouteTable(ctx, &resources.ReadRouteTableRequest{ResourceId: state.Id.Value})
@@ -153,7 +161,11 @@ func (r resourceRouteTable) Update(ctx context.Context, req tfsdk.UpdateResource
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Update route_table
 	vn, err := c.Client.UpdateRouteTable(ctx, &resources.UpdateRouteTableRequest{
@@ -184,10 +196,14 @@ func (r resourceRouteTable) Delete(ctx context.Context, req tfsdk.DeleteResource
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Delete route_table
-	_, err := c.Client.DeleteRouteTable(ctx, &resources.DeleteRouteTableRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteRouteTable(ctx, &resources.DeleteRouteTableRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(

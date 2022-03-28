@@ -68,7 +68,11 @@ func (r resourceVirtualNetwork) Create(ctx context.Context, req tfsdk.CreateReso
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Create new order from plan values
 	vn, err := c.Client.CreateVirtualNetwork(ctx, &resources.CreateVirtualNetworkRequest{
@@ -101,7 +105,11 @@ func (r resourceVirtualNetwork) Read(ctx context.Context, req tfsdk.ReadResource
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Get virtual_network from API and then update what is in state from what the API returns
 	vn, err := r.p.Client.Client.ReadVirtualNetwork(ctx, &resources.ReadVirtualNetworkRequest{ResourceId: state.Id.Value})
@@ -133,7 +141,11 @@ func (r resourceVirtualNetwork) Update(ctx context.Context, req tfsdk.UpdateReso
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Update virtual_network
 	vn, err := c.Client.UpdateVirtualNetwork(ctx, &resources.UpdateVirtualNetworkRequest{
@@ -165,10 +177,14 @@ func (r resourceVirtualNetwork) Delete(ctx context.Context, req tfsdk.DeleteReso
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Delete virtual_network
-	_, err := c.Client.DeleteVirtualNetwork(ctx, &resources.DeleteVirtualNetworkRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteVirtualNetwork(ctx, &resources.DeleteVirtualNetworkRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(

@@ -118,7 +118,11 @@ func (r resourceNetworkSecurityGroup) Create(ctx context.Context, req tfsdk.Crea
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	nsg, err := c.Client.CreateNetworkSecurityGroup(ctx, &resources.CreateNetworkSecurityGroupRequest{
 		Resources: r.convertResourcePlanToArgs(plan),
@@ -149,7 +153,11 @@ func (r resourceNetworkSecurityGroup) Read(ctx context.Context, req tfsdk.ReadRe
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Get network_security_group from API and then update what is in state from what the API returns
 	nsg, err := r.p.Client.Client.ReadNetworkSecurityGroup(ctx, &resources.ReadNetworkSecurityGroupRequest{ResourceId: state.Id.Value})
@@ -181,7 +189,11 @@ func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.Upda
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	request := &resources.UpdateNetworkSecurityGroupRequest{
 		ResourceId: state.Id.Value,
@@ -213,10 +225,14 @@ func (r resourceNetworkSecurityGroup) Delete(ctx context.Context, req tfsdk.Dele
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Delete network_security_group
-	_, err := c.Client.DeleteNetworkSecurityGroup(ctx, &resources.DeleteNetworkSecurityGroupRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteNetworkSecurityGroup(ctx, &resources.DeleteNetworkSecurityGroupRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(

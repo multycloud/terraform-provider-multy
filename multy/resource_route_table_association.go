@@ -7,9 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	common_proto "github.com/multycloud/multy/api/proto/common"
 	"github.com/multycloud/multy/api/proto/resources"
-	"strings"
 	"terraform-provider-multy/multy/common"
 )
 
@@ -64,7 +62,11 @@ func (r resourceRouteTableAssociation) Create(ctx context.Context, req tfsdk.Cre
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Create new order from plan values
 	vn, err := c.Client.CreateRouteTableAssociation(ctx, &resources.CreateRouteTableAssociationRequest{
@@ -97,7 +99,11 @@ func (r resourceRouteTableAssociation) Read(ctx context.Context, req tfsdk.ReadR
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Get route_table_association from API and then update what is in state from what the API returns
 	vn, err := r.p.Client.Client.ReadRouteTableAssociation(ctx, &resources.ReadRouteTableAssociationRequest{ResourceId: state.Id.Value})
@@ -129,7 +135,11 @@ func (r resourceRouteTableAssociation) Update(ctx context.Context, req tfsdk.Upd
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Update route_table_association
 	vn, err := c.Client.UpdateRouteTableAssociation(ctx, &resources.UpdateRouteTableAssociationRequest{
@@ -161,10 +171,14 @@ func (r resourceRouteTableAssociation) Delete(ctx context.Context, req tfsdk.Del
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Delete route_table_association
-	_, err := c.Client.DeleteRouteTableAssociation(ctx, &resources.DeleteRouteTableAssociationRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteRouteTableAssociation(ctx, &resources.DeleteRouteTableAssociationRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -187,7 +201,6 @@ type RouteTableAssociation struct {
 	Id           types.String `tfsdk:"id"`
 	SubnetId     types.String `tfsdk:"subnet_id"`
 	RouteTableId types.String `tfsdk:"route_table_id"`
-	Cloud        types.String `tfsdk:"cloud"`
 }
 
 func (r resourceRouteTableAssociation) convertResponseToResource(res *resources.RouteTableAssociationResource) RouteTableAssociation {
@@ -195,15 +208,11 @@ func (r resourceRouteTableAssociation) convertResponseToResource(res *resources.
 		Id:           types.String{Value: res.CommonParameters.ResourceId},
 		SubnetId:     types.String{Value: res.Resources[0].SubnetId},
 		RouteTableId: types.String{Value: res.Resources[0].RouteTableId},
-		Cloud:        types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
 	}
 }
 
 func (r resourceRouteTableAssociation) convertResourcePlanToArgs(plan RouteTableAssociation) []*resources.CloudSpecificRouteTableAssociationArgs {
 	return []*resources.CloudSpecificRouteTableAssociationArgs{{
-		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
-			CloudProvider: common.StringToCloud(plan.Cloud.Value),
-		},
 		SubnetId:     plan.SubnetId.Value,
 		RouteTableId: plan.RouteTableId.Value,
 	}}

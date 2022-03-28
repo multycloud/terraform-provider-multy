@@ -71,7 +71,11 @@ func (r resourceObjectStorage) Create(ctx context.Context, req tfsdk.CreateResou
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Create new order from plan values
 	vn, err := c.Client.CreateObjectStorage(ctx, &resources.CreateObjectStorageRequest{
@@ -104,7 +108,11 @@ func (r resourceObjectStorage) Read(ctx context.Context, req tfsdk.ReadResourceR
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Get object_storage from API and then update what is in state from what the API returns
 	vn, err := r.p.Client.Client.ReadObjectStorage(ctx, &resources.ReadObjectStorageRequest{ResourceId: state.Id.Value})
@@ -136,7 +144,11 @@ func (r resourceObjectStorage) Update(ctx context.Context, req tfsdk.UpdateResou
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Update object_storage
 	vn, err := c.Client.UpdateObjectStorage(ctx, &resources.UpdateObjectStorageRequest{
@@ -168,10 +180,14 @@ func (r resourceObjectStorage) Delete(ctx context.Context, req tfsdk.DeleteResou
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Delete object_storage
-	_, err := c.Client.DeleteObjectStorage(ctx, &resources.DeleteObjectStorageRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteObjectStorage(ctx, &resources.DeleteObjectStorageRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(

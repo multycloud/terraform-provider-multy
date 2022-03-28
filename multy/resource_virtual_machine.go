@@ -114,7 +114,11 @@ func (r resourceVirtualMachine) Create(ctx context.Context, req tfsdk.CreateReso
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	pIpId := !plan.PublicIpId.Null && !plan.PublicIpId.Unknown && plan.PublicIpId.Value != ""
 	pIp := !plan.PublicIp.Null && !plan.PublicIp.Unknown && plan.PublicIp.Value
@@ -154,7 +158,11 @@ func (r resourceVirtualMachine) Read(ctx context.Context, req tfsdk.ReadResource
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Get virtual_machine from API and then update what is in state from what the API returns
 	vm, err := r.p.Client.Client.ReadVirtualMachine(ctx, &resources.ReadVirtualMachineRequest{ResourceId: state.Id.Value})
@@ -186,7 +194,11 @@ func (r resourceVirtualMachine) Update(ctx context.Context, req tfsdk.UpdateReso
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Update virtual_machine
 	vm, err := c.Client.UpdateVirtualMachine(ctx, &resources.UpdateVirtualMachineRequest{
@@ -218,10 +230,14 @@ func (r resourceVirtualMachine) Delete(ctx context.Context, req tfsdk.DeleteReso
 	}
 
 	c := r.p.Client
-	ctx = c.AddHeaders(ctx)
+	ctx, err := c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Error communicating with server", err.Error())
+		return
+	}
 
 	// Delete virtual_machine
-	_, err := c.Client.DeleteVirtualMachine(ctx, &resources.DeleteVirtualMachineRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteVirtualMachine(ctx, &resources.DeleteVirtualMachineRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
