@@ -130,7 +130,7 @@ func (r resourceVirtualMachine) Create(ctx context.Context, req tfsdk.CreateReso
 
 	// Create new order from plan values
 	vm, err := c.Client.CreateVirtualMachine(ctx, &resources.CreateVirtualMachineRequest{
-		Resources: r.convertResourcePlanToArgs(plan),
+		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating virtual_machine", common.ParseGrpcErrors(err))
@@ -204,7 +204,7 @@ func (r resourceVirtualMachine) Update(ctx context.Context, req tfsdk.UpdateReso
 	vm, err := c.Client.UpdateVirtualMachine(ctx, &resources.UpdateVirtualMachineRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  r.convertResourcePlanToArgs(plan),
+		Resource:   r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating virtual_machine", common.ParseGrpcErrors(err))
@@ -259,24 +259,24 @@ func (r resourceVirtualMachine) ImportState(ctx context.Context, req tfsdk.Impor
 func (r resourceVirtualMachine) convertResponseToResource(res *resources.VirtualMachineResource) VirtualMachine {
 	return VirtualMachine{
 		Id:                      types.String{Value: res.CommonParameters.ResourceId},
-		Name:                    types.String{Value: res.Resources[0].Name},
-		OperatingSystem:         types.String{Value: strings.ToLower(res.Resources[0].OperatingSystem.String())},
-		Size:                    common.DefaultEnumToNull(res.Resources[0].VmSize),
-		SubnetId:                types.String{Value: res.Resources[0].SubnetId},
-		NetworkInterfaceIds:     common.DefaultSliceToNull(common.TypesStringToStringSlice(res.Resources[0].NetworkInterfaceIds)),
-		NetworkSecurityGroupIds: common.DefaultSliceToNull(common.TypesStringToStringSlice(res.Resources[0].NetworkSecurityGroupIds)),
-		UserData:                types.String{Value: res.Resources[0].UserData},
-		PublicSshKey:            types.String{Value: res.Resources[0].PublicSshKey},
-		PublicIpId:              common.DefaultToNull[types.String](res.Resources[0].PublicIpId),
-		PublicIp:                types.Bool{Value: res.Resources[0].GeneratePublicIp},
-		Cloud:                   types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
-		Location:                types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
+		Name:                    types.String{Value: res.Name},
+		OperatingSystem:         types.String{Value: strings.ToLower(res.OperatingSystem.String())},
+		Size:                    common.DefaultEnumToNull(res.VmSize),
+		SubnetId:                types.String{Value: res.SubnetId},
+		NetworkInterfaceIds:     common.DefaultSliceToNull(common.TypesStringToStringSlice(res.NetworkInterfaceIds)),
+		NetworkSecurityGroupIds: common.DefaultSliceToNull(common.TypesStringToStringSlice(res.NetworkSecurityGroupIds)),
+		UserData:                types.String{Value: res.UserData},
+		PublicSshKey:            types.String{Value: res.PublicSshKey},
+		PublicIpId:              common.DefaultToNull[types.String](res.PublicIpId),
+		PublicIp:                types.Bool{Value: res.GeneratePublicIp},
+		Cloud:                   types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
+		Location:                types.String{Value: strings.ToLower(res.CommonParameters.Location.String())},
 	}
 }
 
-func (r resourceVirtualMachine) convertResourcePlanToArgs(plan VirtualMachine) []*resources.CloudSpecificVirtualMachineArgs {
-	return []*resources.CloudSpecificVirtualMachineArgs{{
-		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+func (r resourceVirtualMachine) convertResourcePlanToArgs(plan VirtualMachine) *resources.VirtualMachineArgs {
+	return &resources.VirtualMachineArgs{
+		CommonParameters: &common_proto.ResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},
@@ -290,7 +290,7 @@ func (r resourceVirtualMachine) convertResourcePlanToArgs(plan VirtualMachine) [
 		PublicSshKey:            plan.PublicSshKey.Value,
 		PublicIpId:              plan.PublicIpId.Value,
 		GeneratePublicIp:        plan.PublicIp.Value,
-	}}
+	}
 }
 
 type VirtualMachine struct {

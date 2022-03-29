@@ -76,7 +76,7 @@ func (r resourceVirtualNetwork) Create(ctx context.Context, req tfsdk.CreateReso
 
 	// Create new order from plan values
 	vn, err := c.Client.CreateVirtualNetwork(ctx, &resources.CreateVirtualNetworkRequest{
-		Resources: r.convertResourcePlanToArgs(plan),
+		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating virtual_network", common.ParseGrpcErrors(err))
@@ -151,7 +151,7 @@ func (r resourceVirtualNetwork) Update(ctx context.Context, req tfsdk.UpdateReso
 	vn, err := c.Client.UpdateVirtualNetwork(ctx, &resources.UpdateVirtualNetworkRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  r.convertResourcePlanToArgs(plan),
+		Resource:   r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating virtual_network", common.ParseGrpcErrors(err))
@@ -214,20 +214,20 @@ type VirtualNetwork struct {
 func (r resourceVirtualNetwork) convertResponseToResource(res *resources.VirtualNetworkResource) VirtualNetwork {
 	return VirtualNetwork{
 		Id:        types.String{Value: res.CommonParameters.ResourceId},
-		Name:      types.String{Value: res.Resources[0].Name},
-		CidrBlock: types.String{Value: res.Resources[0].CidrBlock},
-		Cloud:     types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
-		Location:  types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
+		Name:      types.String{Value: res.Name},
+		CidrBlock: types.String{Value: res.CidrBlock},
+		Cloud:     types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
+		Location:  types.String{Value: strings.ToLower(res.CommonParameters.Location.String())},
 	}
 }
 
-func (r resourceVirtualNetwork) convertResourcePlanToArgs(plan VirtualNetwork) []*resources.CloudSpecificVirtualNetworkArgs {
-	return []*resources.CloudSpecificVirtualNetworkArgs{{
-		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+func (r resourceVirtualNetwork) convertResourcePlanToArgs(plan VirtualNetwork) *resources.VirtualNetworkArgs {
+	return &resources.VirtualNetworkArgs{
+		CommonParameters: &common_proto.ResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},
 		Name:      plan.Name.Value,
 		CidrBlock: plan.CidrBlock.Value,
-	}}
+	}
 }

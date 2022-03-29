@@ -73,7 +73,7 @@ func (r resourceNetworkInterface) Create(ctx context.Context, req tfsdk.CreateRe
 
 	// Create new order from plan values
 	vn, err := c.Client.CreateNetworkInterface(ctx, &resources.CreateNetworkInterfaceRequest{
-		Resources: r.convertResourcePlanToArgs(plan),
+		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating network_interface", common.ParseGrpcErrors(err))
@@ -148,7 +148,7 @@ func (r resourceNetworkInterface) Update(ctx context.Context, req tfsdk.UpdateRe
 	vn, err := c.Client.UpdateNetworkInterface(ctx, &resources.UpdateNetworkInterfaceRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  r.convertResourcePlanToArgs(plan),
+		Resource:   r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating network_interface", common.ParseGrpcErrors(err))
@@ -210,18 +210,18 @@ type NetworkInterface struct {
 func (r resourceNetworkInterface) convertResponseToResource(res *resources.NetworkInterfaceResource) NetworkInterface {
 	return NetworkInterface{
 		Id:       types.String{Value: res.CommonParameters.ResourceId},
-		Name:     types.String{Value: res.Resources[0].Name},
-		SubnetId: types.String{Value: res.Resources[0].SubnetId},
-		Cloud:    types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
+		Name:     types.String{Value: res.Name},
+		SubnetId: types.String{Value: res.SubnetId},
+		Cloud:    types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
 	}
 }
 
-func (r resourceNetworkInterface) convertResourcePlanToArgs(plan NetworkInterface) []*resources.CloudSpecificNetworkInterfaceArgs {
-	return []*resources.CloudSpecificNetworkInterfaceArgs{{
-		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+func (r resourceNetworkInterface) convertResourcePlanToArgs(plan NetworkInterface) *resources.NetworkInterfaceArgs {
+	return &resources.NetworkInterfaceArgs{
+		CommonParameters: &common_proto.ResourceCommonArgs{
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},
 		Name:     plan.Name.Value,
 		SubnetId: plan.SubnetId.Value,
-	}}
+	}
 }

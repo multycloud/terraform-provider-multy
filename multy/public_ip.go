@@ -74,7 +74,7 @@ func (r resourcePublicIp) Create(ctx context.Context, req tfsdk.CreateResourceRe
 
 	// Create new order from plan values
 	vn, err := c.Client.CreatePublicIp(ctx, &resources.CreatePublicIpRequest{
-		Resources: r.convertResourcePlanToArgs(plan),
+		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating public_ip", common.ParseGrpcErrors(err))
@@ -149,7 +149,7 @@ func (r resourcePublicIp) Update(ctx context.Context, req tfsdk.UpdateResourceRe
 	vn, err := c.Client.UpdatePublicIp(ctx, &resources.UpdatePublicIpRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  r.convertResourcePlanToArgs(plan),
+		Resource:   r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating public_ip", common.ParseGrpcErrors(err))
@@ -212,20 +212,20 @@ type PublicIp struct {
 func (r resourcePublicIp) convertResponseToResource(res *resources.PublicIpResource) PublicIp {
 	return PublicIp{
 		Id:                 types.String{Value: res.CommonParameters.ResourceId},
-		Name:               types.String{Value: res.Resources[0].Name},
-		NetworkInterfaceId: types.String{Value: res.Resources[0].NetworkInterfaceId},
-		Cloud:              types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
-		Location:           types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
+		Name:               types.String{Value: res.Name},
+		NetworkInterfaceId: types.String{Value: res.NetworkInterfaceId},
+		Cloud:              types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
+		Location:           types.String{Value: strings.ToLower(res.CommonParameters.Location.String())},
 	}
 }
 
-func (r resourcePublicIp) convertResourcePlanToArgs(plan PublicIp) []*resources.CloudSpecificPublicIpArgs {
-	return []*resources.CloudSpecificPublicIpArgs{{
-		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+func (r resourcePublicIp) convertResourcePlanToArgs(plan PublicIp) *resources.PublicIpArgs {
+	return &resources.PublicIpArgs{
+		CommonParameters: &common_proto.ResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},
 		Name:               plan.Name.Value,
 		NetworkInterfaceId: plan.NetworkInterfaceId.Value,
-	}}
+	}
 }

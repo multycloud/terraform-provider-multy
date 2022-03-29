@@ -83,7 +83,7 @@ func (r resourceSubnet) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 
 	// Create new order from plan values
 	subnet, err := c.Client.CreateSubnet(ctx, &resources.CreateSubnetRequest{
-		Resources: r.convertResourcePlanToArgs(plan),
+		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating subnet", err.Error())
@@ -157,7 +157,7 @@ func (r resourceSubnet) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 	vn, err := c.Client.UpdateSubnet(ctx, &resources.UpdateSubnetRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  r.convertResourcePlanToArgs(plan),
+		Resource:   r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating subnet", err.Error())
@@ -224,20 +224,20 @@ type Subnet struct {
 func (r resourceSubnet) convertResponseToResource(res *resources.SubnetResource) Subnet {
 	result := Subnet{
 		Id:               types.String{Value: res.CommonParameters.ResourceId},
-		Name:             types.String{Value: res.Resources[0].Name},
-		CidrBlock:        types.String{Value: res.Resources[0].CidrBlock},
-		AvailabilityZone: types.Int64{Value: int64(res.Resources[0].AvailabilityZone)},
-		VirtualNetworkId: types.String{Value: res.Resources[0].VirtualNetworkId},
+		Name:             types.String{Value: res.Name},
+		CidrBlock:        types.String{Value: res.CidrBlock},
+		AvailabilityZone: types.Int64{Value: int64(res.AvailabilityZone)},
+		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
 	}
 
 	return result
 }
 
-func (r resourceSubnet) convertResourcePlanToArgs(plan Subnet) []*resources.CloudSpecificSubnetArgs {
-	return []*resources.CloudSpecificSubnetArgs{{
+func (r resourceSubnet) convertResourcePlanToArgs(plan Subnet) *resources.SubnetArgs {
+	return &resources.SubnetArgs{
 		Name:             plan.Name.Value,
 		CidrBlock:        plan.CidrBlock.Value,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,
 		AvailabilityZone: int32(plan.AvailabilityZone.Value),
-	}}
+	}
 }

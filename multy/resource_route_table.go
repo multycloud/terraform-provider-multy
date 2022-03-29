@@ -97,7 +97,7 @@ func (r resourceRouteTable) Create(ctx context.Context, req tfsdk.CreateResource
 
 	// Create new order from plan values
 	route_table, err := c.Client.CreateRouteTable(ctx, &resources.CreateRouteTableRequest{
-		Resources: r.convertResourcePlanToArgs(plan),
+		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating route_table", err.Error())
@@ -171,7 +171,7 @@ func (r resourceRouteTable) Update(ctx context.Context, req tfsdk.UpdateResource
 	vn, err := c.Client.UpdateRouteTable(ctx, &resources.UpdateRouteTableRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  r.convertResourcePlanToArgs(plan),
+		Resource:   r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating route_table", err.Error())
@@ -237,7 +237,7 @@ type RouteTableRoute struct {
 
 func (r resourceRouteTable) convertResponseToResource(res *resources.RouteTableResource) RouteTable {
 	var routes []RouteTableRoute
-	for _, i := range res.Resources[0].Routes {
+	for _, i := range res.Routes {
 		routes = append(routes, RouteTableRoute{
 			CidrBlock:   types.String{Value: i.CidrBlock},
 			Destination: types.String{Value: strings.ToLower(i.Destination.String())},
@@ -246,16 +246,16 @@ func (r resourceRouteTable) convertResponseToResource(res *resources.RouteTableR
 
 	result := RouteTable{
 		Id:               types.String{Value: res.CommonParameters.ResourceId},
-		Name:             types.String{Value: res.Resources[0].Name},
+		Name:             types.String{Value: res.Name},
 		Routes:           routes,
-		VirtualNetworkId: types.String{Value: res.Resources[0].VirtualNetworkId},
-		Cloud:            types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
+		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
+		Cloud:            types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
 	}
 
 	return result
 }
 
-func (r resourceRouteTable) convertResourcePlanToArgs(plan RouteTable) []*resources.CloudSpecificRouteTableArgs {
+func (r resourceRouteTable) convertResourcePlanToArgs(plan RouteTable) *resources.RouteTableArgs {
 	var routes []*resources.Route
 	for _, i := range plan.Routes {
 		routes = append(routes, &resources.Route{
@@ -264,12 +264,12 @@ func (r resourceRouteTable) convertResourcePlanToArgs(plan RouteTable) []*resour
 		})
 	}
 
-	return []*resources.CloudSpecificRouteTableArgs{{
-		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+	return &resources.RouteTableArgs{
+		CommonParameters: &common_proto.ResourceCommonArgs{
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},
 		Name:             plan.Name.Value,
 		Routes:           routes,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,
-	}}
+	}
 }

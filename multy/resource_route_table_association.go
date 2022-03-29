@@ -70,7 +70,7 @@ func (r resourceRouteTableAssociation) Create(ctx context.Context, req tfsdk.Cre
 
 	// Create new order from plan values
 	vn, err := c.Client.CreateRouteTableAssociation(ctx, &resources.CreateRouteTableAssociationRequest{
-		Resources: r.convertResourcePlanToArgs(plan),
+		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating route_table_association", common.ParseGrpcErrors(err))
@@ -145,7 +145,7 @@ func (r resourceRouteTableAssociation) Update(ctx context.Context, req tfsdk.Upd
 	vn, err := c.Client.UpdateRouteTableAssociation(ctx, &resources.UpdateRouteTableAssociationRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  r.convertResourcePlanToArgs(plan),
+		Resource:   r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating route_table_association", common.ParseGrpcErrors(err))
@@ -206,14 +206,14 @@ type RouteTableAssociation struct {
 func (r resourceRouteTableAssociation) convertResponseToResource(res *resources.RouteTableAssociationResource) RouteTableAssociation {
 	return RouteTableAssociation{
 		Id:           types.String{Value: res.CommonParameters.ResourceId},
-		SubnetId:     types.String{Value: res.Resources[0].SubnetId},
-		RouteTableId: types.String{Value: res.Resources[0].RouteTableId},
+		SubnetId:     types.String{Value: res.SubnetId},
+		RouteTableId: types.String{Value: res.RouteTableId},
 	}
 }
 
-func (r resourceRouteTableAssociation) convertResourcePlanToArgs(plan RouteTableAssociation) []*resources.CloudSpecificRouteTableAssociationArgs {
-	return []*resources.CloudSpecificRouteTableAssociationArgs{{
+func (r resourceRouteTableAssociation) convertResourcePlanToArgs(plan RouteTableAssociation) *resources.RouteTableAssociationArgs {
+	return &resources.RouteTableAssociationArgs{
 		SubnetId:     plan.SubnetId.Value,
 		RouteTableId: plan.RouteTableId.Value,
-	}}
+	}
 }

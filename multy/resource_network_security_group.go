@@ -125,7 +125,7 @@ func (r resourceNetworkSecurityGroup) Create(ctx context.Context, req tfsdk.Crea
 	}
 
 	nsg, err := c.Client.CreateNetworkSecurityGroup(ctx, &resources.CreateNetworkSecurityGroupRequest{
-		Resources: r.convertResourcePlanToArgs(plan),
+		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating network_security_group", err.Error())
@@ -197,7 +197,7 @@ func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.Upda
 
 	request := &resources.UpdateNetworkSecurityGroupRequest{
 		ResourceId: state.Id.Value,
-		Resources:  r.convertResourcePlanToArgs(plan),
+		Resource:   r.convertResourcePlanToArgs(plan),
 	}
 
 	// Update network_security_group
@@ -284,7 +284,7 @@ type Rule struct {
 
 func (r resourceNetworkSecurityGroup) convertResponseToResource(res *resources.NetworkSecurityGroupResource) NetworkSecurityGroup {
 	var rules []Rule
-	for _, rule := range res.Resources[0].Rules {
+	for _, rule := range res.Rules {
 		rules = append(rules, Rule{
 			Protocol:  types.String{Value: rule.Protocol},
 			Priority:  types.Int64{Value: rule.Priority},
@@ -296,15 +296,15 @@ func (r resourceNetworkSecurityGroup) convertResponseToResource(res *resources.N
 	}
 	return NetworkSecurityGroup{
 		Id:               types.String{Value: res.CommonParameters.ResourceId},
-		Name:             types.String{Value: res.Resources[0].Name},
-		VirtualNetworkId: types.String{Value: res.Resources[0].VirtualNetworkId},
+		Name:             types.String{Value: res.Name},
+		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
 		Rules:            rules,
-		Cloud:            types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
-		Location:         types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
+		Cloud:            types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
+		Location:         types.String{Value: strings.ToLower(res.CommonParameters.Location.String())},
 	}
 }
 
-func (r resourceNetworkSecurityGroup) convertResourcePlanToArgs(plan NetworkSecurityGroup) []*resources.CloudSpecificNetworkSecurityGroupArgs {
+func (r resourceNetworkSecurityGroup) convertResourcePlanToArgs(plan NetworkSecurityGroup) *resources.NetworkSecurityGroupArgs {
 	var rules []*resources.NetworkSecurityRule
 	for _, item := range plan.Rules {
 		ruleDirection := common.StringToRuleDirection(item.Direction.Value)
@@ -319,13 +319,13 @@ func (r resourceNetworkSecurityGroup) convertResourcePlanToArgs(plan NetworkSecu
 			Direction: ruleDirection,
 		})
 	}
-	return []*resources.CloudSpecificNetworkSecurityGroupArgs{{
-		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+	return &resources.NetworkSecurityGroupArgs{
+		CommonParameters: &common_proto.ResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},
 		Name:             plan.Name.Value,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,
 		Rules:            rules,
-	}}
+	}
 }

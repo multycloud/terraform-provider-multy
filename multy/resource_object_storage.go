@@ -79,7 +79,7 @@ func (r resourceObjectStorage) Create(ctx context.Context, req tfsdk.CreateResou
 
 	// Create new order from plan values
 	vn, err := c.Client.CreateObjectStorage(ctx, &resources.CreateObjectStorageRequest{
-		Resources: r.convertResourcePlanToArgs(plan),
+		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating object_storage", common.ParseGrpcErrors(err))
@@ -154,7 +154,7 @@ func (r resourceObjectStorage) Update(ctx context.Context, req tfsdk.UpdateResou
 	vn, err := c.Client.UpdateObjectStorage(ctx, &resources.UpdateObjectStorageRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
-		Resources:  r.convertResourcePlanToArgs(plan),
+		Resource:   r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating object_storage", common.ParseGrpcErrors(err))
@@ -218,22 +218,22 @@ type ObjectStorage struct {
 func (r resourceObjectStorage) convertResponseToResource(res *resources.ObjectStorageResource) ObjectStorage {
 	return ObjectStorage{
 		Id:   types.String{Value: res.CommonParameters.ResourceId},
-		Name: types.String{Value: res.Resources[0].Name},
-		//Versioning:   types.Bool{Value: res.Resources[0].Versioning},
-		//RandomSuffix: types.Bool{Value: res.Resources[0].RandomSuffix},
-		Cloud:    types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.CloudProvider.String())},
-		Location: types.String{Value: strings.ToLower(res.Resources[0].CommonParameters.Location.String())},
+		Name: types.String{Value: res.Name},
+		//Versioning:   types.Bool{Value: res.Versioning},
+		//RandomSuffix: types.Bool{Value: res.RandomSuffix},
+		Cloud:    types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
+		Location: types.String{Value: strings.ToLower(res.CommonParameters.Location.String())},
 	}
 }
 
-func (r resourceObjectStorage) convertResourcePlanToArgs(plan ObjectStorage) []*resources.CloudSpecificObjectStorageArgs {
-	return []*resources.CloudSpecificObjectStorageArgs{{
-		CommonParameters: &common_proto.CloudSpecificResourceCommonArgs{
+func (r resourceObjectStorage) convertResourcePlanToArgs(plan ObjectStorage) *resources.ObjectStorageArgs {
+	return &resources.ObjectStorageArgs{
+		CommonParameters: &common_proto.ResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},
 		Name: plan.Name.Value,
 		//Versioning:   plan.Versioning.Value,
 		//RandomSuffix: plan.RandomSuffix.Value,
-	}}
+	}
 }
