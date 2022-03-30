@@ -96,10 +96,20 @@ func ParseGrpcErrors(err error) string {
 		for _, detail := range s.Details() {
 			if e, ok := detail.(*errors.ResourceValidationError); ok {
 				str += "\n" + e.ErrorMessage
+			} else if e, ok := detail.(*errors.InternalErrorDetails); ok {
+				str += "\n" + e.ErrorMessage
 			}
 		}
 	} else if s.Code() == codes.Internal {
-		str += "something went wrong: " + s.Message()
+		str += s.Message()
+		for _, detail := range s.Details() {
+			if e, ok := detail.(*errors.ResourceValidationError); ok {
+				str += "\n" + e.ErrorMessage
+			} else if e, ok := detail.(*errors.InternalErrorDetails); ok {
+				str += "\n" + e.ErrorMessage
+			}
+		}
+		//str += fmt.Sprintf("something went wrong: %s; %+v", s.Message(), err)
 	} else {
 		str += s.String()
 	}

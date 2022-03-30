@@ -222,15 +222,13 @@ type Subnet struct {
 //}
 
 func (r resourceSubnet) convertResponseToResource(res *resources.SubnetResource) Subnet {
-	result := Subnet{
+	return Subnet{
 		Id:               types.String{Value: res.CommonParameters.ResourceId},
 		Name:             types.String{Value: res.Name},
 		CidrBlock:        types.String{Value: res.CidrBlock},
 		AvailabilityZone: types.Int64{Value: int64(res.AvailabilityZone)},
 		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
 	}
-
-	return result
 }
 
 func (r resourceSubnet) convertResourcePlanToArgs(plan Subnet) *resources.SubnetArgs {

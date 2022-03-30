@@ -38,6 +38,7 @@ func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 			},
 			"aws": {
 				Optional:    true,
+				Computed:    true,
 				Description: "Credentials for AWS Cloud",
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"access_key_id": {
@@ -144,24 +145,33 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		return
 	}
 
-	awsConfig, err := p.validateAwsConfig(ctx, config.Aws)
+	var awsConfig *common.AwsConfig
+	// fixme error with aws = {} in provider
+	//if config.Aws != nil {
+	var err error
+	awsConfig, err = p.validateAwsConfig(ctx, config.Aws)
 	// TODO: handle case where we don't need azure
 	if err != nil {
-		//resp.Diagnostics.AddError(
-		//	"Unable to connect to AWS",
-		//	err.Error(),
-		//)
-		//return
+		resp.Diagnostics.AddError(
+			"Unable to connect to AWS",
+			err.Error(),
+		)
+		return
 	}
+	//}
 
-	azureConfig, err := p.validateAzureConfig(config.Azure)
-	// TODO: handle case where we don't need azure
-	if err != nil {
-		//resp.Diagnostics.AddError(
-		//	"Unable to connect to Azure",
-		//	err.Error(),
-		//)
-		//return
+	var azureConfig *common.AzureConfig
+	if config.Azure != nil {
+		var err error
+		azureConfig, err = p.validateAzureConfig(config.Azure)
+		// TODO: handle case where we don't need azure
+		if err != nil {
+			//resp.Diagnostics.AddError(
+			//	"Unable to connect to Azure",
+			//	err.Error(),
+			//)
+			//return
+		}
 	}
 
 	endpoint := "api.multy.dev:443"
@@ -304,7 +314,7 @@ func (p *Provider) validateAzureConfig(config *providerAzureConfig) (*common.Azu
 
 	// terraform-helper for azure authentication
 	azConfig := authentication.Builder{
-		SupportsClientCertAuth:   true,
+		//SupportsClientCertAuth:   true,
 		SupportsClientSecretAuth: true,
 		SupportsAzureCliToken:    true,
 	}
@@ -315,7 +325,14 @@ func (p *Provider) validateAzureConfig(config *providerAzureConfig) (*common.Azu
 	azureConfig.SubscriptionId = creds.SubscriptionID
 	azureConfig.ClientId = creds.ClientID
 	azureConfig.TenantId = creds.TenantID
-	//azureConfig.ClientSecret = creds.ClientSecret
+
+	if config != nil && !config.ClientSecret.Unknown && !config.ClientSecret.Null && config.ClientSecret.Value != "" {
+		azureConfig.ClientSecret = config.ClientSecret.Value
+	} else if os.Getenv("ARM_CLIENT_SECRET") != "" {
+		azureConfig.ClientSecret = os.Getenv("ARM_CLIENT_SECRET")
+	} else {
+		return &azureConfig, fmt.Errorf("client_secret has not been set")
+	}
 
 	if azureConfig.SubscriptionId != "" && azureConfig.ClientId != "" && azureConfig.ClientSecret != "" && azureConfig.TenantId != "" {
 		return &azureConfig, nil

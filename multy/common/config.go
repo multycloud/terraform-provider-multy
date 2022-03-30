@@ -19,20 +19,23 @@ type ProviderConfig struct {
 }
 
 func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error) {
-	cloudCreds := &creds.CloudCredentials{
-		AwsCreds: &creds.AwsCredentials{
+	var cloudCreds creds.CloudCredentials
+	if c.Aws != nil {
+		cloudCreds.AwsCreds = &creds.AwsCredentials{
 			AccessKey: c.Aws.AccessKeyId,
 			SecretKey: c.Aws.AccessKeySecret,
-		},
-		AzureCreds: &creds.AzureCredentials{
+		}
+	}
+	if c.Azure != nil {
+		cloudCreds.AzureCreds = &creds.AzureCredentials{
 			SubscriptionId: c.Azure.SubscriptionId,
 			TenantId:       c.Azure.TenantId,
 			ClientId:       c.Azure.ClientId,
 			ClientSecret:   c.Azure.ClientSecret,
-		},
+		}
 	}
 
-	b, err := proto.Marshal(cloudCreds)
+	b, err := proto.Marshal(&cloudCreds)
 	if err != nil {
 		return nil, err
 	}

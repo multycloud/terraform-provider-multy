@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	common_proto "github.com/multycloud/multy/api/proto/common"
 	"github.com/multycloud/multy/api/proto/resources"
 	"strings"
 	"terraform-provider-multy/multy/common"
@@ -36,7 +35,6 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
-			"cloud": common.CloudsSchema,
 		},
 		Blocks: map[string]tfsdk.Block{
 			"route": {
@@ -55,7 +53,7 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 						Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: common.GetRouteDestinations()}},
 					},
 				},
-				NestingMode: tfsdk.BlockNestingModeSet,
+				NestingMode: tfsdk.BlockNestingModeList,
 			},
 		},
 	}, nil
@@ -96,7 +94,7 @@ func (r resourceRouteTable) Create(ctx context.Context, req tfsdk.CreateResource
 	}
 
 	// Create new order from plan values
-	route_table, err := c.Client.CreateRouteTable(ctx, &resources.CreateRouteTableRequest{
+	rt, err := c.Client.CreateRouteTable(ctx, &resources.CreateRouteTableRequest{
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
@@ -104,10 +102,10 @@ func (r resourceRouteTable) Create(ctx context.Context, req tfsdk.CreateResource
 		return
 	}
 
-	tflog.Trace(ctx, "created route_table", map[string]interface{}{"route_table_id": route_table.CommonParameters.ResourceId})
+	tflog.Trace(ctx, "created route_table", map[string]interface{}{"route_table_id": rt.CommonParameters.ResourceId})
 
 	// Map response body to resource schema attribute
-	state := r.convertResponseToResource(route_table)
+	state := r.convertResponseToResource(rt)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -226,8 +224,7 @@ type RouteTable struct {
 	Id               types.String      `tfsdk:"id"`
 	Name             types.String      `tfsdk:"name"`
 	VirtualNetworkId types.String      `tfsdk:"virtual_network_id"`
-	Routes           []RouteTableRoute `tfsdk:"routes"`
-	Cloud            types.String      `tfsdk:"cloud"`
+	Routes           []RouteTableRoute `tfsdk:"route"`
 }
 
 type RouteTableRoute struct {
@@ -249,7 +246,6 @@ func (r resourceRouteTable) convertResponseToResource(res *resources.RouteTableR
 		Name:             types.String{Value: res.Name},
 		Routes:           routes,
 		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
-		Cloud:            types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
 	}
 
 	return result
@@ -265,9 +261,6 @@ func (r resourceRouteTable) convertResourcePlanToArgs(plan RouteTable) *resource
 	}
 
 	return &resources.RouteTableArgs{
-		CommonParameters: &common_proto.ResourceCommonArgs{
-			CloudProvider: common.StringToCloud(plan.Cloud.Value),
-		},
 		Name:             plan.Name.Value,
 		Routes:           routes,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,

@@ -87,7 +87,6 @@ func (r resourceVirtualNetwork) Create(ctx context.Context, req tfsdk.CreateReso
 
 	// Map response body to resource schema attribute
 	state := r.convertResponseToResource(vn)
-
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

@@ -8,7 +8,8 @@ terraform {
 }
 
 provider "multy" {
-  api_key = "multy_local"
+  api_key = "1234"
+  #  server_endpoint = "localhost:8000"
 }
 
 resource multy_virtual_network vn {
