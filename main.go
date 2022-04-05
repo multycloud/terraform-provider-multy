@@ -1,15 +1,13 @@
 package main
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"terraform-provider-multy/multy/provider"
+	"context"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"terraform-provider-multy/multy"
 )
 
 func main() {
-	plugin.Serve(&plugin.ServeOpts{
-		ProviderFunc: func() *schema.Provider {
-			return provider.Provider()
-		},
+	tfsdk.Serve(context.Background(), multy.New, tfsdk.ServeOpts{
+		Name: "multy",
 	})
 }

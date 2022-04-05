@@ -12,7 +12,7 @@ var (
 //		return warnings, errors
 //	}
 //
-//	location := common_proto.Location(common_proto.Location_value[strings.ToUpper(v)])
+//	location := commonpb.Location(commonpb.Location_value[strings.ToUpper(v)])
 //	if location == 0 {
 //		errors = append(errors, fmt.Errorf("expected %s to be one of %v, got %s", k, GetLocationNames(), v))
 //	}
