@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	common_proto "github.com/multycloud/multy/api/proto/common"
-	"github.com/multycloud/multy/api/proto/resources"
+	"github.com/multycloud/multy/api/proto/commonpb"
+	"github.com/multycloud/multy/api/proto/resourcespb"
 	"strconv"
 	"strings"
 	"terraform-provider-multy/multy/common"
@@ -124,7 +124,7 @@ func (r resourceNetworkSecurityGroup) Create(ctx context.Context, req tfsdk.Crea
 		return
 	}
 
-	nsg, err := c.Client.CreateNetworkSecurityGroup(ctx, &resources.CreateNetworkSecurityGroupRequest{
+	nsg, err := c.Client.CreateNetworkSecurityGroup(ctx, &resourcespb.CreateNetworkSecurityGroupRequest{
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
@@ -160,7 +160,7 @@ func (r resourceNetworkSecurityGroup) Read(ctx context.Context, req tfsdk.ReadRe
 	}
 
 	// Get network_security_group from API and then update what is in state from what the API returns
-	nsg, err := r.p.Client.Client.ReadNetworkSecurityGroup(ctx, &resources.ReadNetworkSecurityGroupRequest{ResourceId: state.Id.Value})
+	nsg, err := r.p.Client.Client.ReadNetworkSecurityGroup(ctx, &resourcespb.ReadNetworkSecurityGroupRequest{ResourceId: state.Id.Value})
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting network_security_group", err.Error())
 		return
@@ -195,7 +195,7 @@ func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.Upda
 		return
 	}
 
-	request := &resources.UpdateNetworkSecurityGroupRequest{
+	request := &resourcespb.UpdateNetworkSecurityGroupRequest{
 		ResourceId: state.Id.Value,
 		Resource:   r.convertResourcePlanToArgs(plan),
 	}
@@ -232,7 +232,7 @@ func (r resourceNetworkSecurityGroup) Delete(ctx context.Context, req tfsdk.Dele
 	}
 
 	// Delete network_security_group
-	_, err = c.Client.DeleteNetworkSecurityGroup(ctx, &resources.DeleteNetworkSecurityGroupRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteNetworkSecurityGroup(ctx, &resourcespb.DeleteNetworkSecurityGroupRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -282,7 +282,7 @@ type Rule struct {
 	Direction types.String `tfsdk:"direction"`
 }
 
-func (r resourceNetworkSecurityGroup) convertResponseToResource(res *resources.NetworkSecurityGroupResource) NetworkSecurityGroup {
+func (r resourceNetworkSecurityGroup) convertResponseToResource(res *resourcespb.NetworkSecurityGroupResource) NetworkSecurityGroup {
 	var rules []Rule
 	for _, rule := range res.Rules {
 		rules = append(rules, Rule{
@@ -304,14 +304,14 @@ func (r resourceNetworkSecurityGroup) convertResponseToResource(res *resources.N
 	}
 }
 
-func (r resourceNetworkSecurityGroup) convertResourcePlanToArgs(plan NetworkSecurityGroup) *resources.NetworkSecurityGroupArgs {
-	var rules []*resources.NetworkSecurityRule
+func (r resourceNetworkSecurityGroup) convertResourcePlanToArgs(plan NetworkSecurityGroup) *resourcespb.NetworkSecurityGroupArgs {
+	var rules []*resourcespb.NetworkSecurityRule
 	for _, item := range plan.Rules {
 		ruleDirection := common.StringToRuleDirection(item.Direction.Value)
-		rules = append(rules, &resources.NetworkSecurityRule{
+		rules = append(rules, &resourcespb.NetworkSecurityRule{
 			Protocol: item.Protocol.Value,
 			Priority: item.Priority.Value,
-			PortRange: &resources.PortRange{
+			PortRange: &resourcespb.PortRange{
 				From: int32(item.FromPort.Value),
 				To:   int32(item.FromPort.Value),
 			},
@@ -319,8 +319,8 @@ func (r resourceNetworkSecurityGroup) convertResourcePlanToArgs(plan NetworkSecu
 			Direction: ruleDirection,
 		})
 	}
-	return &resources.NetworkSecurityGroupArgs{
-		CommonParameters: &common_proto.ResourceCommonArgs{
+	return &resourcespb.NetworkSecurityGroupArgs{
+		CommonParameters: &commonpb.ResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},

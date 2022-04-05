@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/multycloud/multy/api/proto/resources"
+	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/validators"
 )
 
@@ -82,7 +82,7 @@ func (r resourceSubnet) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 	}
 
 	// Create new order from plan values
-	subnet, err := c.Client.CreateSubnet(ctx, &resources.CreateSubnetRequest{
+	subnet, err := c.Client.CreateSubnet(ctx, &resourcespb.CreateSubnetRequest{
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
@@ -118,7 +118,7 @@ func (r resourceSubnet) Read(ctx context.Context, req tfsdk.ReadResourceRequest,
 	}
 
 	// Get subnet from API and then update what is in state from what the API returns
-	subnet, err := r.p.Client.Client.ReadSubnet(ctx, &resources.ReadSubnetRequest{ResourceId: state.Id.Value})
+	subnet, err := r.p.Client.Client.ReadSubnet(ctx, &resourcespb.ReadSubnetRequest{ResourceId: state.Id.Value})
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting subnet", err.Error())
 		return
@@ -154,7 +154,7 @@ func (r resourceSubnet) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 	}
 
 	// Update subnet
-	vn, err := c.Client.UpdateSubnet(ctx, &resources.UpdateSubnetRequest{
+	vn, err := c.Client.UpdateSubnet(ctx, &resourcespb.UpdateSubnetRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
 		Resource:   r.convertResourcePlanToArgs(plan),
@@ -189,7 +189,7 @@ func (r resourceSubnet) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 	}
 
 	// Delete subnet
-	_, err = c.Client.DeleteSubnet(ctx, &resources.DeleteSubnetRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteSubnet(ctx, &resourcespb.DeleteSubnetRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -221,18 +221,20 @@ type Subnet struct {
 //	Location types.String `tfsdk:"location"`
 //}
 
-func (r resourceSubnet) convertResponseToResource(res *resources.SubnetResource) Subnet {
-	return Subnet{
+func (r resourceSubnet) convertResponseToResource(res *resourcespb.SubnetResource) Subnet {
+	result := Subnet{
 		Id:               types.String{Value: res.CommonParameters.ResourceId},
 		Name:             types.String{Value: res.Name},
 		CidrBlock:        types.String{Value: res.CidrBlock},
 		AvailabilityZone: types.Int64{Value: int64(res.AvailabilityZone)},
 		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
 	}
+
+	return result
 }
 
-func (r resourceSubnet) convertResourcePlanToArgs(plan Subnet) *resources.SubnetArgs {
-	return &resources.SubnetArgs{
+func (r resourceSubnet) convertResourcePlanToArgs(plan Subnet) *resourcespb.SubnetArgs {
+	return &resourcespb.SubnetArgs{
 		Name:             plan.Name.Value,
 		CidrBlock:        plan.CidrBlock.Value,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,

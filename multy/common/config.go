@@ -3,12 +3,12 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	mproto "github.com/multycloud/multy/api/proto"
-	common_proto "github.com/multycloud/multy/api/proto/common"
-	"github.com/multycloud/multy/api/proto/creds"
+	"github.com/multycloud/multy/api/proto/commonpb"
+	"github.com/multycloud/multy/api/proto/credspb"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/proto"
 )
 
 type ProviderConfig struct {
@@ -19,15 +19,15 @@ type ProviderConfig struct {
 }
 
 func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error) {
-	var cloudCreds creds.CloudCredentials
+	var cloudCreds credspb.CloudCredentials
 	if c.Aws != nil {
-		cloudCreds.AwsCreds = &creds.AwsCredentials{
+		cloudCreds.AwsCreds = &credspb.AwsCredentials{
 			AccessKey: c.Aws.AccessKeyId,
 			SecretKey: c.Aws.AccessKeySecret,
 		}
 	}
 	if c.Azure != nil {
-		cloudCreds.AzureCreds = &creds.AzureCredentials{
+		cloudCreds.AzureCreds = &credspb.AzureCredentials{
 			SubscriptionId: c.Azure.SubscriptionId,
 			TenantId:       c.Azure.TenantId,
 			ClientId:       c.Azure.ClientId,
@@ -53,18 +53,18 @@ func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error
 //	return c.Clouds
 //}
 
-func (c *ProviderConfig) GetOperatingSystem(d *schema.ResourceData) common_proto.OperatingSystem_Enum {
+func (c *ProviderConfig) GetOperatingSystem(d *schema.ResourceData) commonpb.OperatingSystem_Enum {
 	if loc, check := d.GetOk("operating_system"); check {
 		return StringToVmOperatingSystem(loc.(string))
 	}
-	return common_proto.OperatingSystem_UNKNOWN_OS
+	return commonpb.OperatingSystem_UNKNOWN_OS
 }
 
-func (c *ProviderConfig) GetVmSize(d *schema.ResourceData) common_proto.VmSize_Enum {
+func (c *ProviderConfig) GetVmSize(d *schema.ResourceData) commonpb.VmSize_Enum {
 	if loc, check := d.GetOk("size"); check {
 		return StringToVmSize(loc.(string))
 	}
-	return common_proto.VmSize_UNKNOWN_VM_SIZE
+	return commonpb.VmSize_UNKNOWN_VM_SIZE
 }
 
 type AwsConfig struct {

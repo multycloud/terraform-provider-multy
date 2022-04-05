@@ -7,8 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	common_proto "github.com/multycloud/multy/api/proto/common"
-	"github.com/multycloud/multy/api/proto/resources"
+	"github.com/multycloud/multy/api/proto/commonpb"
+	"github.com/multycloud/multy/api/proto/resourcespb"
 	"strings"
 	"terraform-provider-multy/multy/common"
 )
@@ -78,7 +78,7 @@ func (r resourceObjectStorage) Create(ctx context.Context, req tfsdk.CreateResou
 	}
 
 	// Create new order from plan values
-	vn, err := c.Client.CreateObjectStorage(ctx, &resources.CreateObjectStorageRequest{
+	vn, err := c.Client.CreateObjectStorage(ctx, &resourcespb.CreateObjectStorageRequest{
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
@@ -115,7 +115,7 @@ func (r resourceObjectStorage) Read(ctx context.Context, req tfsdk.ReadResourceR
 	}
 
 	// Get object_storage from API and then update what is in state from what the API returns
-	vn, err := r.p.Client.Client.ReadObjectStorage(ctx, &resources.ReadObjectStorageRequest{ResourceId: state.Id.Value})
+	vn, err := r.p.Client.Client.ReadObjectStorage(ctx, &resourcespb.ReadObjectStorageRequest{ResourceId: state.Id.Value})
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting object_storage", common.ParseGrpcErrors(err))
 		return
@@ -151,7 +151,7 @@ func (r resourceObjectStorage) Update(ctx context.Context, req tfsdk.UpdateResou
 	}
 
 	// Update object_storage
-	vn, err := c.Client.UpdateObjectStorage(ctx, &resources.UpdateObjectStorageRequest{
+	vn, err := c.Client.UpdateObjectStorage(ctx, &resourcespb.UpdateObjectStorageRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
 		Resource:   r.convertResourcePlanToArgs(plan),
@@ -187,7 +187,7 @@ func (r resourceObjectStorage) Delete(ctx context.Context, req tfsdk.DeleteResou
 	}
 
 	// Delete object_storage
-	_, err = c.Client.DeleteObjectStorage(ctx, &resources.DeleteObjectStorageRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteObjectStorage(ctx, &resourcespb.DeleteObjectStorageRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -215,7 +215,7 @@ type ObjectStorage struct {
 	Location     types.String `tfsdk:"location"`
 }
 
-func (r resourceObjectStorage) convertResponseToResource(res *resources.ObjectStorageResource) ObjectStorage {
+func (r resourceObjectStorage) convertResponseToResource(res *resourcespb.ObjectStorageResource) ObjectStorage {
 	return ObjectStorage{
 		Id:   types.String{Value: res.CommonParameters.ResourceId},
 		Name: types.String{Value: res.Name},
@@ -226,9 +226,9 @@ func (r resourceObjectStorage) convertResponseToResource(res *resources.ObjectSt
 	}
 }
 
-func (r resourceObjectStorage) convertResourcePlanToArgs(plan ObjectStorage) *resources.ObjectStorageArgs {
-	return &resources.ObjectStorageArgs{
-		CommonParameters: &common_proto.ResourceCommonArgs{
+func (r resourceObjectStorage) convertResourcePlanToArgs(plan ObjectStorage) *resourcespb.ObjectStorageArgs {
+	return &resourcespb.ObjectStorageArgs{
+		CommonParameters: &commonpb.ResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},

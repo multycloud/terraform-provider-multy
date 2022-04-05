@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/multycloud/multy/api/proto/resources"
+	"github.com/multycloud/multy/api/proto/resourcespb"
 	"strings"
 	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/validators"
@@ -35,6 +35,7 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
+			"cloud": common.CloudsSchema,
 		},
 		Blocks: map[string]tfsdk.Block{
 			"route": {
@@ -53,7 +54,7 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 						Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: common.GetRouteDestinations()}},
 					},
 				},
-				NestingMode: tfsdk.BlockNestingModeList,
+				NestingMode: tfsdk.BlockNestingModeSet,
 			},
 		},
 	}, nil
@@ -94,7 +95,7 @@ func (r resourceRouteTable) Create(ctx context.Context, req tfsdk.CreateResource
 	}
 
 	// Create new order from plan values
-	rt, err := c.Client.CreateRouteTable(ctx, &resources.CreateRouteTableRequest{
+	route_table, err := c.Client.CreateRouteTable(ctx, &resourcespb.CreateRouteTableRequest{
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
@@ -102,10 +103,10 @@ func (r resourceRouteTable) Create(ctx context.Context, req tfsdk.CreateResource
 		return
 	}
 
-	tflog.Trace(ctx, "created route_table", map[string]interface{}{"route_table_id": rt.CommonParameters.ResourceId})
+	tflog.Trace(ctx, "created route_table", map[string]interface{}{"route_table_id": route_table.CommonParameters.ResourceId})
 
 	// Map response body to resource schema attribute
-	state := r.convertResponseToResource(rt)
+	state := r.convertResponseToResource(route_table)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -130,7 +131,7 @@ func (r resourceRouteTable) Read(ctx context.Context, req tfsdk.ReadResourceRequ
 	}
 
 	// Get route_table from API and then update what is in state from what the API returns
-	rt, err := r.p.Client.Client.ReadRouteTable(ctx, &resources.ReadRouteTableRequest{ResourceId: state.Id.Value})
+	rt, err := r.p.Client.Client.ReadRouteTable(ctx, &resourcespb.ReadRouteTableRequest{ResourceId: state.Id.Value})
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting route_table", err.Error())
 		return
@@ -166,7 +167,7 @@ func (r resourceRouteTable) Update(ctx context.Context, req tfsdk.UpdateResource
 	}
 
 	// Update route_table
-	vn, err := c.Client.UpdateRouteTable(ctx, &resources.UpdateRouteTableRequest{
+	vn, err := c.Client.UpdateRouteTable(ctx, &resourcespb.UpdateRouteTableRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
 		Resource:   r.convertResourcePlanToArgs(plan),
@@ -201,7 +202,7 @@ func (r resourceRouteTable) Delete(ctx context.Context, req tfsdk.DeleteResource
 	}
 
 	// Delete route_table
-	_, err = c.Client.DeleteRouteTable(ctx, &resources.DeleteRouteTableRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteRouteTable(ctx, &resourcespb.DeleteRouteTableRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -224,7 +225,8 @@ type RouteTable struct {
 	Id               types.String      `tfsdk:"id"`
 	Name             types.String      `tfsdk:"name"`
 	VirtualNetworkId types.String      `tfsdk:"virtual_network_id"`
-	Routes           []RouteTableRoute `tfsdk:"route"`
+	Routes           []RouteTableRoute `tfsdk:"routes"`
+	Cloud            types.String      `tfsdk:"cloud"`
 }
 
 type RouteTableRoute struct {
@@ -232,7 +234,7 @@ type RouteTableRoute struct {
 	Destination types.String `tfsdk:"destination"`
 }
 
-func (r resourceRouteTable) convertResponseToResource(res *resources.RouteTableResource) RouteTable {
+func (r resourceRouteTable) convertResponseToResource(res *resourcespb.RouteTableResource) RouteTable {
 	var routes []RouteTableRoute
 	for _, i := range res.Routes {
 		routes = append(routes, RouteTableRoute{
@@ -251,16 +253,16 @@ func (r resourceRouteTable) convertResponseToResource(res *resources.RouteTableR
 	return result
 }
 
-func (r resourceRouteTable) convertResourcePlanToArgs(plan RouteTable) *resources.RouteTableArgs {
-	var routes []*resources.Route
+func (r resourceRouteTable) convertResourcePlanToArgs(plan RouteTable) *resourcespb.RouteTableArgs {
+	var routes []*resourcespb.Route
 	for _, i := range plan.Routes {
-		routes = append(routes, &resources.Route{
+		routes = append(routes, &resourcespb.Route{
 			CidrBlock:   i.CidrBlock.Value,
 			Destination: common.StringToRouteDestination(i.Destination.Value),
 		})
 	}
 
-	return &resources.RouteTableArgs{
+	return &resourcespb.RouteTableArgs{
 		Name:             plan.Name.Value,
 		Routes:           routes,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,

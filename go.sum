@@ -309,8 +309,8 @@ github.com/mitchellh/mapstructure v1.4.3 h1:OVowDSCllw/YjdLkam3/sm7wEtOy59d8ndGg
 github.com/mitchellh/mapstructure v1.4.3/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zxSIeXaQ=
 github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
-github.com/multycloud/multy v0.1.14 h1:8Kf/r/jtVy7A+Cf6XImWKYWqEulcRUBGwXjHPk7LaW0=
-github.com/multycloud/multy v0.1.14/go.mod h1:Yxv6xtfxECXcvQYD5XgdQXJISCLmFXACF7TU2KLfTT4=
+github.com/multycloud/multy v0.1.15 h1:WBStdxxvWTYaprqMbGvB4dSRsgdjxoJq8TzMzZnTuVk=
+github.com/multycloud/multy v0.1.15/go.mod h1:Yxv6xtfxECXcvQYD5XgdQXJISCLmFXACF7TU2KLfTT4=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce h1:RPclfga2SEJmgMmz2k+Mg7cowZ8yv4Trqw9UsJby758=
 github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce/go.mod h1:uFMI8w+ref4v2r9jz+c9i1IfIttS/OkmLfrk1jne5hs=

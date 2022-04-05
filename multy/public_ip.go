@@ -7,8 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	common_proto "github.com/multycloud/multy/api/proto/common"
-	"github.com/multycloud/multy/api/proto/resources"
+	"github.com/multycloud/multy/api/proto/commonpb"
+	"github.com/multycloud/multy/api/proto/resourcespb"
 	"strings"
 	"terraform-provider-multy/multy/common"
 )
@@ -73,7 +73,7 @@ func (r resourcePublicIp) Create(ctx context.Context, req tfsdk.CreateResourceRe
 	}
 
 	// Create new order from plan values
-	vn, err := c.Client.CreatePublicIp(ctx, &resources.CreatePublicIpRequest{
+	vn, err := c.Client.CreatePublicIp(ctx, &resourcespb.CreatePublicIpRequest{
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
@@ -110,7 +110,7 @@ func (r resourcePublicIp) Read(ctx context.Context, req tfsdk.ReadResourceReques
 	}
 
 	// Get public_ip from API and then update what is in state from what the API returns
-	vn, err := r.p.Client.Client.ReadPublicIp(ctx, &resources.ReadPublicIpRequest{ResourceId: state.Id.Value})
+	vn, err := r.p.Client.Client.ReadPublicIp(ctx, &resourcespb.ReadPublicIpRequest{ResourceId: state.Id.Value})
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting public_ip", common.ParseGrpcErrors(err))
 		return
@@ -146,7 +146,7 @@ func (r resourcePublicIp) Update(ctx context.Context, req tfsdk.UpdateResourceRe
 	}
 
 	// Update public_ip
-	vn, err := c.Client.UpdatePublicIp(ctx, &resources.UpdatePublicIpRequest{
+	vn, err := c.Client.UpdatePublicIp(ctx, &resourcespb.UpdatePublicIpRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
 		Resource:   r.convertResourcePlanToArgs(plan),
@@ -182,7 +182,7 @@ func (r resourcePublicIp) Delete(ctx context.Context, req tfsdk.DeleteResourceRe
 	}
 
 	// Delete public_ip
-	_, err = c.Client.DeletePublicIp(ctx, &resources.DeletePublicIpRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeletePublicIp(ctx, &resourcespb.DeletePublicIpRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -209,7 +209,7 @@ type PublicIp struct {
 	Location           types.String `tfsdk:"location"`
 }
 
-func (r resourcePublicIp) convertResponseToResource(res *resources.PublicIpResource) PublicIp {
+func (r resourcePublicIp) convertResponseToResource(res *resourcespb.PublicIpResource) PublicIp {
 	return PublicIp{
 		Id:                 types.String{Value: res.CommonParameters.ResourceId},
 		Name:               types.String{Value: res.Name},
@@ -219,9 +219,9 @@ func (r resourcePublicIp) convertResponseToResource(res *resources.PublicIpResou
 	}
 }
 
-func (r resourcePublicIp) convertResourcePlanToArgs(plan PublicIp) *resources.PublicIpArgs {
-	return &resources.PublicIpArgs{
-		CommonParameters: &common_proto.ResourceCommonArgs{
+func (r resourcePublicIp) convertResourcePlanToArgs(plan PublicIp) *resourcespb.PublicIpArgs {
+	return &resourcespb.PublicIpArgs{
+		CommonParameters: &commonpb.ResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},

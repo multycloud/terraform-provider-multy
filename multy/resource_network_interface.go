@@ -7,8 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	common_proto "github.com/multycloud/multy/api/proto/common"
-	"github.com/multycloud/multy/api/proto/resources"
+	"github.com/multycloud/multy/api/proto/commonpb"
+	"github.com/multycloud/multy/api/proto/resourcespb"
 	"strings"
 	"terraform-provider-multy/multy/common"
 )
@@ -72,7 +72,7 @@ func (r resourceNetworkInterface) Create(ctx context.Context, req tfsdk.CreateRe
 	}
 
 	// Create new order from plan values
-	vn, err := c.Client.CreateNetworkInterface(ctx, &resources.CreateNetworkInterfaceRequest{
+	vn, err := c.Client.CreateNetworkInterface(ctx, &resourcespb.CreateNetworkInterfaceRequest{
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
@@ -109,7 +109,7 @@ func (r resourceNetworkInterface) Read(ctx context.Context, req tfsdk.ReadResour
 	}
 
 	// Get network_interface from API and then update what is in state from what the API returns
-	vn, err := r.p.Client.Client.ReadNetworkInterface(ctx, &resources.ReadNetworkInterfaceRequest{ResourceId: state.Id.Value})
+	vn, err := r.p.Client.Client.ReadNetworkInterface(ctx, &resourcespb.ReadNetworkInterfaceRequest{ResourceId: state.Id.Value})
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting network_interface", common.ParseGrpcErrors(err))
 		return
@@ -145,7 +145,7 @@ func (r resourceNetworkInterface) Update(ctx context.Context, req tfsdk.UpdateRe
 	}
 
 	// Update network_interface
-	vn, err := c.Client.UpdateNetworkInterface(ctx, &resources.UpdateNetworkInterfaceRequest{
+	vn, err := c.Client.UpdateNetworkInterface(ctx, &resourcespb.UpdateNetworkInterfaceRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
 		Resource:   r.convertResourcePlanToArgs(plan),
@@ -181,7 +181,7 @@ func (r resourceNetworkInterface) Delete(ctx context.Context, req tfsdk.DeleteRe
 	}
 
 	// Delete network_interface
-	_, err = c.Client.DeleteNetworkInterface(ctx, &resources.DeleteNetworkInterfaceRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteNetworkInterface(ctx, &resourcespb.DeleteNetworkInterfaceRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -207,7 +207,7 @@ type NetworkInterface struct {
 	Cloud    types.String `tfsdk:"cloud"`
 }
 
-func (r resourceNetworkInterface) convertResponseToResource(res *resources.NetworkInterfaceResource) NetworkInterface {
+func (r resourceNetworkInterface) convertResponseToResource(res *resourcespb.NetworkInterfaceResource) NetworkInterface {
 	return NetworkInterface{
 		Id:       types.String{Value: res.CommonParameters.ResourceId},
 		Name:     types.String{Value: res.Name},
@@ -216,9 +216,9 @@ func (r resourceNetworkInterface) convertResponseToResource(res *resources.Netwo
 	}
 }
 
-func (r resourceNetworkInterface) convertResourcePlanToArgs(plan NetworkInterface) *resources.NetworkInterfaceArgs {
-	return &resources.NetworkInterfaceArgs{
-		CommonParameters: &common_proto.ResourceCommonArgs{
+func (r resourceNetworkInterface) convertResourcePlanToArgs(plan NetworkInterface) *resourcespb.NetworkInterfaceArgs {
+	return &resourcespb.NetworkInterfaceArgs{
+		CommonParameters: &commonpb.ResourceCommonArgs{
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},
 		Name:     plan.Name.Value,

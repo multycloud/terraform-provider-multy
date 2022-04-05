@@ -4,13 +4,12 @@ go 1.18
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.15.2
-	github.com/golang/protobuf v1.5.2
 	github.com/hashicorp/go-azure-helpers v0.27.0
 	github.com/hashicorp/terraform-plugin-framework v0.6.0
 	github.com/hashicorp/terraform-plugin-go v0.8.0
 	github.com/hashicorp/terraform-plugin-log v0.3.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.11.0
-	github.com/multycloud/multy v0.1.14
+	github.com/multycloud/multy v0.1.15
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0
 )
@@ -41,6 +40,7 @@ require (
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -78,5 +78,4 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e // indirect
-
 )

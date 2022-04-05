@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	common_proto "github.com/multycloud/multy/api/proto/common"
-	"github.com/multycloud/multy/api/proto/resources"
+	"github.com/multycloud/multy/api/proto/commonpb"
+	"github.com/multycloud/multy/api/proto/resourcespb"
 	"strings"
 	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/validators"
@@ -129,7 +129,7 @@ func (r resourceVirtualMachine) Create(ctx context.Context, req tfsdk.CreateReso
 	}
 
 	// Create new order from plan values
-	vm, err := c.Client.CreateVirtualMachine(ctx, &resources.CreateVirtualMachineRequest{
+	vm, err := c.Client.CreateVirtualMachine(ctx, &resourcespb.CreateVirtualMachineRequest{
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
@@ -165,7 +165,7 @@ func (r resourceVirtualMachine) Read(ctx context.Context, req tfsdk.ReadResource
 	}
 
 	// Get virtual_machine from API and then update what is in state from what the API returns
-	vm, err := r.p.Client.Client.ReadVirtualMachine(ctx, &resources.ReadVirtualMachineRequest{ResourceId: state.Id.Value})
+	vm, err := r.p.Client.Client.ReadVirtualMachine(ctx, &resourcespb.ReadVirtualMachineRequest{ResourceId: state.Id.Value})
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting virtual_machine", common.ParseGrpcErrors(err))
 		return
@@ -201,7 +201,7 @@ func (r resourceVirtualMachine) Update(ctx context.Context, req tfsdk.UpdateReso
 	}
 
 	// Update virtual_machine
-	vm, err := c.Client.UpdateVirtualMachine(ctx, &resources.UpdateVirtualMachineRequest{
+	vm, err := c.Client.UpdateVirtualMachine(ctx, &resourcespb.UpdateVirtualMachineRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
 		Resource:   r.convertResourcePlanToArgs(plan),
@@ -237,7 +237,7 @@ func (r resourceVirtualMachine) Delete(ctx context.Context, req tfsdk.DeleteReso
 	}
 
 	// Delete virtual_machine
-	_, err = c.Client.DeleteVirtualMachine(ctx, &resources.DeleteVirtualMachineRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteVirtualMachine(ctx, &resourcespb.DeleteVirtualMachineRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -256,7 +256,7 @@ func (r resourceVirtualMachine) ImportState(ctx context.Context, req tfsdk.Impor
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }
 
-func (r resourceVirtualMachine) convertResponseToResource(res *resources.VirtualMachineResource) VirtualMachine {
+func (r resourceVirtualMachine) convertResponseToResource(res *resourcespb.VirtualMachineResource) VirtualMachine {
 	return VirtualMachine{
 		Id:                      types.String{Value: res.CommonParameters.ResourceId},
 		Name:                    types.String{Value: res.Name},
@@ -274,9 +274,9 @@ func (r resourceVirtualMachine) convertResponseToResource(res *resources.Virtual
 	}
 }
 
-func (r resourceVirtualMachine) convertResourcePlanToArgs(plan VirtualMachine) *resources.VirtualMachineArgs {
-	return &resources.VirtualMachineArgs{
-		CommonParameters: &common_proto.ResourceCommonArgs{
+func (r resourceVirtualMachine) convertResourcePlanToArgs(plan VirtualMachine) *resourcespb.VirtualMachineArgs {
+	return &resourcespb.VirtualMachineArgs{
+		CommonParameters: &commonpb.ResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},

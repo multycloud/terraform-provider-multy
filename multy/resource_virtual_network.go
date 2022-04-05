@@ -7,8 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	common_proto "github.com/multycloud/multy/api/proto/common"
-	"github.com/multycloud/multy/api/proto/resources"
+	"github.com/multycloud/multy/api/proto/commonpb"
+	"github.com/multycloud/multy/api/proto/resourcespb"
 	"strings"
 	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/validators"
@@ -75,7 +75,7 @@ func (r resourceVirtualNetwork) Create(ctx context.Context, req tfsdk.CreateReso
 	}
 
 	// Create new order from plan values
-	vn, err := c.Client.CreateVirtualNetwork(ctx, &resources.CreateVirtualNetworkRequest{
+	vn, err := c.Client.CreateVirtualNetwork(ctx, &resourcespb.CreateVirtualNetworkRequest{
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
@@ -111,7 +111,7 @@ func (r resourceVirtualNetwork) Read(ctx context.Context, req tfsdk.ReadResource
 	}
 
 	// Get virtual_network from API and then update what is in state from what the API returns
-	vn, err := r.p.Client.Client.ReadVirtualNetwork(ctx, &resources.ReadVirtualNetworkRequest{ResourceId: state.Id.Value})
+	vn, err := r.p.Client.Client.ReadVirtualNetwork(ctx, &resourcespb.ReadVirtualNetworkRequest{ResourceId: state.Id.Value})
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting virtual_network", common.ParseGrpcErrors(err))
 		return
@@ -147,7 +147,7 @@ func (r resourceVirtualNetwork) Update(ctx context.Context, req tfsdk.UpdateReso
 	}
 
 	// Update virtual_network
-	vn, err := c.Client.UpdateVirtualNetwork(ctx, &resources.UpdateVirtualNetworkRequest{
+	vn, err := c.Client.UpdateVirtualNetwork(ctx, &resourcespb.UpdateVirtualNetworkRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
 		Resource:   r.convertResourcePlanToArgs(plan),
@@ -183,7 +183,7 @@ func (r resourceVirtualNetwork) Delete(ctx context.Context, req tfsdk.DeleteReso
 	}
 
 	// Delete virtual_network
-	_, err = c.Client.DeleteVirtualNetwork(ctx, &resources.DeleteVirtualNetworkRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteVirtualNetwork(ctx, &resourcespb.DeleteVirtualNetworkRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -210,7 +210,7 @@ type VirtualNetwork struct {
 	Location  types.String `tfsdk:"location"`
 }
 
-func (r resourceVirtualNetwork) convertResponseToResource(res *resources.VirtualNetworkResource) VirtualNetwork {
+func (r resourceVirtualNetwork) convertResponseToResource(res *resourcespb.VirtualNetworkResource) VirtualNetwork {
 	return VirtualNetwork{
 		Id:        types.String{Value: res.CommonParameters.ResourceId},
 		Name:      types.String{Value: res.Name},
@@ -220,9 +220,9 @@ func (r resourceVirtualNetwork) convertResponseToResource(res *resources.Virtual
 	}
 }
 
-func (r resourceVirtualNetwork) convertResourcePlanToArgs(plan VirtualNetwork) *resources.VirtualNetworkArgs {
-	return &resources.VirtualNetworkArgs{
-		CommonParameters: &common_proto.ResourceCommonArgs{
+func (r resourceVirtualNetwork) convertResourcePlanToArgs(plan VirtualNetwork) *resourcespb.VirtualNetworkArgs {
+	return &resourcespb.VirtualNetworkArgs{
+		CommonParameters: &commonpb.ResourceCommonArgs{
 			Location:      common.StringToLocation(plan.Location.Value),
 			CloudProvider: common.StringToCloud(plan.Cloud.Value),
 		},

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/multycloud/multy/api/proto/resources"
+	"github.com/multycloud/multy/api/proto/resourcespb"
 	"strings"
 	"terraform-provider-multy/multy/common"
 )
@@ -29,7 +29,7 @@ func dataVirtualNetworkRead(ctx context.Context, d *schema.ResourceData, m inter
 		return
 	}
 
-	vn, err := c.Client.ReadVirtualNetwork(ctx, &resources.ReadVirtualNetworkRequest{ResourceId: d.Id()})
+	vn, err := c.Client.ReadVirtualNetwork(ctx, &resourcespb.ReadVirtualNetworkRequest{ResourceId: d.Id()})
 	if err != nil {
 		return diag.FromErr(err)
 	}
