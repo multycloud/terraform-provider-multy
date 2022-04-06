@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.15.3
-	github.com/hashicorp/go-azure-helpers v0.27.0
+	github.com/hashicorp/go-azure-helpers v0.28.0
 	github.com/hashicorp/terraform-plugin-docs v0.7.0
 	github.com/hashicorp/terraform-plugin-framework v0.6.1
 	github.com/hashicorp/terraform-plugin-go v0.8.0
@@ -18,8 +18,8 @@ require (
 require (
 	github.com/Azure/azure-sdk-for-go v59.2.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest v0.11.22 // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.9.17 // indirect
+	github.com/Azure/go-autorest/autorest v0.11.24 // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.9.18 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.4 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
@@ -70,7 +70,8 @@ require (
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jhump/protoreflect v1.12.0 // indirect
-	github.com/manicminer/hamilton v0.37.0 // indirect
+	github.com/manicminer/hamilton v0.43.0 // indirect
+	github.com/manicminer/hamilton-autorest v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/cli v1.1.2 // indirect
