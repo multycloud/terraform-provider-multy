@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/multycloud/multy/api/proto/resourcespb"
+	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/validators"
 )
 
@@ -86,7 +87,7 @@ func (r resourceSubnet) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating subnet", err.Error())
+		resp.Diagnostics.AddError("Error creating subnet", common.ParseGrpcErrors(err))
 		return
 	}
 

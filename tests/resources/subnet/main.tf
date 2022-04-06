@@ -8,8 +8,8 @@ terraform {
 }
 
 provider "multy" {
-  api_key = "1234"
-  #  server_endpoint = "localhost:8000"
+  api_key         = "secret-1"
+  server_endpoint = "localhost:8000"
 }
 
 resource multy_virtual_network vn {
@@ -21,6 +21,13 @@ resource multy_virtual_network vn {
 
 resource multy_subnet subnet {
   name               = "test_subnet"
-  cidr_block         = "10.0.10.0/24"
+  cidr_block         = "10.0.0.0/1"
+  virtual_network_id = multy_virtual_network.vn.id
+}
+
+
+resource multy_subnet subnet_2 {
+  name               = "test_subnet"
+  cidr_block         = "10.0.1.0/1"
   virtual_network_id = multy_virtual_network.vn.id
 }

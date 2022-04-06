@@ -40,7 +40,7 @@ func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error
 	fmt.Println(string(b))
 	ctx = metadata.AppendToOutgoingContext(ctx, "cloud-creds-bin", string(b))
 	// TODO: retrieve user id from api key
-	return metadata.AppendToOutgoingContext(ctx, "user_id", c.ApiKey), nil
+	return metadata.AppendToOutgoingContext(ctx, "api_key", c.ApiKey), nil
 }
 
 //
