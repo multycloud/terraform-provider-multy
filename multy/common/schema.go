@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"terraform-provider-multy/multy/validators"
 )
 
-var RgVarsSchema = &schema.Schema{
-	Type:     schema.TypeMap,
-	Optional: true,
-	Elem: &schema.Schema{
-		Type: schema.TypeString,
-	},
-}
+//var RgVarsSchema = &schema.Schema{
+//	Type:     schema.TypeMap,
+//	Optional: true,
+//	Elem: &schema.Schema{
+//		Type: schema.TypeString,
+//	},
+//}
 
 var CloudsSchema = tfsdk.Attribute{
 	Type:        types.StringType,

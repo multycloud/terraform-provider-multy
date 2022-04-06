@@ -3,9 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	mproto "github.com/multycloud/multy/api/proto"
-	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/credspb"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
@@ -52,20 +50,6 @@ func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error
 //	}
 //	return c.Clouds
 //}
-
-func (c *ProviderConfig) GetOperatingSystem(d *schema.ResourceData) commonpb.OperatingSystem_Enum {
-	if loc, check := d.GetOk("operating_system"); check {
-		return StringToVmOperatingSystem(loc.(string))
-	}
-	return commonpb.OperatingSystem_UNKNOWN_OS
-}
-
-func (c *ProviderConfig) GetVmSize(d *schema.ResourceData) commonpb.VmSize_Enum {
-	if loc, check := d.GetOk("size"); check {
-		return StringToVmSize(loc.(string))
-	}
-	return commonpb.VmSize_UNKNOWN_VM_SIZE
-}
 
 type AwsConfig struct {
 	AccessKeyId     string
