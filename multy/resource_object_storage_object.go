@@ -7,15 +7,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/mtypes"
+	"terraform-provider-multy/multy/validators"
 )
 
-type ResourceObjectStorageType struct{}
+type ResourceObjectStorageObjectType struct{}
 
-func (r ResourceObjectStorageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (r ResourceObjectStorageObjectType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
@@ -25,32 +25,47 @@ func (r ResourceObjectStorageType) GetSchema(_ context.Context) (tfsdk.Schema, d
 			},
 			"name": {
 				Type:        types.StringType,
-				Description: "Name of Virtual Network",
+				Description: "Name of object storage object",
 				Required:    true,
 			},
-			"versioning": {
-				Type:        types.BoolType,
-				Description: "If true, versioning will be enabled to `object_storage_object`",
+			"object_storage_id": {
+				Type:        types.StringType,
+				Description: "Id of object storage",
+				Required:    true,
+			},
+			"content": {
+				Type:        types.StringType,
+				Description: "Content of the object",
+				Required:    true,
+			},
+			"content_type": {
+				Type:        types.StringType,
+				Description: "Standard MIME type describing the format of the object data",
+				Optional:    true,
+				Validators:  []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+			},
+			"acl": {
+				Type:        mtypes.ObjectAclType,
+				Description: "Access control for the given object. Can be public_read or private. Defaults to private.",
 				Optional:    true,
 				Computed:    true,
+				Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.ObjectAclType)},
 			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
 		},
 	}, nil
 }
 
-func (r ResourceObjectStorageType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return resourceObjectStorage{
+func (r ResourceObjectStorageObjectType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return resourceObjectStorageObject{
 		p: *(p.(*Provider)),
 	}, nil
 }
 
-type resourceObjectStorage struct {
+type resourceObjectStorageObject struct {
 	p Provider
 }
 
-func (r resourceObjectStorage) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r resourceObjectStorageObject) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	if !r.p.Configured {
 		resp.Diagnostics.AddError(
 			"Provider not configured",
@@ -60,7 +75,7 @@ func (r resourceObjectStorage) Create(ctx context.Context, req tfsdk.CreateResou
 	}
 
 	// Retrieve values from plan
-	var plan ObjectStorage
+	var plan ObjectStorageObject
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -75,7 +90,7 @@ func (r resourceObjectStorage) Create(ctx context.Context, req tfsdk.CreateResou
 	}
 
 	// Create new order from plan values
-	vn, err := c.Client.CreateObjectStorage(ctx, &resourcespb.CreateObjectStorageRequest{
+	vn, err := c.Client.CreateObjectStorageObject(ctx, &resourcespb.CreateObjectStorageObjectRequest{
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
@@ -83,7 +98,7 @@ func (r resourceObjectStorage) Create(ctx context.Context, req tfsdk.CreateResou
 		return
 	}
 
-	tflog.Trace(ctx, "created object_storage", map[string]interface{}{"object_storage_id": vn.CommonParameters.ResourceId})
+	tflog.Trace(ctx, "created object_storage_object", map[string]interface{}{"object_storage_object_id": vn.CommonParameters.ResourceId})
 
 	// Map response body to resource schema attribute
 	state := r.convertResponseToResource(vn)
@@ -95,9 +110,9 @@ func (r resourceObjectStorage) Create(ctx context.Context, req tfsdk.CreateResou
 	}
 }
 
-func (r resourceObjectStorage) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r resourceObjectStorageObject) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	// Get current state
-	var state ObjectStorage
+	var state ObjectStorageObject
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -112,7 +127,7 @@ func (r resourceObjectStorage) Read(ctx context.Context, req tfsdk.ReadResourceR
 	}
 
 	// Get object_storage from API and then update what is in state from what the API returns
-	vn, err := r.p.Client.Client.ReadObjectStorage(ctx, &resourcespb.ReadObjectStorageRequest{ResourceId: state.Id.Value})
+	vn, err := r.p.Client.Client.ReadObjectStorageObject(ctx, &resourcespb.ReadObjectStorageObjectRequest{ResourceId: state.Id.Value})
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting object_storage", common.ParseGrpcErrors(err))
 		return
@@ -127,8 +142,8 @@ func (r resourceObjectStorage) Read(ctx context.Context, req tfsdk.ReadResourceR
 	}
 }
 
-func (r resourceObjectStorage) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var plan, state ObjectStorage
+func (r resourceObjectStorageObject) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	var plan, state ObjectStorageObject
 	// Get plan values
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -148,7 +163,7 @@ func (r resourceObjectStorage) Update(ctx context.Context, req tfsdk.UpdateResou
 	}
 
 	// Update object_storage
-	vn, err := c.Client.UpdateObjectStorage(ctx, &resourcespb.UpdateObjectStorageRequest{
+	vn, err := c.Client.UpdateObjectStorageObject(ctx, &resourcespb.UpdateObjectStorageObjectRequest{
 		// fixme state vs plan
 		ResourceId: state.Id.Value,
 		Resource:   r.convertResourcePlanToArgs(plan),
@@ -158,7 +173,7 @@ func (r resourceObjectStorage) Update(ctx context.Context, req tfsdk.UpdateResou
 		return
 	}
 
-	tflog.Trace(ctx, "updated object_storage", map[string]interface{}{"object_storage_id": state.Id.Value})
+	tflog.Trace(ctx, "updated object_storage_object", map[string]interface{}{"object_storage_id": state.Id.Value})
 
 	// Map response body to resource schema attribute & Set state
 	state = r.convertResponseToResource(vn)
@@ -169,8 +184,8 @@ func (r resourceObjectStorage) Update(ctx context.Context, req tfsdk.UpdateResou
 	}
 }
 
-func (r resourceObjectStorage) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	var state ObjectStorage
+func (r resourceObjectStorageObject) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+	var state ObjectStorageObject
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -184,7 +199,7 @@ func (r resourceObjectStorage) Delete(ctx context.Context, req tfsdk.DeleteResou
 	}
 
 	// Delete object_storage
-	_, err = c.Client.DeleteObjectStorage(ctx, &resourcespb.DeleteObjectStorageRequest{ResourceId: state.Id.Value})
+	_, err = c.Client.DeleteObjectStorageObject(ctx, &resourcespb.DeleteObjectStorageObjectRequest{ResourceId: state.Id.Value})
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -198,36 +213,37 @@ func (r resourceObjectStorage) Delete(ctx context.Context, req tfsdk.DeleteResou
 	resp.State.RemoveResource(ctx)
 }
 
-func (r resourceObjectStorage) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r resourceObjectStorageObject) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	// Save the import identifier in the id attribute
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }
 
-type ObjectStorage struct {
-	Id         types.String                             `tfsdk:"id"`
-	Name       types.String                             `tfsdk:"name"`
-	Versioning types.Bool                               `tfsdk:"versioning"`
-	Cloud      mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location   mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+type ObjectStorageObject struct {
+	Id              types.String                                         `tfsdk:"id"`
+	Name            string                                               `tfsdk:"name"`
+	Acl             mtypes.EnumValue[resourcespb.ObjectStorageObjectAcl] `tfsdk:"acl"`
+	ObjectStorageId string                                               `tfsdk:"object_storage_id"`
+	Content         string                                               `tfsdk:"content"`
+	ContentType     types.String                                         `tfsdk:"content_type"`
 }
 
-func (r resourceObjectStorage) convertResponseToResource(res *resourcespb.ObjectStorageResource) ObjectStorage {
-	return ObjectStorage{
-		Id:         types.String{Value: res.CommonParameters.ResourceId},
-		Name:       types.String{Value: res.Name},
-		Versioning: types.Bool{Value: res.Versioning},
-		Cloud:      mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:   mtypes.LocationType.NewVal(res.CommonParameters.Location),
+func (r resourceObjectStorageObject) convertResponseToResource(res *resourcespb.ObjectStorageObjectResource) ObjectStorageObject {
+	return ObjectStorageObject{
+		Id:              types.String{Value: res.CommonParameters.ResourceId},
+		Name:            res.Name,
+		Acl:             mtypes.ObjectAclType.NewVal(res.Acl),
+		ObjectStorageId: res.ObjectStorageId,
+		Content:         res.Content,
+		ContentType:     common.DefaultToNull[types.String](res.ContentType),
 	}
 }
 
-func (r resourceObjectStorage) convertResourcePlanToArgs(plan ObjectStorage) *resourcespb.ObjectStorageArgs {
-	return &resourcespb.ObjectStorageArgs{
-		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      plan.Location.Value,
-			CloudProvider: plan.Cloud.Value,
-		},
-		Name:       plan.Name.Value,
-		Versioning: plan.Versioning.Value,
+func (r resourceObjectStorageObject) convertResourcePlanToArgs(plan ObjectStorageObject) *resourcespb.ObjectStorageObjectArgs {
+	return &resourcespb.ObjectStorageObjectArgs{
+		Name:            plan.Name,
+		Acl:             plan.Acl.Value,
+		ObjectStorageId: plan.ObjectStorageId,
+		Content:         plan.Content,
+		ContentType:     common.NullToDefault[string](plan.ContentType),
 	}
 }

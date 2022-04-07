@@ -9,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
-	"strings"
 	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/mtypes"
 )
 
 type ResourcePublicIpType struct{}
@@ -19,8 +19,9 @@ func (r ResourcePublicIpType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
 				Type:        types.StringType,
@@ -202,11 +203,11 @@ func (r resourcePublicIp) ImportState(ctx context.Context, req tfsdk.ImportResou
 }
 
 type PublicIp struct {
-	Id                 types.String `tfsdk:"id"`
-	Name               types.String `tfsdk:"name"`
-	NetworkInterfaceId types.String `tfsdk:"network_interface_id"`
-	Cloud              types.String `tfsdk:"cloud"`
-	Location           types.String `tfsdk:"location"`
+	Id                 types.String                             `tfsdk:"id"`
+	Name               types.String                             `tfsdk:"name"`
+	NetworkInterfaceId types.String                             `tfsdk:"network_interface_id"`
+	Cloud              mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location           mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 }
 
 func (r resourcePublicIp) convertResponseToResource(res *resourcespb.PublicIpResource) PublicIp {
@@ -214,16 +215,16 @@ func (r resourcePublicIp) convertResponseToResource(res *resourcespb.PublicIpRes
 		Id:                 types.String{Value: res.CommonParameters.ResourceId},
 		Name:               types.String{Value: res.Name},
 		NetworkInterfaceId: types.String{Value: res.NetworkInterfaceId},
-		Cloud:              types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
-		Location:           types.String{Value: strings.ToLower(res.CommonParameters.Location.String())},
+		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
 func (r resourcePublicIp) convertResourcePlanToArgs(plan PublicIp) *resourcespb.PublicIpArgs {
 	return &resourcespb.PublicIpArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      common.StringToLocation(plan.Location.Value),
-			CloudProvider: common.StringToCloud(plan.Cloud.Value),
+			Location:      plan.Location.Value,
+			CloudProvider: plan.Cloud.Value,
 		},
 		Name:               plan.Name.Value,
 		NetworkInterfaceId: plan.NetworkInterfaceId.Value,

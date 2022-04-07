@@ -9,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
-	"strings"
 	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
 )
 
@@ -21,8 +21,9 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 		MarkdownDescription: "Provides Multy Virtual Network resource",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
 				Type:        types.StringType,
@@ -204,11 +205,11 @@ func (r resourceVirtualNetwork) ImportState(ctx context.Context, req tfsdk.Impor
 }
 
 type VirtualNetwork struct {
-	Id        types.String `tfsdk:"id"`
-	Name      types.String `tfsdk:"name"`
-	CidrBlock types.String `tfsdk:"cidr_block"`
-	Cloud     types.String `tfsdk:"cloud"`
-	Location  types.String `tfsdk:"location"`
+	Id        types.String                             `tfsdk:"id"`
+	Name      types.String                             `tfsdk:"name"`
+	CidrBlock types.String                             `tfsdk:"cidr_block"`
+	Cloud     mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location  mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 }
 
 func (r resourceVirtualNetwork) convertResponseToResource(res *resourcespb.VirtualNetworkResource) VirtualNetwork {
@@ -216,16 +217,16 @@ func (r resourceVirtualNetwork) convertResponseToResource(res *resourcespb.Virtu
 		Id:        types.String{Value: res.CommonParameters.ResourceId},
 		Name:      types.String{Value: res.Name},
 		CidrBlock: types.String{Value: res.CidrBlock},
-		Cloud:     types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
-		Location:  types.String{Value: strings.ToLower(res.CommonParameters.Location.String())},
+		Cloud:     mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:  mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
 func (r resourceVirtualNetwork) convertResourcePlanToArgs(plan VirtualNetwork) *resourcespb.VirtualNetworkArgs {
 	return &resourcespb.VirtualNetworkArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      common.StringToLocation(plan.Location.Value),
-			CloudProvider: common.StringToCloud(plan.Cloud.Value),
+			Location:      plan.Location.Value,
+			CloudProvider: plan.Cloud.Value,
 		},
 		Name:      plan.Name.Value,
 		CidrBlock: plan.CidrBlock.Value,

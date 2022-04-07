@@ -11,8 +11,8 @@ import (
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"strconv"
-	"strings"
 	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
 )
 
@@ -27,8 +27,9 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
 				Type:        types.StringType,
@@ -265,12 +266,12 @@ func validateRulePort(i interface{}, k string) (warnings []string, errors []erro
 }
 
 type NetworkSecurityGroup struct {
-	Id               types.String `tfsdk:"id"`
-	Name             types.String `tfsdk:"name"`
-	VirtualNetworkId types.String `tfsdk:"virtual_network_id"`
-	Rules            []Rule       `tfsdk:"rule"`
-	Cloud            types.String `tfsdk:"cloud"`
-	Location         types.String `tfsdk:"location"`
+	Id               types.String                             `tfsdk:"id"`
+	Name             types.String                             `tfsdk:"name"`
+	VirtualNetworkId types.String                             `tfsdk:"virtual_network_id"`
+	Rules            []Rule                                   `tfsdk:"rule"`
+	Cloud            mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location         mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 }
 
 type Rule struct {
@@ -299,8 +300,8 @@ func (r resourceNetworkSecurityGroup) convertResponseToResource(res *resourcespb
 		Name:             types.String{Value: res.Name},
 		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
 		Rules:            rules,
-		Cloud:            types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
-		Location:         types.String{Value: strings.ToLower(res.CommonParameters.Location.String())},
+		Cloud:            mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:         mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
@@ -321,8 +322,8 @@ func (r resourceNetworkSecurityGroup) convertResourcePlanToArgs(plan NetworkSecu
 	}
 	return &resourcespb.NetworkSecurityGroupArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      common.StringToLocation(plan.Location.Value),
-			CloudProvider: common.StringToCloud(plan.Cloud.Value),
+			Location:      plan.Location.Value,
+			CloudProvider: plan.Cloud.Value,
 		},
 		Name:             plan.Name.Value,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,

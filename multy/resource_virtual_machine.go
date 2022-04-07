@@ -10,8 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
-	"strings"
 	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
 )
 
@@ -21,8 +21,9 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
 				Type:        types.StringType,
@@ -30,16 +31,16 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Required:    true,
 			},
 			"operating_system": {
-				Type:        types.StringType,
+				Type:        mtypes.OperatingSystemType,
 				Description: fmt.Sprintf("Operating System of Virtual Machine. Accepted values are %s", common.GetVmOperatingSystem()),
 				Required:    true,
-				Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: common.GetVmOperatingSystem()}},
+				Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.OperatingSystemType)},
 			},
 			"size": {
-				Type:        types.StringType,
+				Type:        mtypes.VmSizeType,
 				Description: fmt.Sprintf("Size of Virtual Machine. Accepted values are %s", common.GetVmSize()),
 				Required:    true,
-				Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: common.GetVmSize()}},
+				Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.VmSizeType)},
 			},
 			"subnet_id": {
 				Type:        types.StringType,
@@ -260,8 +261,8 @@ func (r resourceVirtualMachine) convertResponseToResource(res *resourcespb.Virtu
 	return VirtualMachine{
 		Id:                      types.String{Value: res.CommonParameters.ResourceId},
 		Name:                    types.String{Value: res.Name},
-		OperatingSystem:         types.String{Value: strings.ToLower(res.OperatingSystem.String())},
-		Size:                    common.DefaultEnumToNull(res.VmSize),
+		OperatingSystem:         mtypes.OperatingSystemType.NewVal(res.OperatingSystem),
+		Size:                    mtypes.VmSizeType.NewVal(res.VmSize),
 		SubnetId:                types.String{Value: res.SubnetId},
 		NetworkInterfaceIds:     common.DefaultSliceToNull(common.TypesStringToStringSlice(res.NetworkInterfaceIds)),
 		NetworkSecurityGroupIds: common.DefaultSliceToNull(common.TypesStringToStringSlice(res.NetworkSecurityGroupIds)),
@@ -269,22 +270,22 @@ func (r resourceVirtualMachine) convertResponseToResource(res *resourcespb.Virtu
 		PublicSshKey:            types.String{Value: res.PublicSshKey},
 		PublicIpId:              common.DefaultToNull[types.String](res.PublicIpId),
 		PublicIp:                types.Bool{Value: res.GeneratePublicIp},
-		Cloud:                   types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
-		Location:                types.String{Value: strings.ToLower(res.CommonParameters.Location.String())},
+		Cloud:                   mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:                mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
 func (r resourceVirtualMachine) convertResourcePlanToArgs(plan VirtualMachine) *resourcespb.VirtualMachineArgs {
 	return &resourcespb.VirtualMachineArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      common.StringToLocation(plan.Location.Value),
-			CloudProvider: common.StringToCloud(plan.Cloud.Value),
+			Location:      plan.Location.Value,
+			CloudProvider: plan.Cloud.Value,
 		},
 		Name:                    plan.Name.Value,
-		OperatingSystem:         common.StringToVmOperatingSystem(plan.OperatingSystem.Value),
+		OperatingSystem:         plan.OperatingSystem.Value,
 		NetworkInterfaceIds:     common.StringSliceToTypesString(plan.NetworkInterfaceIds),
 		NetworkSecurityGroupIds: common.StringSliceToTypesString(plan.NetworkSecurityGroupIds),
-		VmSize:                  common.StringToVmSize(plan.Size.Value),
+		VmSize:                  plan.Size.Value,
 		UserData:                plan.UserData.Value,
 		SubnetId:                plan.SubnetId.Value,
 		PublicSshKey:            plan.PublicSshKey.Value,
@@ -294,17 +295,17 @@ func (r resourceVirtualMachine) convertResourcePlanToArgs(plan VirtualMachine) *
 }
 
 type VirtualMachine struct {
-	Id                      types.String   `tfsdk:"id"`
-	Name                    types.String   `tfsdk:"name"`
-	OperatingSystem         types.String   `tfsdk:"operating_system"`
-	Size                    types.String   `tfsdk:"size"`
-	SubnetId                types.String   `tfsdk:"subnet_id"`
-	NetworkInterfaceIds     []types.String `tfsdk:"network_interface_ids"`
-	NetworkSecurityGroupIds []types.String `tfsdk:"network_security_group_ids"`
-	UserData                types.String   `tfsdk:"user_data"`
-	PublicSshKey            types.String   `tfsdk:"public_ssh_key"`
-	PublicIpId              types.String   `tfsdk:"public_ip_id"`
-	PublicIp                types.Bool     `tfsdk:"public_ip"`
-	Cloud                   types.String   `tfsdk:"cloud"`
-	Location                types.String   `tfsdk:"location"`
+	Id                      types.String                                    `tfsdk:"id"`
+	Name                    types.String                                    `tfsdk:"name"`
+	OperatingSystem         mtypes.EnumValue[commonpb.OperatingSystem_Enum] `tfsdk:"operating_system"`
+	Size                    mtypes.EnumValue[commonpb.VmSize_Enum]          `tfsdk:"size"`
+	SubnetId                types.String                                    `tfsdk:"subnet_id"`
+	NetworkInterfaceIds     []types.String                                  `tfsdk:"network_interface_ids"`
+	NetworkSecurityGroupIds []types.String                                  `tfsdk:"network_security_group_ids"`
+	UserData                types.String                                    `tfsdk:"user_data"`
+	PublicSshKey            types.String                                    `tfsdk:"public_ssh_key"`
+	PublicIpId              types.String                                    `tfsdk:"public_ip_id"`
+	PublicIp                types.Bool                                      `tfsdk:"public_ip"`
+	Cloud                   mtypes.EnumValue[commonpb.CloudProvider]        `tfsdk:"cloud"`
+	Location                mtypes.EnumValue[commonpb.Location]             `tfsdk:"location"`
 }
