@@ -18,8 +18,9 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
 				Type:        types.StringType,

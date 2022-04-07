@@ -7,9 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
-	"strings"
 	"terraform-provider-multy/multy/common"
 )
 
@@ -19,8 +17,9 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
 				Type:        types.StringType,
@@ -204,7 +203,6 @@ type NetworkInterface struct {
 	Id       types.String `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
 	SubnetId types.String `tfsdk:"subnet_id"`
-	Cloud    types.String `tfsdk:"cloud"`
 }
 
 func (r resourceNetworkInterface) convertResponseToResource(res *resourcespb.NetworkInterfaceResource) NetworkInterface {
@@ -212,15 +210,11 @@ func (r resourceNetworkInterface) convertResponseToResource(res *resourcespb.Net
 		Id:       types.String{Value: res.CommonParameters.ResourceId},
 		Name:     types.String{Value: res.Name},
 		SubnetId: types.String{Value: res.SubnetId},
-		Cloud:    types.String{Value: strings.ToLower(res.CommonParameters.CloudProvider.String())},
 	}
 }
 
 func (r resourceNetworkInterface) convertResourcePlanToArgs(plan NetworkInterface) *resourcespb.NetworkInterfaceArgs {
 	return &resourcespb.NetworkInterfaceArgs{
-		CommonParameters: &commonpb.ResourceCommonArgs{
-			CloudProvider: common.StringToCloud(plan.Cloud.Value),
-		},
 		Name:     plan.Name.Value,
 		SubnetId: plan.SubnetId.Value,
 	}

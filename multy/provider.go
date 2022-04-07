@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto"
+	"github.com/multycloud/multy/api/proto/commonpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -47,7 +48,7 @@ func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 						Type:        types.StringType,
 						Sensitive:   true,
 					},
-					"secret_access_key": {
+					"access_key_secret": {
 						Optional:    true,
 						Description: "AWS Secret Access Key. " + common.HelperValueViaEnvVar("AWS_SECRET_ACCESS_KEY"),
 						Type:        types.StringType,
@@ -116,6 +117,7 @@ type providerAzureConfig struct {
 
 func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
 	var config providerData
+	var err error
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -147,34 +149,33 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 
 	var awsConfig *common.AwsConfig
 	// fixme error with aws = {} in provider
-	//if config.Aws != nil {
-	var err error
-	awsConfig, err = p.validateAwsConfig(ctx, config.Aws)
-	// TODO: handle case where we don't need azure
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to connect to AWS",
-			err.Error(),
-		)
-		return
-	}
-	//}
-
-	var azureConfig *common.AzureConfig
-	if config.Azure != nil {
+	if config.Aws != nil {
 		var err error
-		azureConfig, err = p.validateAzureConfig(config.Azure)
+		awsConfig, err = p.validateAwsConfig(ctx, config.Aws)
 		// TODO: handle case where we don't need azure
 		if err != nil {
-			//resp.Diagnostics.AddError(
-			//	"Unable to connect to Azure",
-			//	err.Error(),
-			//)
-			//return
+			resp.Diagnostics.AddError(
+				"Unable to connect to AWS",
+				err.Error(),
+			)
+			return
 		}
 	}
 
-	endpoint := "api2.multy.dev:443"
+	var azureConfig *common.AzureConfig
+	if config.Azure != nil {
+		azureConfig, err = p.validateAzureConfig(config.Azure)
+		// TODO: handle case where we don't need azure
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Unable to connect to Azure",
+				err.Error(),
+			)
+			return
+		}
+
+	}
+	endpoint := "api.multy.dev:443"
 	if !config.ServerEndpoint.Null {
 		endpoint = config.ServerEndpoint.Value
 	}
@@ -204,19 +205,27 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	c := common.ProviderConfig{}
 
 	client := proto.NewMultyResourceServiceClient(conn)
-	// fix me no err from previous func
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to create Client",
-			"Unable to create multy Client:\n\n"+err.Error(),
-		)
-		return
-	}
-
 	c.Client = client
 	c.ApiKey = apiKey
 	c.Aws = awsConfig
 	c.Azure = azureConfig
+
+	ctx, err = c.AddHeaders(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to connect to multy server",
+			"Unable to connect to multy server:\n\n"+err.Error(),
+		)
+		return
+	}
+	_, err = client.RefreshState(ctx, &commonpb.Empty{})
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to connect to multy server",
+			"Unable to connect to multy server:\n\n"+common.ParseGrpcErrors(err),
+		)
+		return
+	}
 
 	p.Client = &c
 	p.Configured = true
@@ -231,6 +240,9 @@ func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 		"multy_network_interface":       ResourceNetworkInterfaceType{},
 		"multy_route_table":             ResourceRouteTableType{},
 		"multy_route_table_association": ResourceRouteTableAssociationType{},
+		"multy_object_storage_object":   ResourceObjectStorageObjectType{},
+		"multy_object_storage":          ResourceObjectStorageType{},
+		"multy_database":                ResourceDatabaseType{},
 	}, nil
 }
 
@@ -243,23 +255,19 @@ func (p *Provider) GetDataSources(_ context.Context) (map[string]tfsdk.DataSourc
 
 func (p *Provider) validateAwsConfig(ctx context.Context, config *providerAwsConfig) (*common.AwsConfig, error) {
 	var awsConfig common.AwsConfig
-	if config != nil && config.AccessKeyId.Unknown {
+	if config.AccessKeyId.Unknown {
 		return nil, fmt.Errorf("cannot use unknown value as access_key_id")
 	}
-	if config != nil {
-		if config.AccessKeyId.Unknown {
-			return nil, fmt.Errorf("cannot use unknown value as access_key_id")
-		}
-		if config.AccessKeySecret.Unknown {
-			return nil, fmt.Errorf("cannot use unknown value as access_key_id")
-		}
-
-		return &common.AwsConfig{
-			AccessKeyId:     config.AccessKeyId.Value,
-			AccessKeySecret: config.AccessKeySecret.Value,
-		}, nil
+	if config.AccessKeySecret.Unknown {
+		return nil, fmt.Errorf("cannot use unknown value as access_key_seceret")
 	}
-
+	awsConfig = common.AwsConfig{
+		AccessKeyId:     config.AccessKeyId.Value,
+		AccessKeySecret: config.AccessKeySecret.Value,
+	}
+	if len(awsConfig.AccessKeyId) > 0 && len(awsConfig.AccessKeyId) > 0 {
+		return &awsConfig, nil
+	}
 	awsConfig.AccessKeyId = os.Getenv("AWS_ACCESS_KEY_ID")
 	awsConfig.AccessKeySecret = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	if awsConfig.AccessKeyId != "" && awsConfig.AccessKeySecret != "" {
@@ -281,26 +289,28 @@ func (p *Provider) validateAwsConfig(ctx context.Context, config *providerAwsCon
 
 func (p *Provider) validateAzureConfig(config *providerAzureConfig) (*common.AzureConfig, error) {
 	var azureConfig common.AzureConfig
-	if config != nil {
-		if config.SubscriptionId.Unknown {
-			return nil, fmt.Errorf("cannot use unknown value as subscription_id")
-		}
-		if config.ClientId.Unknown {
-			return nil, fmt.Errorf("cannot use unknown value as client_id")
-		}
-		if config.ClientSecret.Unknown {
-			return nil, fmt.Errorf("cannot use unknown value as client_secret")
-		}
-		if config.TenantId.Unknown {
-			return nil, fmt.Errorf("cannot use unknown value as tenant_id")
-		}
+	if config.SubscriptionId.Unknown {
+		return nil, fmt.Errorf("cannot use unknown value as subscription_id")
+	}
+	if config.ClientId.Unknown {
+		return nil, fmt.Errorf("cannot use unknown value as client_id")
+	}
+	if config.ClientSecret.Unknown {
+		return nil, fmt.Errorf("cannot use unknown value as client_secret")
+	}
+	if config.TenantId.Unknown {
+		return nil, fmt.Errorf("cannot use unknown value as tenant_id")
+	}
 
-		return &common.AzureConfig{
-			SubscriptionId: config.SubscriptionId.Value,
-			ClientId:       config.ClientId.Value,
-			ClientSecret:   config.ClientSecret.Value,
-			TenantId:       config.TenantId.Value,
-		}, nil
+	azureConfig = common.AzureConfig{
+		SubscriptionId: config.SubscriptionId.Value,
+		ClientId:       config.ClientId.Value,
+		ClientSecret:   config.ClientSecret.Value,
+		TenantId:       config.TenantId.Value,
+	}
+
+	if azureConfig.SubscriptionId != "" && azureConfig.ClientId != "" && azureConfig.ClientSecret != "" && azureConfig.TenantId != "" {
+		return &azureConfig, nil
 	}
 
 	azureConfig.SubscriptionId = os.Getenv("ARM_SUBSCRIPTION_ID")

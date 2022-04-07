@@ -22,14 +22,6 @@ func GetEnumNames(vals map[string]int32) []string {
 	return keys
 }
 
-func GetLocationNames() []string {
-	return GetEnumNames(commonpb.Location_value)
-}
-
-func GetCloudNames() []string {
-	return GetEnumNames(commonpb.CloudProvider_value)
-}
-
 func GetVmOperatingSystem() []string {
 	return GetEnumNames(commonpb.OperatingSystem_Enum_value)
 }
@@ -42,20 +34,19 @@ func GetRouteDestinations() []string {
 	return GetEnumNames(resourcespb.RouteDestination_value)
 }
 
-func StringToLocation(loc string) commonpb.Location {
-	return commonpb.Location(commonpb.Location_value[strings.ToUpper(loc)])
-}
-
 func StringToVmOperatingSystem(os string) commonpb.OperatingSystem_Enum {
-	return commonpb.OperatingSystem_Enum(commonpb.OperatingSystem_Enum_value[strings.ToUpper(os)])
+	return StringToEnum[commonpb.OperatingSystem_Enum](commonpb.OperatingSystem_Enum_value, os)
 }
 
 func StringToVmSize(os string) commonpb.VmSize_Enum {
-	return commonpb.VmSize_Enum(commonpb.VmSize_Enum_value[strings.ToUpper(os)])
+	return StringToEnum[commonpb.VmSize_Enum](commonpb.VmSize_Enum_value, os)
 }
 
-func StringToCloud(cloud string) commonpb.CloudProvider {
-	return commonpb.CloudProvider(commonpb.CloudProvider_value[strings.ToUpper(cloud)])
+func StringToEnum[T ~int32](values map[string]int32, value string) T {
+	if value == "" {
+		return T(0)
+	}
+	return T(values[strings.ToUpper(value)])
 }
 
 func StringToRouteDestination(route string) resourcespb.RouteDestination {
@@ -74,14 +65,6 @@ func RuleDirectionToString(dir resourcespb.Direction) string {
 		return "both"
 	}
 	return strings.ToLower(dir.String())
-}
-
-func ListToCloudList(clouds []string) []commonpb.CloudProvider {
-	var cloudList []commonpb.CloudProvider
-	for _, c := range clouds {
-		cloudList = append(cloudList, commonpb.CloudProvider(commonpb.CloudProvider_value[strings.ToUpper(c)]))
-	}
-	return cloudList
 }
 
 func ParseGrpcErrors(err error) string {
@@ -133,14 +116,38 @@ func DefaultToNull[OutT attr.Value](t any) OutT {
 	return s.(OutT)
 }
 
+func NullToDefault[OutT any, T attr.Value](t T) OutT {
+	returnVal := new(OutT)
+	value, err := t.ToTerraformValue(nil)
+	if err != nil {
+		panic(err)
+	}
+	if value.IsNull() {
+		return *returnVal
+	}
+
+	err = value.As(returnVal)
+	if err != nil {
+		panic(err)
+	}
+
+	return *returnVal
+}
+
 type protoEnum interface {
 	String() string
 	Number() protoreflect.EnumNumber
 }
 
-func DefaultEnumToNull(p protoEnum) types.String {
+func DefaultEnumToNullString(p protoEnum) types.String {
 	return types.String{
 		Null:  p.Number() == 0,
+		Value: strings.ToLower(p.String()),
+	}
+}
+
+func EnumToString(p protoEnum) types.String {
+	return types.String{
 		Value: strings.ToLower(p.String()),
 	}
 }

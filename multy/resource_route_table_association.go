@@ -17,8 +17,9 @@ func (r ResourceRouteTableAssociationType) GetSchema(_ context.Context) (tfsdk.S
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"subnet_id": {
 				Type:        types.StringType,

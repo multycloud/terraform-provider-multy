@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
 )
 
@@ -16,17 +17,18 @@ import (
 //}
 
 var CloudsSchema = tfsdk.Attribute{
-	Type:        types.StringType,
-	Description: fmt.Sprintf("Cloud provider to deploy resource into. Accepted values are %s", StringSliceToDocsMarkdown(GetCloudNames())),
-	Required:    true,
-	Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: GetCloudNames()}},
+	Type:          mtypes.CloudType,
+	Description:   fmt.Sprintf("CloudType provider to deploy resource into. Accepted values are %s", StringSliceToDocsMarkdown(mtypes.CloudType.GetAllValues())),
+	Required:      true,
+	Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.CloudType)},
+	PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 }
 
 var LocationSchema = tfsdk.Attribute{
-	Type:          types.StringType,
-	Description:   fmt.Sprintf("Location to deploy resource into. Accepted values are %s", StringSliceToDocsMarkdown(GetLocationNames())),
+	Type:          mtypes.LocationType,
+	Description:   fmt.Sprintf("LocationType to deploy resource into. Accepted values are %s", StringSliceToDocsMarkdown(mtypes.LocationType.GetAllValues())),
 	Required:      true,
-	Validators:    []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: GetLocationNames()}},
+	Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.LocationType)},
 	PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 }
 
