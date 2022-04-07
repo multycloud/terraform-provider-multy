@@ -13,16 +13,15 @@ variable clouds {
 }
 
 provider "multy" {
-  api_key         = "multy_local"
-  server_endpoint = "localhost:8000"
+  api_key = "secret-2"
 }
 
 resource multy_virtual_network vn {
   for_each = toset(var.clouds)
 
-  name       = "vn_test2"
+  name       = "vn_test"
   cidr_block = "10.0.0.0/16"
-  cloud      = each.key
+  cloud      = "aws"
   location   = "us_east"
 }
 
