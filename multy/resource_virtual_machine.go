@@ -19,6 +19,7 @@ type ResourceVirtualMachineType struct{}
 
 func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
+		MarkdownDescription: "Provides Multy Virtual Machine resource",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Type:          types.StringType,

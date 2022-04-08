@@ -19,6 +19,7 @@ type ResourceDatabaseType struct{}
 
 func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
+		MarkdownDescription: "Provides Multy Database resource",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Type:          types.StringType,

@@ -16,6 +16,7 @@ type ResourceSubnetType struct{}
 
 func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
+		MarkdownDescription: "Provides Multy Subnet resource",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Type:          types.StringType,
