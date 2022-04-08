@@ -175,7 +175,7 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		}
 
 	}
-	endpoint := "api.multy.dev:443"
+	endpoint := "api2.multy.dev:443"
 	if !config.ServerEndpoint.Null {
 		endpoint = config.ServerEndpoint.Value
 	}

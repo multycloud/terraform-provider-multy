@@ -17,6 +17,7 @@ type ResourceObjectStorageObjectType struct{}
 
 func (r ResourceObjectStorageObjectType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
+		MarkdownDescription: "Provides Multy Object Storage Object resource",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Type:          types.StringType,
