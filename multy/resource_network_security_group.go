@@ -130,7 +130,7 @@ func (r resourceNetworkSecurityGroup) Create(ctx context.Context, req tfsdk.Crea
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating network_security_group", err.Error())
+		resp.Diagnostics.AddError("Error creating network_security_group", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -164,7 +164,7 @@ func (r resourceNetworkSecurityGroup) Read(ctx context.Context, req tfsdk.ReadRe
 	// Get network_security_group from API and then update what is in state from what the API returns
 	nsg, err := r.p.Client.Client.ReadNetworkSecurityGroup(ctx, &resourcespb.ReadNetworkSecurityGroupRequest{ResourceId: state.Id.Value})
 	if err != nil {
-		resp.Diagnostics.AddError("Error getting network_security_group", err.Error())
+		resp.Diagnostics.AddError("Error getting network_security_group", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -205,7 +205,7 @@ func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.Upda
 	// Update network_security_group
 	nsg, err := c.Client.UpdateNetworkSecurityGroup(ctx, request)
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating network_security_group", err.Error())
+		resp.Diagnostics.AddError("Error creating network_security_group", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -239,7 +239,7 @@ func (r resourceNetworkSecurityGroup) Delete(ctx context.Context, req tfsdk.Dele
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting network_security_group",
-			err.Error(),
+			common.ParseGrpcErrors(err),
 		)
 		return
 	}

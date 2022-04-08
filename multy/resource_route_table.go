@@ -102,7 +102,7 @@ func (r resourceRouteTable) Create(ctx context.Context, req tfsdk.CreateResource
 		Resource: r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating route_table", err.Error())
+		resp.Diagnostics.AddError("Error creating route_table", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -136,7 +136,7 @@ func (r resourceRouteTable) Read(ctx context.Context, req tfsdk.ReadResourceRequ
 	// Get route_table from API and then update what is in state from what the API returns
 	rt, err := r.p.Client.Client.ReadRouteTable(ctx, &resourcespb.ReadRouteTableRequest{ResourceId: state.Id.Value})
 	if err != nil {
-		resp.Diagnostics.AddError("Error getting route_table", err.Error())
+		resp.Diagnostics.AddError("Error getting route_table", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -176,7 +176,7 @@ func (r resourceRouteTable) Update(ctx context.Context, req tfsdk.UpdateResource
 		Resource:   r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating route_table", err.Error())
+		resp.Diagnostics.AddError("Error creating route_table", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -210,7 +210,7 @@ func (r resourceRouteTable) Delete(ctx context.Context, req tfsdk.DeleteResource
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting route_table",
-			err.Error(),
+			common.ParseGrpcErrors(err),
 		)
 		return
 	}

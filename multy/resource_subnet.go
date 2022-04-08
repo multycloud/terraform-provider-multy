@@ -123,7 +123,7 @@ func (r resourceSubnet) Read(ctx context.Context, req tfsdk.ReadResourceRequest,
 	// Get subnet from API and then update what is in state from what the API returns
 	subnet, err := r.p.Client.Client.ReadSubnet(ctx, &resourcespb.ReadSubnetRequest{ResourceId: state.Id.Value})
 	if err != nil {
-		resp.Diagnostics.AddError("Error getting subnet", err.Error())
+		resp.Diagnostics.AddError("Error getting subnet", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -163,7 +163,7 @@ func (r resourceSubnet) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 		Resource:   r.convertResourcePlanToArgs(plan),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating subnet", err.Error())
+		resp.Diagnostics.AddError("Error creating subnet", common.ParseGrpcErrors(err))
 		return
 	}
 
@@ -197,7 +197,7 @@ func (r resourceSubnet) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting subnet",
-			err.Error(),
+			common.ParseGrpcErrors(err),
 		)
 		return
 	}

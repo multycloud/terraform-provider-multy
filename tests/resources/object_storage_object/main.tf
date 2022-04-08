@@ -10,12 +10,15 @@ terraform {
 provider "multy" {
   api_key         = "secret-1"
   server_endpoint = "localhost:8000"
+  aws             = {}
+  azure           = {}
 }
 
 resource multy_object_storage "obj_storage" {
-  name     = "test-storage-123-multy"
-  cloud    = "azure"
-  location = "us_east"
+  name       = "test-storage-123-multy"
+  cloud      = "azure"
+  location   = "us_east"
+  versioning = true
 }
 
 resource multy_object_storage_object "obj_storage" {

@@ -92,6 +92,13 @@ func ParseGrpcErrors(err error) string {
 				}
 			}
 		}
+	} else if s.Code() == codes.FailedPrecondition {
+		str += s.Message()
+		for _, detail := range s.Details() {
+			if e, ok := detail.(*errorspb.DeploymentErrorDetails); ok {
+				str += "\n" + e.ErrorMessage
+			}
+		}
 	} else {
 		str += s.String()
 	}

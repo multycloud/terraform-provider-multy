@@ -12,6 +12,7 @@ variable clouds {
 }
 
 provider "multy" {
+  aws     = {}
   api_key = "secret-2"
 }
 

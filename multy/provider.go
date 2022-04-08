@@ -149,11 +149,9 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 
 	var awsConfig *common.AwsConfig
-	// fixme error with aws = {} in provider
 	if config.Aws != nil {
 		var err error
 		awsConfig, err = p.validateAwsConfig(ctx, config.Aws)
-		// TODO: handle case where we don't need azure
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Unable to connect to AWS",
@@ -166,7 +164,6 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	var azureConfig *common.AzureConfig
 	if config.Azure != nil {
 		azureConfig, err = p.validateAzureConfig(config.Azure)
-		// TODO: handle case where we don't need azure
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Unable to connect to Azure",
@@ -342,7 +339,7 @@ func (p *Provider) validateAzureConfig(config *providerAzureConfig) (*common.Azu
 	} else if os.Getenv("ARM_CLIENT_SECRET") != "" {
 		azureConfig.ClientSecret = os.Getenv("ARM_CLIENT_SECRET")
 	} else {
-		return &azureConfig, fmt.Errorf("client_secret has not been set")
+		return &azureConfig, fmt.Errorf("ARM_CLIENT_SECRET has not been set")
 	}
 
 	if azureConfig.SubscriptionId != "" && azureConfig.ClientId != "" && azureConfig.ClientSecret != "" && azureConfig.TenantId != "" {
