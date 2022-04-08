@@ -11,6 +11,7 @@ import (
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"strings"
 	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
 )
 
@@ -50,9 +51,9 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 					},
 					"destination": {
 						Type:        types.StringType,
-						Description: fmt.Sprintf("Destination of route. Accepted values are %s", common.StringSliceToDocsMarkdown(common.GetRouteDestinations())),
+						Description: fmt.Sprintf("Destination of route. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.RouteDestinationType.GetAllValues())),
 						Required:    true,
-						Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: common.GetRouteDestinations()}},
+						Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.RouteDestinationType)},
 					},
 				},
 				NestingMode: tfsdk.BlockNestingModeSet,

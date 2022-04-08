@@ -35,6 +35,6 @@ description: |-
 Required:
 
 - `cidr_block` (String) CIDR block of network rule
-- `destination` (String) Destination of route. Accepted values are `unknown_destination`, `internet`,
+- `destination` (String) Destination of route. Accepted values are `internet`,
 
 
