@@ -1,8 +1,7 @@
 terraform {
   required_providers {
     multy = {
-      version = "0.0.1"
-      source  = "multycloud/multy"
+      source = "multycloud/multy"
     }
   }
 }
