@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/multycloud/multy/api/proto/resourcespb"
-	"strings"
 	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
@@ -233,8 +232,8 @@ type RouteTable struct {
 }
 
 type RouteTableRoute struct {
-	CidrBlock   types.String `tfsdk:"cidr_block"`
-	Destination types.String `tfsdk:"destination"`
+	CidrBlock   types.String                                   `tfsdk:"cidr_block"`
+	Destination mtypes.EnumValue[resourcespb.RouteDestination] `tfsdk:"destination"`
 }
 
 func (r resourceRouteTable) convertResponseToResource(res *resourcespb.RouteTableResource) RouteTable {
@@ -242,7 +241,7 @@ func (r resourceRouteTable) convertResponseToResource(res *resourcespb.RouteTabl
 	for _, i := range res.Routes {
 		routes = append(routes, RouteTableRoute{
 			CidrBlock:   types.String{Value: i.CidrBlock},
-			Destination: types.String{Value: strings.ToLower(i.Destination.String())},
+			Destination: mtypes.RouteDestinationType.NewVal(i.Destination),
 		})
 	}
 
@@ -261,7 +260,7 @@ func (r resourceRouteTable) convertResourcePlanToArgs(plan RouteTable) *resource
 	for _, i := range plan.Routes {
 		routes = append(routes, &resourcespb.Route{
 			CidrBlock:   i.CidrBlock.Value,
-			Destination: common.StringToRouteDestination(i.Destination.Value),
+			Destination: i.Destination.Value,
 		})
 	}
 

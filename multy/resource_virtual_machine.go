@@ -61,7 +61,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 			"user_data": {
 				Type: types.StringType,
 				// fixme check instance launch or boot
-				Description: "User Data script of Virtual Machine that will run on instance launch",
+				Description: "Base64 User Data script of Virtual Machine that will run on instance launch",
 				Optional:    true,
 			},
 			"public_ssh_key": {
