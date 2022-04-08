@@ -17,7 +17,7 @@ description: |-
 
 ### Required
 
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `unknown_provider`, `aws`, `azure`,
+- `cloud` (String) CloudType provider to deploy resource into. Accepted values are `aws`, `azure`,
 - `name` (String) Name of RouteTable
 - `virtual_network_id` (String) ID of `virtual_network` resource
 
@@ -35,6 +35,6 @@ description: |-
 Required:
 
 - `cidr_block` (String) CIDR block of network rule
-- `destination` (String) Destination of route. Accepted values are `unknown_destination`, `internet`,
+- `destination` (String) Destination of route. Accepted values are `internet`, `unknown_destination`,
 
 

@@ -17,7 +17,7 @@ description: |-
 
 ### Required
 
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `unknown_provider`, `aws`, `azure`,
+- `cloud` (String) CloudType provider to deploy resource into. Accepted values are `aws`, `azure`,
 - `name` (String) Name of Network Interface
 - `subnet_id` (String) ID of `subnet` resource
 

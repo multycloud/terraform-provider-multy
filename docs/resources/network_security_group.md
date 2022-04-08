@@ -17,8 +17,8 @@ description: |-
 
 ### Required
 
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `unknown_provider`, `aws`, `azure`,
-- `location` (String) Location to deploy resource into. Accepted values are `unknown_location`, `us_east`, `ireland`, `uk`,
+- `cloud` (String) CloudType provider to deploy resource into. Accepted values are `aws`, `azure`,
+- `location` (String) LocationType to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
 - `name` (String) Name of Network Security Group
 - `virtual_network_id` (String) ID of `virtual_network` resource
 

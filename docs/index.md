@@ -28,7 +28,7 @@ description: |-
 Optional:
 
 - `access_key_id` (String, Sensitive) AWS Access Key ID. Can be provided via the `AWS_ACCESS_KEY_ID` environment variable
-- `secret_access_key` (String, Sensitive) AWS Secret Access Key. Can be provided via the `AWS_SECRET_ACCESS_KEY` environment variable
+- `access_key_secret` (String, Sensitive) AWS Secret Access Key. Can be provided via the `AWS_SECRET_ACCESS_KEY` environment variable
 
 
 <a id="nestedatt--azure"></a>
