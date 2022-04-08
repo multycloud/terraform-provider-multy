@@ -37,6 +37,9 @@ var (
 	DbSizeType = EnumType[commonpb.DatabaseSize_Enum]{
 		ValueMap: commonpb.DatabaseSize_Enum_value,
 	}
+	RouteDestinationType = EnumType[resourcespb.RouteDestination]{
+		ValueMap: resourcespb.RouteDestination_value,
+	}
 )
 
 type ProtoEnum interface {
