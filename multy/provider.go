@@ -30,6 +30,7 @@ type Provider struct {
 
 func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
+		MarkdownDescription: "Terraform provider to manage the lifecycle of Multy resources.",
 		Attributes: map[string]tfsdk.Attribute{
 			"api_key": {
 				Type:        types.StringType,

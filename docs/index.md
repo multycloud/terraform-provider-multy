@@ -3,12 +3,12 @@
 page_title: "multy Provider"
 subcategory: ""
 description: |-
-  
+  Terraform provider to manage the lifecycle of Multy resources.
 ---
 
 # multy Provider
 
-
+Terraform provider to manage the lifecycle of Multy resources.
 
 ## Example Usage
 
