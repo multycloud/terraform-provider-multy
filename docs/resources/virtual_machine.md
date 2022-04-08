@@ -20,8 +20,8 @@ description: |-
 - `cloud` (String) CloudType provider to deploy resource into. Accepted values are `aws`, `azure`,
 - `location` (String) LocationType to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
 - `name` (String) Name of Virtual Machine
-- `operating_system` (String) Operating System of Virtual Machine. Accepted values are [unknown_os linux]
-- `size` (String) Size of Virtual Machine. Accepted values are [medium unknown_vm_size micro]
+- `operating_system` (String) Operating System of Virtual Machine. Accepted values are `linux`,
+- `size` (String) Size of Virtual Machine. Accepted values are `micro`, `medium`,
 - `subnet_id` (String) ID of `subnet` resource
 
 ### Optional
