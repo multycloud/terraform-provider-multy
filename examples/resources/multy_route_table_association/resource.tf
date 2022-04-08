@@ -12,7 +12,7 @@ resource "multy_subnet" "subnet" {
   virtual_network = multy_virtual_network.vn.id
 }
 
-resource multy_route_table rt {
+resource "multy_route_table" "rt" {
   name               = "dev-rt"
   virtual_network_id = multy_virtual_network.vn.id
   route {
@@ -21,7 +21,7 @@ resource multy_route_table rt {
   }
 }
 
-resource multy_route_table_association rta {
+resource "multy_route_table_association" "rta" {
   route_table_id = multy_route_table.rt.id
   subnet_id      = multy_subnet.subnet.id
 }

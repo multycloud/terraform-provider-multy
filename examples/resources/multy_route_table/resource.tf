@@ -6,7 +6,7 @@ resource "multy_virtual_network" "vn" {
   cloud      = "aws"
 }
 
-resource multy_route_table rt {
+resource "multy_route_table" "rt" {
   name               = "dev-rt"
   virtual_network_id = multy_virtual_network.vn.id
   route {
