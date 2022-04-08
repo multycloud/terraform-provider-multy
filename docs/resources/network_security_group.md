@@ -14,14 +14,14 @@ Provides Multy Network Security Group resource
 
 ```terraform
 # TODO
-resource multy_virtual_network vn {
+resource "multy_virtual_network" "vn" {
   name       = "dev-nsg"
   cidr_block = "10.0.0.0/16"
   cloud      = "aws"
   location   = "ireland"
 }
 
-resource "multy_network_security_group" nsg {
+resource "multy_network_security_group" "nsg" {
   name               = "dev-nsg"
   virtual_network_id = multy_virtual_network.vn.id
   cloud              = "aws"
