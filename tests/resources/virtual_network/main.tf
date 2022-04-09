@@ -1,7 +1,8 @@
 terraform {
   required_providers {
     multy = {
-      source = "multycloud/multy"
+      version = "0.0.1"
+      source  = "hashicorp.com/dev/multy"
     }
   }
 }
@@ -12,8 +13,9 @@ variable clouds {
 }
 
 provider "multy" {
-  aws     = {}
-  api_key = "secret-2"
+  aws             = {}
+  api_key         = "secret-1"
+  server_endpoint = "localhost:8000"
 }
 
 resource multy_virtual_network vn {
