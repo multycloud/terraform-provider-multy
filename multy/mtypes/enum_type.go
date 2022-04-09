@@ -40,6 +40,9 @@ var (
 	RouteDestinationType = EnumType[resourcespb.RouteDestination]{
 		ValueMap: resourcespb.RouteDestination_value,
 	}
+	VaultAclType = EnumType[resourcespb.VaultAccess_Enum]{
+		ValueMap: resourcespb.VaultAccess_Enum_value,
+	}
 )
 
 type ProtoEnum interface {

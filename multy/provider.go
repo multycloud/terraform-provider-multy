@@ -241,6 +241,9 @@ func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 		"multy_object_storage_object":   ResourceObjectStorageObjectType{},
 		"multy_object_storage":          ResourceObjectStorageType{},
 		"multy_database":                ResourceDatabaseType{},
+		"multy_vault":                   ResourceVaultType{},
+		"multy_vault_secret":            ResourceVaultSecretType{},
+		"multy_vault_access_policy":     ResourceVaultAccessPolicyType{},
 	}, nil
 }
 
