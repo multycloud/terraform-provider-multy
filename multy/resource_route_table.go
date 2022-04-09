@@ -37,7 +37,6 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
-			"cloud": common.CloudsSchema,
 		},
 		Blocks: map[string]tfsdk.Block{
 			"route": {
@@ -50,7 +49,7 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 						Validators:  []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
 					},
 					"destination": {
-						Type:        types.StringType,
+						Type:        mtypes.RouteDestinationType,
 						Description: fmt.Sprintf("Destination of route. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.RouteDestinationType.GetAllValues())),
 						Required:    true,
 						Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.RouteDestinationType)},
@@ -227,8 +226,7 @@ type RouteTable struct {
 	Id               types.String      `tfsdk:"id"`
 	Name             types.String      `tfsdk:"name"`
 	VirtualNetworkId types.String      `tfsdk:"virtual_network_id"`
-	Routes           []RouteTableRoute `tfsdk:"routes"`
-	Cloud            types.String      `tfsdk:"cloud"`
+	Routes           []RouteTableRoute `tfsdk:"route"`
 }
 
 type RouteTableRoute struct {
