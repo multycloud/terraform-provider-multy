@@ -6,11 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
-	"strconv"
 	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
@@ -93,177 +90,51 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 }
 
 func (r ResourceNetworkSecurityGroupType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return resourceNetworkSecurityGroup{
-		p: *(p.(*Provider)),
+	return MultyResource[NetworkSecurityGroup]{
+		p:          *(p.(*Provider)),
+		createFunc: createNetworkSecurityGroup,
+		updateFunc: updateNetworkSecurityGroup,
+		readFunc:   readNetworkSecurityGroup,
+		deleteFunc: deleteNetworkSecurityGroup,
 	}, nil
 }
 
-type resourceNetworkSecurityGroup struct {
-	p Provider
-}
-
-func (r resourceNetworkSecurityGroup) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	if !r.p.Configured {
-		resp.Diagnostics.AddError(
-			"Provider not configured",
-			"The provider hasn't been configured before apply, likely because it depends on an unknown value from another resource. This leads to weird stuff happening, so we'd prefer if you didn't do that. Thanks!",
-		)
-		return
-	}
-
-	// Retrieve values from plan
-	var plan NetworkSecurityGroup
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	c := r.p.Client
-	ctx, err := c.AddHeaders(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Error communicating with server", err.Error())
-		return
-	}
-
-	nsg, err := c.Client.CreateNetworkSecurityGroup(ctx, &resourcespb.CreateNetworkSecurityGroupRequest{
-		Resource: r.convertResourcePlanToArgs(plan),
+func createNetworkSecurityGroup(ctx context.Context, p Provider, plan NetworkSecurityGroup) (NetworkSecurityGroup, error) {
+	vn, err := p.Client.Client.CreateNetworkSecurityGroup(ctx, &resourcespb.CreateNetworkSecurityGroupRequest{
+		Resource: convertFromNetworkSecurityGroup(plan),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating network_security_group", common.ParseGrpcErrors(err))
-		return
+		return NetworkSecurityGroup{}, err
 	}
-
-	tflog.Trace(ctx, "created nsg", map[string]interface{}{"network_security_group_id": nsg.CommonParameters.ResourceId})
-
-	// Map response body to resource schema attribute
-	state := r.convertResponseToResource(nsg)
-	diags = resp.State.Set(ctx, state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	return convertToNetworkSecurityGroup(vn), nil
 }
 
-func (r resourceNetworkSecurityGroup) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	// Get current state
-	var state NetworkSecurityGroup
-	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	c := r.p.Client
-	ctx, err := c.AddHeaders(ctx)
+func updateNetworkSecurityGroup(ctx context.Context, p Provider, plan NetworkSecurityGroup) (NetworkSecurityGroup, error) {
+	vn, err := p.Client.Client.UpdateNetworkSecurityGroup(ctx, &resourcespb.UpdateNetworkSecurityGroupRequest{
+		ResourceId: plan.Id.Value,
+		Resource:   convertFromNetworkSecurityGroup(plan),
+	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error communicating with server", err.Error())
-		return
+		return NetworkSecurityGroup{}, err
 	}
-
-	// Get network_security_group from API and then update what is in state from what the API returns
-	nsg, err := r.p.Client.Client.ReadNetworkSecurityGroup(ctx, &resourcespb.ReadNetworkSecurityGroupRequest{ResourceId: state.Id.Value})
-	if err != nil {
-		resp.Diagnostics.AddError("Error getting network_security_group", common.ParseGrpcErrors(err))
-		return
-	}
-
-	// Map response body to resource schema attribute & Set state
-	state = r.convertResponseToResource(nsg)
-	diags = resp.State.Set(ctx, state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	return convertToNetworkSecurityGroup(vn), nil
 }
 
-func (r resourceNetworkSecurityGroup) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var plan, state NetworkSecurityGroup
-	// Get plan values
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	// Get current state
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	c := r.p.Client
-	ctx, err := c.AddHeaders(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Error communicating with server", err.Error())
-		return
-	}
-
-	request := &resourcespb.UpdateNetworkSecurityGroupRequest{
+func readNetworkSecurityGroup(ctx context.Context, p Provider, state NetworkSecurityGroup) (NetworkSecurityGroup, error) {
+	vn, err := p.Client.Client.ReadNetworkSecurityGroup(ctx, &resourcespb.ReadNetworkSecurityGroupRequest{
 		ResourceId: state.Id.Value,
-		Resource:   r.convertResourcePlanToArgs(plan),
-	}
-
-	// Update network_security_group
-	nsg, err := c.Client.UpdateNetworkSecurityGroup(ctx, request)
+	})
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating network_security_group", common.ParseGrpcErrors(err))
-		return
+		return NetworkSecurityGroup{}, err
 	}
-
-	tflog.Trace(ctx, "updated network_security_group", map[string]interface{}{"network_security_group_id": state.Id.Value})
-
-	// Map response body to resource schema attribute & Set state
-	state = r.convertResponseToResource(nsg)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	return convertToNetworkSecurityGroup(vn), nil
 }
 
-func (r resourceNetworkSecurityGroup) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	var state NetworkSecurityGroup
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	c := r.p.Client
-	ctx, err := c.AddHeaders(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Error communicating with server", err.Error())
-		return
-	}
-
-	// Delete network_security_group
-	_, err = c.Client.DeleteNetworkSecurityGroup(ctx, &resourcespb.DeleteNetworkSecurityGroupRequest{ResourceId: state.Id.Value})
-
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error deleting network_security_group",
-			common.ParseGrpcErrors(err),
-		)
-		return
-	}
-
-	// Remove resource from state
-	resp.State.RemoveResource(ctx)
-}
-
-func (r resourceNetworkSecurityGroup) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	// Save the import identifier in the id attribute
-	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
-}
-
-func validateRulePort(i interface{}, k string) (warnings []string, errors []error) {
-	v, ok := i.(string)
-	if !ok {
-		errors = append(errors, fmt.Errorf("expected type of %s to be string", k))
-		return warnings, errors
-	}
-
-	if i, err := strconv.Atoi(v); err != nil || i < -1 {
-		errors = append(errors, fmt.Errorf("expected %s to be between greater than -1, got %s", k, v))
-	}
-	return warnings, errors
+func deleteNetworkSecurityGroup(ctx context.Context, p Provider, state NetworkSecurityGroup) error {
+	_, err := p.Client.Client.DeleteNetworkSecurityGroup(ctx, &resourcespb.DeleteNetworkSecurityGroupRequest{
+		ResourceId: state.Id.Value,
+	})
+	return err
 }
 
 type NetworkSecurityGroup struct {
@@ -284,7 +155,7 @@ type Rule struct {
 	Direction types.String `tfsdk:"direction"`
 }
 
-func (r resourceNetworkSecurityGroup) convertResponseToResource(res *resourcespb.NetworkSecurityGroupResource) NetworkSecurityGroup {
+func convertToNetworkSecurityGroup(res *resourcespb.NetworkSecurityGroupResource) NetworkSecurityGroup {
 	var rules []Rule
 	for _, rule := range res.Rules {
 		rules = append(rules, Rule{
@@ -306,7 +177,7 @@ func (r resourceNetworkSecurityGroup) convertResponseToResource(res *resourcespb
 	}
 }
 
-func (r resourceNetworkSecurityGroup) convertResourcePlanToArgs(plan NetworkSecurityGroup) *resourcespb.NetworkSecurityGroupArgs {
+func convertFromNetworkSecurityGroup(plan NetworkSecurityGroup) *resourcespb.NetworkSecurityGroupArgs {
 	var rules []*resourcespb.NetworkSecurityRule
 	for _, item := range plan.Rules {
 		ruleDirection := common.StringToRuleDirection(item.Direction.Value)

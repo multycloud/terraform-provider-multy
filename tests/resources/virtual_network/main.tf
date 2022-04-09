@@ -1,7 +1,8 @@
 terraform {
   required_providers {
     multy = {
-      source = "multycloud/multy"
+      version = "0.0.1"
+      source  = "hashicorp.com/dev/multy"
     }
   }
 }
@@ -11,12 +12,18 @@ provider "multy" {
   aws     = {}
 }
 
-variable clouds {
+variable "clouds" {
   type    = list(string)
   default = ["aws"]
 }
 
-resource multy_virtual_network vn {
+provider "multy" {
+  aws             = {}
+  api_key         = "secret-1"
+  server_endpoint = "localhost:8000"
+}
+
+resource "multy_virtual_network" "vn" {
   for_each = toset(var.clouds)
 
   name       = "vn_test2"
@@ -25,6 +32,6 @@ resource multy_virtual_network vn {
   location   = "ireland"
 }
 
-output vn {
+output "vn" {
   value = multy_virtual_network.vn
 }

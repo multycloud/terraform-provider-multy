@@ -4,6 +4,10 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"os"
+	"strings"
+	"terraform-provider-multy/multy/common"
+
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/hashicorp/go-azure-helpers/authentication"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -14,9 +18,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	"os"
-	"strings"
-	"terraform-provider-multy/multy/common"
 )
 
 func New() tfsdk.Provider {
@@ -242,6 +243,8 @@ func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 		"multy_object_storage":          ResourceObjectStorageType{},
 		"multy_database":                ResourceDatabaseType{},
 		"multy_vault":                   ResourceVaultType{},
+		"multy_vault_secret":            ResourceVaultSecretType{},
+		"multy_vault_access_policy":     ResourceVaultAccessPolicyType{},
 	}, nil
 }
 
