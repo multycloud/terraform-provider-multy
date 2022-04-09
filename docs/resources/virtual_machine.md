@@ -44,8 +44,8 @@ resource "multy_virtual_machine" "vm" {
 
 ### Required
 
-- `cloud` (String) CloudType provider to deploy resource into. Accepted values are `aws`, `azure`,
-- `location` (String) LocationType to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure`,
+- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
 - `name` (String) Name of Virtual Machine
 - `operating_system` (String) Operating System of Virtual Machine. Accepted values are `linux`,
 - `size` (String) Size of Virtual Machine. Accepted values are `micro`, `medium`,
@@ -58,7 +58,7 @@ resource "multy_virtual_machine" "vm" {
 - `public_ip` (Boolean) If true, a public IP will be automatically generated. Cannot be used with `public_ip_id`
 - `public_ip_id` (String) ID of `public_ip` resource. Cannot be used with `public_ip`
 - `public_ssh_key` (String) Public SSH Key of Virtual Machine
-- `user_data` (String) User Data script of Virtual Machine that will run on instance launch
+- `user_data` (String) Base64 User Data script of Virtual Machine that will run on instance launch
 
 ### Read-Only
 

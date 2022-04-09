@@ -70,7 +70,7 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
 
-			"host": {
+			"hostname": {
 				Type:        types.StringType,
 				Description: "Database endpoint to connect to",
 				Computed:    true,
@@ -139,7 +139,7 @@ type Database struct {
 	SubnetIds     []types.String                               `tfsdk:"subnet_ids"`
 	Cloud         mtypes.EnumValue[commonpb.CloudProvider]     `tfsdk:"cloud"`
 	Location      mtypes.EnumValue[commonpb.Location]          `tfsdk:"location"`
-	Host          types.String                                 `tfsdk:"host"`
+	Host          types.String                                 `tfsdk:"hostname"`
 }
 
 func convertToDatabase(res *resourcespb.DatabaseResource) Database {

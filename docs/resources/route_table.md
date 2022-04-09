@@ -36,7 +36,6 @@ resource "multy_route_table" "rt" {
 
 ### Required
 
-- `cloud` (String) CloudType provider to deploy resource into. Accepted values are `aws`, `azure`,
 - `name` (String) Name of RouteTable
 - `virtual_network_id` (String) ID of `virtual_network` resource
 

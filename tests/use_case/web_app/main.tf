@@ -44,6 +44,7 @@ resource multy_subnet private_subnet {
   name               = "web_app_private_subnet"
   cidr_block         = "10.0.11.0/24"
   virtual_network_id = multy_virtual_network.vn[each.key].id
+  availability_zone  = 1
 }
 
 resource multy_subnet private_subnet2 {
@@ -64,10 +65,21 @@ resource "multy_route_table" "rt" {
   }
 }
 
-resource multy_route_table_association rta3 {
+resource multy_route_table_association rta1 {
   for_each       = toset(var.clouds)
   route_table_id = multy_route_table.rt[each.key].id
   subnet_id      = multy_subnet.public_subnet[each.key].id
+}
+// fixme: For a DB instance to be publicly accessible, all of the subnets in its DB subnet group must be public. If a subnet that is associated with a publicly accessible DB instance changes from public to private, it can affect DB instance availability.
+resource multy_route_table_association rta2 {
+  for_each       = toset(var.clouds)
+  route_table_id = multy_route_table.rt[each.key].id
+  subnet_id      = multy_subnet.private_subnet[each.key].id
+}
+resource multy_route_table_association rta3 {
+  for_each       = toset(var.clouds)
+  route_table_id = multy_route_table.rt[each.key].id
+  subnet_id      = multy_subnet.private_subnet2[each.key].id
 }
 
 resource "multy_network_security_group" nsg {
@@ -100,6 +112,14 @@ resource "multy_network_security_group" nsg {
     cidr_block = "0.0.0.0/0"
     direction  = "both"
   }
+  rule {
+    protocol   = "tcp"
+    priority   = 133
+    from_port  = 3306
+    to_port    = 3306
+    cidr_block = "0.0.0.0/0"
+    direction  = "both"
+  }
 }
 
 resource "multy_database" "example_db" {
@@ -117,18 +137,18 @@ resource "multy_database" "example_db" {
 }
 
 resource multy_virtual_machine vm {
-  for_each                   = toset(var.clouds)
-  name                       = "web_app_vm"
-  size                       = "micro"
-  operating_system           = "linux"
-  subnet_id                  = multy_subnet.public_subnet[each.key].id
-  public_ip                  = true
-  #  user_data        = base64encode(templatefile("./${each.key}_init.sh", {
-  #    db_host : multy_database.example_db[each.key].host,
-  #    db_username : multy_database.example_db[each.key].username,
-  #    db_password : multy_database.example_db[each.key].password
-  #  }))
-  user_data                  = base64encode("#!/bin/bash -xe\nsudo su; yum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on ${each.key}</h1>\" > /var/www/html/index.html")
+  for_each         = toset(var.clouds)
+  name             = "web_app_vm"
+  size             = "micro"
+  operating_system = "linux"
+  subnet_id        = multy_subnet.public_subnet[each.key].id
+  public_ip        = true
+  user_data        = base64encode(templatefile("./${each.key}_init.sh", {
+    db_host : multy_database.example_db[each.key].hostname,
+    db_username : multy_database.example_db[each.key].username,
+    db_password : multy_database.example_db[each.key].password
+  }))
+  #  user_data                  = base64encode("#!/bin/bash -xe\nsudo su; yum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on ${each.key}</h1>\" > /var/www/html/index.html")
   network_security_group_ids = [multy_network_security_group.nsg[each.key].id]
 
   public_ssh_key = file("./ssh_key.pub")

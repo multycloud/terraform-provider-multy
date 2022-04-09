@@ -4,7 +4,7 @@
 date
 sudo yum update -y
 
-sudo yum install epel-release -y
+sudo amazon-linux-extras install epel
 sudo yum install jq -y
 
 region=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)

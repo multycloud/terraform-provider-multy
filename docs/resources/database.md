@@ -36,10 +36,10 @@ resource "multy_database" "example_db" {
 
 ### Required
 
-- `cloud` (String) CloudType provider to deploy resource into. Accepted values are `aws`, `azure`,
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure`,
 - `engine` (String) Database engine. Available values are [mysql]
 - `engine_version` (String) Engine version
-- `location` (String) LocationType to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
+- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
 - `name` (String) Name of the database
 - `password` (String) Password for the database user
 - `size` (String) Database size. Available values are [nano micro medium]
@@ -49,7 +49,7 @@ resource "multy_database" "example_db" {
 
 ### Read-Only
 
-- `host` (String) Database endpoint to connect to
+- `hostname` (String) Database endpoint to connect to
 - `id` (String) The ID of this resource.
 
 
