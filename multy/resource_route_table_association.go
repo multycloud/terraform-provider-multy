@@ -20,14 +20,16 @@ func (r ResourceRouteTableAssociationType) GetSchema(_ context.Context) (tfsdk.S
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"subnet_id": {
-				Type:        types.StringType,
-				Description: "ID of `subnet` resource",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "ID of `subnet` resource",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"route_table_id": {
-				Type:        types.StringType,
-				Description: "ID of `route_table` resource",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "ID of `route_table` resource",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 		},
 	}, nil

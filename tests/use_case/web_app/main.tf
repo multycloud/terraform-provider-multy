@@ -12,11 +12,12 @@ provider "multy" {
   api_key         = "secret-2"
   server_endpoint = "localhost:8000"
   aws             = {}
+  azure           = {}
 }
 
 variable "location" {
   type    = string
-  default = "ireland"
+  default = "us_east"
 }
 
 variable "clouds" {
@@ -104,22 +105,6 @@ resource "multy_network_security_group" nsg {
     cidr_block = "0.0.0.0/0"
     direction  = "both"
   }
-  rule {
-    protocol   = "tcp"
-    priority   = 132
-    from_port  = 80
-    to_port    = 80
-    cidr_block = "0.0.0.0/0"
-    direction  = "both"
-  }
-  rule {
-    protocol   = "tcp"
-    priority   = 133
-    from_port  = 3306
-    to_port    = 3306
-    cidr_block = "0.0.0.0/0"
-    direction  = "both"
-  }
 }
 
 resource "multy_database" "example_db" {
@@ -129,11 +114,13 @@ resource "multy_database" "example_db" {
   engine         = "mysql"
   engine_version = "5.7"
   username       = "multyadmin"
-  password       = "multy$Admin123!"
+  password       = "multy-Admin123!"
   size           = "micro"
   subnet_ids     = [multy_subnet.private_subnet[each.key].id, multy_subnet.private_subnet2[each.key].id]
   cloud          = each.key
   location       = var.location
+
+  depends_on = [multy_route_table_association.rta2, multy_route_table_association.rta3]
 }
 
 resource multy_virtual_machine vm {
@@ -157,6 +144,38 @@ resource multy_virtual_machine vm {
 
   depends_on = [multy_network_security_group.nsg]
 }
+
+resource "multy_vault" "web_app_vault" {
+  for_each = toset(var.clouds)
+  name     = "web_app_vault"
+  cloud    = each.key
+  location = var.location
+}
+#resource "multy_vault_secret" "db_host" {
+#  for_each = toset(var.clouds)
+#  name     = "db-host"
+#  vault_id = multy_vault.web_app_vault[each.key].id
+#  value    = multy_database.example_db[each.key].hostname
+#}
+#resource "multy_vault_secret" "db_username" {
+#  for_each = toset(var.clouds)
+#  name     = "db-username"
+#  vault_id = multy_vault.web_app_vault[each.key].id
+#  value    = multy_database.example_db[each.key].username
+#}
+#resource "multy_vault_secret" "db_password" {
+#  for_each = toset(var.clouds)
+#  name     = "db-password"
+#  vault_id = multy_vault.web_app_vault[each.key].id
+#  value    = multy_database.example_db[each.key].password
+#}
+#resource "multy_vault_access_policy" "kv_ap" {
+#  for_each = toset(var.clouds)
+#  vault_id    = multy_vault.web_app_vault.id
+#  identity = multy_virtual_machine.vm[each.key].identity
+#  access   = "owner"
+#}
+
 #
 #output "endpoint" {
 #  value = {

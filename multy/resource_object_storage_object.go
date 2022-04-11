@@ -28,9 +28,10 @@ func (r ResourceObjectStorageObjectType) GetSchema(_ context.Context) (tfsdk.Sch
 				Required:    true,
 			},
 			"object_storage_id": {
-				Type:        types.StringType,
-				Description: "Id of object storage",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Id of object storage",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"content": {
 				Type:        types.StringType,

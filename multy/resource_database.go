@@ -30,10 +30,11 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Required:    true,
 			},
 			"engine": {
-				Type:        mtypes.DbEngineType,
-				Description: fmt.Sprintf("Database engine. Available values are %v", mtypes.DbEngineType.GetAllValues()),
-				Required:    true,
-				Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.DbEngineType)},
+				Type:          mtypes.DbEngineType,
+				Description:   fmt.Sprintf("Database engine. Available values are %v", mtypes.DbEngineType.GetAllValues()),
+				Required:      true,
+				Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.DbEngineType)},
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"engine_version": {
 				Type:        types.StringType,
@@ -62,9 +63,10 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Required:    true,
 			},
 			"subnet_ids": {
-				Type:        types.ListType{ElemType: types.StringType},
-				Description: "Subnets associated with this database. At least 2 in different availability zones are required.",
-				Required:    true,
+				Type:          types.ListType{ElemType: types.StringType},
+				Description:   "Subnets associated with this database. At least 2 in different availability zones are required.",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 
 			"cloud":    common.CloudsSchema,

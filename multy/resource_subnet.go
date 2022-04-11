@@ -26,10 +26,11 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				Required:    true,
 			},
 			"cidr_block": {
-				Type:        types.StringType,
-				Description: "CIDR block of Subnet",
-				Required:    true,
-				Validators:  []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
+				Type:          types.StringType,
+				Description:   "CIDR block of Subnet",
+				Required:      true,
+				Validators:    []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"virtual_network_id": {
 				Type:          types.StringType,
@@ -38,10 +39,11 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"availability_zone": {
-				Type:        types.Int64Type,
-				Description: "Availability Zone for subnet. Valid only on `aws`",
-				Optional:    true,
-				Computed:    true,
+				Type:          types.Int64Type,
+				Description:   "Availability Zone for subnet. Valid only on `aws`",
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 		},
 	}, nil
