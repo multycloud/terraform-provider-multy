@@ -77,7 +77,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Optional:    true,
 				// TODO: validate if not empty string
 			},
-			"public_ip": {
+			"generate_public_ip": {
 				Type:        types.BoolType,
 				Description: "If true, a public IP will be automatically generated. Cannot be used with `public_ip_id`",
 				Optional:    true,
@@ -86,6 +86,17 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
+
+			"public_ip": {
+				Type:        types.StringType,
+				Description: "Public IP of Virtual Machine",
+				Computed:    true,
+			},
+			"identity": {
+				Type:        types.StringType,
+				Description: "Identity of Virtual Machine",
+				Computed:    true,
+			},
 		},
 	}, nil
 }
@@ -102,7 +113,7 @@ func (r ResourceVirtualMachineType) NewResource(_ context.Context, p tfsdk.Provi
 
 func createVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) (VirtualMachine, error) {
 	pIpId := !plan.PublicIpId.Null && !plan.PublicIpId.Unknown && plan.PublicIpId.Value != ""
-	pIp := !plan.PublicIp.Null && !plan.PublicIp.Unknown && plan.PublicIp.Value
+	pIp := !plan.GeneratePublicIp.Null && !plan.GeneratePublicIp.Unknown && plan.GeneratePublicIp.Value
 	// fixme check isnt working
 	if pIpId && pIp {
 		return VirtualMachine{}, fmt.Errorf("cannot set both public_ip and public_ip_id")
@@ -116,14 +127,14 @@ func createVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) 
 		return VirtualMachine{}, err
 	}
 
-	tflog.Trace(ctx, "created virtual network", map[string]interface{}{"virtual_machine_id": vm.CommonParameters.ResourceId})
+	tflog.Trace(ctx, "created virtual machine", map[string]interface{}{"virtual_machine_id": vm.CommonParameters.ResourceId})
 
 	return convertToVirtualMachine(vm), nil
 }
 
 func updateVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) (VirtualMachine, error) {
 	pIpId := !plan.PublicIpId.Null && !plan.PublicIpId.Unknown && plan.PublicIpId.Value != ""
-	pIp := !plan.PublicIp.Null && !plan.PublicIp.Unknown && plan.PublicIp.Value
+	pIp := !plan.GeneratePublicIp.Null && !plan.GeneratePublicIp.Unknown && plan.GeneratePublicIp.Value
 	// fixme check isnt working
 	if pIpId && pIp {
 		return VirtualMachine{}, fmt.Errorf("cannot set both public_ip and public_ip_id")
@@ -137,7 +148,7 @@ func updateVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) 
 		return VirtualMachine{}, err
 	}
 
-	tflog.Trace(ctx, "updated virtual network", map[string]interface{}{"virtual_machine_id": vm.CommonParameters.ResourceId})
+	tflog.Trace(ctx, "updated virtual machine", map[string]interface{}{"virtual_machine_id": vm.CommonParameters.ResourceId})
 
 	return convertToVirtualMachine(vm), nil
 }
@@ -169,9 +180,11 @@ func convertToVirtualMachine(res *resourcespb.VirtualMachineResource) VirtualMac
 		UserData:                types.String{Value: res.UserData},
 		PublicSshKey:            types.String{Value: res.PublicSshKey},
 		PublicIpId:              common.DefaultToNull[types.String](res.PublicIpId),
-		PublicIp:                types.Bool{Value: res.GeneratePublicIp},
+		GeneratePublicIp:        types.Bool{Value: res.GeneratePublicIp},
 		Cloud:                   mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:                mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		PublicIp:                types.String{Value: res.PublicIp},
+		Identity:                types.String{Value: res.IdentityId},
 	}
 }
 
@@ -190,7 +203,7 @@ func convertFromVirtualMachine(plan VirtualMachine) *resourcespb.VirtualMachineA
 		SubnetId:                plan.SubnetId.Value,
 		PublicSshKey:            plan.PublicSshKey.Value,
 		PublicIpId:              plan.PublicIpId.Value,
-		GeneratePublicIp:        plan.PublicIp.Value,
+		GeneratePublicIp:        plan.GeneratePublicIp.Value,
 	}
 }
 
@@ -205,7 +218,9 @@ type VirtualMachine struct {
 	UserData                types.String                                    `tfsdk:"user_data"`
 	PublicSshKey            types.String                                    `tfsdk:"public_ssh_key"`
 	PublicIpId              types.String                                    `tfsdk:"public_ip_id"`
-	PublicIp                types.Bool                                      `tfsdk:"public_ip"`
+	GeneratePublicIp        types.Bool                                      `tfsdk:"generate_public_ip"`
+	PublicIp                types.String                                    `tfsdk:"public_ip"`
+	Identity                types.String                                    `tfsdk:"identity"`
 	Cloud                   mtypes.EnumValue[commonpb.CloudProvider]        `tfsdk:"cloud"`
 	Location                mtypes.EnumValue[commonpb.Location]             `tfsdk:"location"`
 }

@@ -12,9 +12,8 @@ provider "multy" {
 }
 
 resource multy_object_storage "obj_storage" {
-  name          = "test-storage"
-  cloud         = "aws"
-  location      = "ireland"
-  random_suffix = true
-  versioning    = true
+  name       = "test-storage"
+  cloud      = "aws"
+  location   = "ireland"
+  versioning = true
 }

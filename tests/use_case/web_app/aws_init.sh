@@ -17,9 +17,9 @@ sudo chmod a+rwx .
 git clone https://github.com/FaztTech/nodejs-mysql-links.git
 cd nodejs-mysql-links
 
-#export DATABASE_HOST=$(aws ssm get-parameter --with-decryption --name "/$${vault_name}/$${db_host_secret_name}" --region "$region" | jq ".Parameter.Value" -r)
-#export DATABASE_USER=$(aws ssm get-parameter --with-decryption --name "/$${vault_name}/$${db_username_secret_name}" --region "$region" | jq ".Parameter.Value" -r)
-#export DATABASE_PASSWORD=$(aws ssm get-parameter --with-decryption --name "/$${vault_name}/$${db_password_secret_name}" --region "$region" | jq ".Parameter.Value" -r)
+#export DATABASE_HOST=$(aws ssm get-parameter --with-decryption --name "/${vault_name}/${db_host_secret_name}" --region "$region" | jq ".Parameter.Value" -r)
+#export DATABASE_USER=$(aws ssm get-parameter --with-decryption --name "/${vault_name}/${db_username_secret_name}" --region "$region" | jq ".Parameter.Value" -r)
+#export DATABASE_PASSWORD=$(aws ssm get-parameter --with-decryption --name "/${vault_name}/${db_password_secret_name}" --region "$region" | jq ".Parameter.Value" -r)
 
 export DATABASE_HOST=${db_host}
 export DATABASE_USER=${db_username}

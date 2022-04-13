@@ -12,13 +12,13 @@ resource "multy_subnet" "subnet" {
 }
 
 resource "multy_virtual_machine" "vm" {
-  name             = "dev-vm"
-  size             = "micro"
-  operating_system = "linux"
-  subnet_id        = multy_subnet.subnet.id
-  public_ip        = true
-  user_data        = "echo 'Hello World'"
-  public_ssh_key   = file("./ssh_key.pub")
-  cloud            = "aws"
-  location         = "ireland"
+  name               = "dev-vm"
+  size               = "micro"
+  operating_system   = "linux"
+  subnet_id          = multy_subnet.subnet.id
+  generate_public_ip = true
+  user_data          = "echo 'Hello World'"
+  public_ssh_key     = file("./ssh_key.pub")
+  cloud              = "aws"
+  location           = "ireland"
 }

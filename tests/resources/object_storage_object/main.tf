@@ -24,6 +24,6 @@ resource multy_object_storage "obj_storage" {
 resource multy_object_storage_object "obj_storage" {
   name              = "test-obj"
   object_storage_id = multy_object_storage.obj_storage.id
-  content           = "abc"
+  content           = "<h1>hello world</h1>"
   content_type      = "text/html"
 }

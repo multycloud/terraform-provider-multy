@@ -17,12 +17,17 @@ provider "multy" {
 
 variable "location" {
   type    = string
-  default = "us_east"
+  default = "ireland"
 }
 
 variable "clouds" {
   type    = list(string)
   default = ["aws"]
+}
+
+variable "db_cloud" {
+  type    = string
+  default = "aws"
 }
 
 resource multy_virtual_network vn {
@@ -105,10 +110,44 @@ resource "multy_network_security_group" nsg {
     cidr_block = "0.0.0.0/0"
     direction  = "both"
   }
+  rule {
+    protocol   = "tcp"
+    priority   = 132
+    from_port  = 4000
+    to_port    = 4000
+    cidr_block = "0.0.0.0/0"
+    direction  = "both"
+  }
+}
+
+resource multy_virtual_machine vm {
+  for_each           = toset(var.clouds)
+  name               = "web_app_vm"
+  size               = each.key == "azure" ? "large" : "micro"
+  operating_system   = "linux"
+  subnet_id          = multy_subnet.public_subnet[each.key].id
+  generate_public_ip = true
+  user_data          = base64encode(templatefile("./${each.key}_init.sh", {
+    vault_name : multy_vault.web_app_vault[each.key].name,
+    db_host_secret_name : multy_vault_secret.db_host[each.key].name,
+    db_username_secret_name : multy_vault_secret.db_username[each.key].name,
+    db_password_secret_name : multy_vault_secret.db_password[each.key].name,
+    db_host : multy_database.example_db["aws"].hostname,
+    db_username : multy_database.example_db["aws"].username,
+    db_password : multy_database.example_db["aws"].password
+  }))
+  #  user_data                  = base64encode("#!/bin/bash -xe\nsudo su; yum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on ${each.key}</h1>\" > /var/www/html/index.html")
+  network_security_group_ids = [multy_network_security_group.nsg[each.key].id]
+
+  public_ssh_key = file("./ssh_key.pub")
+  cloud          = each.key
+  location       = var.location
+
+  depends_on = [multy_network_security_group.nsg]
 }
 
 resource "multy_database" "example_db" {
-  for_each       = toset(var.clouds)
+  for_each       = toset([var.db_cloud])
   storage_gb     = 10
   name           = "exampledbmulty"
   engine         = "mysql"
@@ -123,62 +162,40 @@ resource "multy_database" "example_db" {
   depends_on = [multy_route_table_association.rta2, multy_route_table_association.rta3]
 }
 
-resource multy_virtual_machine vm {
-  for_each         = toset(var.clouds)
-  name             = "web_app_vm"
-  size             = "micro"
-  operating_system = "linux"
-  subnet_id        = multy_subnet.public_subnet[each.key].id
-  public_ip        = true
-  user_data        = base64encode(templatefile("./${each.key}_init.sh", {
-    db_host : multy_database.example_db[each.key].hostname,
-    db_username : multy_database.example_db[each.key].username,
-    db_password : multy_database.example_db[each.key].password
-  }))
-  #  user_data                  = base64encode("#!/bin/bash -xe\nsudo su; yum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on ${each.key}</h1>\" > /var/www/html/index.html")
-  network_security_group_ids = [multy_network_security_group.nsg[each.key].id]
-
-  public_ssh_key = file("./ssh_key.pub")
-  cloud          = each.key
-  location       = var.location
-
-  depends_on = [multy_network_security_group.nsg]
-}
-
 resource "multy_vault" "web_app_vault" {
   for_each = toset(var.clouds)
-  name     = "web_app_vault"
+  #  for_each = toset(var.clouds)
+  name     = "web-app-vault-test"
   cloud    = each.key
   location = var.location
 }
-#resource "multy_vault_secret" "db_host" {
-#  for_each = toset(var.clouds)
-#  name     = "db-host"
-#  vault_id = multy_vault.web_app_vault[each.key].id
-#  value    = multy_database.example_db[each.key].hostname
-#}
-#resource "multy_vault_secret" "db_username" {
-#  for_each = toset(var.clouds)
-#  name     = "db-username"
-#  vault_id = multy_vault.web_app_vault[each.key].id
-#  value    = multy_database.example_db[each.key].username
-#}
-#resource "multy_vault_secret" "db_password" {
-#  for_each = toset(var.clouds)
-#  name     = "db-password"
-#  vault_id = multy_vault.web_app_vault[each.key].id
-#  value    = multy_database.example_db[each.key].password
-#}
-#resource "multy_vault_access_policy" "kv_ap" {
-#  for_each = toset(var.clouds)
-#  vault_id    = multy_vault.web_app_vault.id
-#  identity = multy_virtual_machine.vm[each.key].identity
-#  access   = "owner"
-#}
+resource "multy_vault_secret" "db_host" {
+  for_each = toset(var.clouds)
+  name     = "db-host"
+  vault_id = multy_vault.web_app_vault[each.key].id
+  value    = multy_database.example_db[var.db_cloud].hostname
+}
+resource "multy_vault_secret" "db_username" {
+  for_each = toset(var.clouds)
+  name     = "db-username"
+  vault_id = multy_vault.web_app_vault[each.key].id
+  value    = multy_database.example_db[var.db_cloud].username
+}
+resource "multy_vault_secret" "db_password" {
+  for_each = toset(var.clouds)
+  name     = "db-password"
+  vault_id = multy_vault.web_app_vault[each.key].id
+  value    = multy_database.example_db[var.db_cloud].password
+}
+resource "multy_vault_access_policy" "kv_ap" {
+  for_each = toset(var.clouds)
+  vault_id = multy_vault.web_app_vault[each.key].id
+  identity = multy_virtual_machine.vm[each.key].identity
+  access   = "owner"
+}
 
-#
-#output "endpoint" {
-#  value = {
-#  for k, vm in multy_virtual_network.vn : k => vm.public_ip
-#  }
-#}
+output "endpoint" {
+  value = {
+  for k, vm in multy_virtual_machine.vm : k => "http://${vm.public_ip}:4000"
+  }
+}

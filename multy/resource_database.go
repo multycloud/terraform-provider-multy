@@ -141,7 +141,7 @@ type Database struct {
 	SubnetIds     []types.String                               `tfsdk:"subnet_ids"`
 	Cloud         mtypes.EnumValue[commonpb.CloudProvider]     `tfsdk:"cloud"`
 	Location      mtypes.EnumValue[commonpb.Location]          `tfsdk:"location"`
-	Host          types.String                                 `tfsdk:"hostname"`
+	Hostname      types.String                                 `tfsdk:"hostname"`
 }
 
 func convertToDatabase(res *resourcespb.DatabaseResource) Database {
@@ -157,7 +157,7 @@ func convertToDatabase(res *resourcespb.DatabaseResource) Database {
 		SubnetIds:     common.TypesStringToStringSlice(res.SubnetIds),
 		Cloud:         mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:      mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		Host:          types.String{Value: res.Host},
+		Hostname:      types.String{Value: res.Host},
 	}
 }
 

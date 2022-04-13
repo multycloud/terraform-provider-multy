@@ -62,15 +62,15 @@ resource "multy_network_security_group" nsg {
 }
 
 resource multy_virtual_machine vm {
-  name             = "test_vm"
-  size             = "micro"
-  operating_system = "linux"
-  subnet_id        = multy_subnet.subnet.id
-  public_ip        = true
-  user_data        = "#!/bin/bash -xe\nsudo su;\nyum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on AWS</h1>\" > /var/www/html/index.html"
-  public_ssh_key   = file("./ssh_key.pub")
-  cloud            = "aws"
-  location         = var.location
+  name               = "test_vm"
+  size               = "micro"
+  operating_system   = "linux"
+  subnet_id          = multy_subnet.subnet.id
+  generate_public_ip = true
+  user_data          = "#!/bin/bash -xe\nsudo su;\nyum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on AWS</h1>\" > /var/www/html/index.html"
+  public_ssh_key     = file("./ssh_key.pub")
+  cloud              = "aws"
+  location           = var.location
 
   depends_on = [multy_network_security_group.nsg]
 }

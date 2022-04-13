@@ -27,12 +27,12 @@ resource multy_subnet subnet {
 }
 
 resource multy_virtual_machine vm {
-  name             = "test_vm"
-  size             = "micro"
-  operating_system = "xx"
-  subnet_id        = multy_subnet.subnet.id
-  public_ip_id     = "123"
-  public_ip        = false
-  cloud            = "aws"
-  location         = "ireland"
+  name               = "test_vm"
+  size               = "micro"
+  operating_system   = "xx"
+  subnet_id          = multy_subnet.subnet.id
+  public_ip_id       = "123"
+  generate_public_ip = false
+  cloud              = "aws"
+  location           = "ireland"
 }
