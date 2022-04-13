@@ -2,20 +2,21 @@ package multy
 
 import (
 	"context"
+	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/mtypes"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
-	"terraform-provider-multy/multy/common"
-	"terraform-provider-multy/multy/mtypes"
 )
 
 type ResourceVaultType struct{}
 
 func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Object Storage resource",
+		MarkdownDescription: "Provides Multy Vault resource",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Type:          types.StringType,
@@ -24,7 +25,7 @@ func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 			},
 			"name": {
 				Type:        types.StringType,
-				Description: "Name of Virtual Network",
+				Description: "Name of vault resource",
 				Required:    true,
 			},
 			"cloud":    common.CloudsSchema,

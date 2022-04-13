@@ -7,7 +7,7 @@ terraform {
   }
 }
 
-variable clouds {
+variable "clouds" {
   type    = list(string)
   default = ["aws"]
 }
@@ -18,7 +18,7 @@ provider "multy" {
   server_endpoint = "localhost:8000"
 }
 
-resource multy_vault v {
+resource "multy_vault" "v" {
   name     = "multyvault"
   cloud    = "aws"
   location = "us_east"

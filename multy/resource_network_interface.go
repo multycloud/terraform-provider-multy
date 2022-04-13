@@ -26,9 +26,10 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 				Required:    true,
 			},
 			"subnet_id": {
-				Type:        types.StringType,
-				Description: "ID of `subnet` resource",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "ID of `subnet` resource",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"cloud": common.CloudsSchema,
 		},

@@ -4,19 +4,20 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"github.com/multycloud/multy/api/proto/commonpb"
+	"os"
+	"strings"
+	"terraform-provider-multy/multy/common"
+
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/hashicorp/go-azure-helpers/authentication"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto"
-	"github.com/multycloud/multy/api/proto/commonpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	"os"
-	"strings"
-	"terraform-provider-multy/multy/common"
 )
 
 func New() tfsdk.Provider {

@@ -30,10 +30,11 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Required:    true,
 			},
 			"engine": {
-				Type:        mtypes.DbEngineType,
-				Description: fmt.Sprintf("Database engine. Available values are %v", mtypes.DbEngineType.GetAllValues()),
-				Required:    true,
-				Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.DbEngineType)},
+				Type:          mtypes.DbEngineType,
+				Description:   fmt.Sprintf("Database engine. Available values are %v", mtypes.DbEngineType.GetAllValues()),
+				Required:      true,
+				Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.DbEngineType)},
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"engine_version": {
 				Type:        types.StringType,
@@ -62,15 +63,16 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Required:    true,
 			},
 			"subnet_ids": {
-				Type:        types.ListType{ElemType: types.StringType},
-				Description: "Subnets associated with this database. At least 2 in different availability zones are required.",
-				Required:    true,
+				Type:          types.ListType{ElemType: types.StringType},
+				Description:   "Subnets associated with this database. At least 2 in different availability zones are required.",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
 
-			"host": {
+			"hostname": {
 				Type:        types.StringType,
 				Description: "Database endpoint to connect to",
 				Computed:    true,
@@ -139,7 +141,7 @@ type Database struct {
 	SubnetIds     []types.String                               `tfsdk:"subnet_ids"`
 	Cloud         mtypes.EnumValue[commonpb.CloudProvider]     `tfsdk:"cloud"`
 	Location      mtypes.EnumValue[commonpb.Location]          `tfsdk:"location"`
-	Host          types.String                                 `tfsdk:"host"`
+	Hostname      types.String                                 `tfsdk:"hostname"`
 }
 
 func convertToDatabase(res *resourcespb.DatabaseResource) Database {
@@ -155,7 +157,7 @@ func convertToDatabase(res *resourcespb.DatabaseResource) Database {
 		SubnetIds:     common.TypesStringToStringSlice(res.SubnetIds),
 		Cloud:         mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:      mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		Host:          types.String{Value: res.Host},
+		Hostname:      types.String{Value: res.Host},
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
-	"strings"
 	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
@@ -36,7 +35,6 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
-			"cloud": common.CloudsSchema,
 		},
 		Blocks: map[string]tfsdk.Block{
 			"route": {
@@ -49,7 +47,7 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 						Validators:  []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
 					},
 					"destination": {
-						Type:        types.StringType,
+						Type:        mtypes.RouteDestinationType,
 						Description: fmt.Sprintf("Destination of route. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.RouteDestinationType.GetAllValues())),
 						Required:    true,
 						Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.RouteDestinationType)},
@@ -113,13 +111,12 @@ type RouteTable struct {
 	Id               types.String      `tfsdk:"id"`
 	Name             types.String      `tfsdk:"name"`
 	VirtualNetworkId types.String      `tfsdk:"virtual_network_id"`
-	Routes           []RouteTableRoute `tfsdk:"routes"`
-	Cloud            types.String      `tfsdk:"cloud"`
+	Routes           []RouteTableRoute `tfsdk:"route"`
 }
 
 type RouteTableRoute struct {
-	CidrBlock   types.String `tfsdk:"cidr_block"`
-	Destination types.String `tfsdk:"destination"`
+	CidrBlock   types.String                                   `tfsdk:"cidr_block"`
+	Destination mtypes.EnumValue[resourcespb.RouteDestination] `tfsdk:"destination"`
 }
 
 func convertToRouteTable(res *resourcespb.RouteTableResource) RouteTable {
@@ -127,7 +124,7 @@ func convertToRouteTable(res *resourcespb.RouteTableResource) RouteTable {
 	for _, i := range res.Routes {
 		routes = append(routes, RouteTableRoute{
 			CidrBlock:   types.String{Value: i.CidrBlock},
-			Destination: types.String{Value: strings.ToLower(i.Destination.String())},
+			Destination: mtypes.RouteDestinationType.NewVal(i.Destination),
 		})
 	}
 
@@ -146,7 +143,7 @@ func convertFromRouteTable(plan RouteTable) *resourcespb.RouteTableArgs {
 	for _, i := range plan.Routes {
 		routes = append(routes, &resourcespb.Route{
 			CidrBlock:   i.CidrBlock.Value,
-			Destination: common.StringToRouteDestination(i.Destination.Value),
+			Destination: i.Destination.Value,
 		})
 	}
 

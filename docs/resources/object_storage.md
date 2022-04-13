@@ -26,8 +26,8 @@ resource "multy_object_storage" "obj_storage" {
 
 ### Required
 
-- `cloud` (String) CloudType provider to deploy resource into. Accepted values are `aws`, `azure`,
-- `location` (String) LocationType to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure`,
+- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
 - `name` (String) Name of Virtual Network
 
 ### Optional

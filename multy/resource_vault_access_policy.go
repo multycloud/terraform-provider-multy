@@ -23,9 +23,10 @@ func (r ResourceVaultAccessPolicyType) GetSchema(_ context.Context) (tfsdk.Schem
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"vault_id": {
-				Type:        types.StringType,
-				Description: "Id of the associated vault",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Id of the associated vault",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"identity": {
 				Type:        types.StringType,

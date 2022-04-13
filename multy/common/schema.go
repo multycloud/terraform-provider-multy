@@ -18,7 +18,7 @@ import (
 
 var CloudsSchema = tfsdk.Attribute{
 	Type:          mtypes.CloudType,
-	Description:   fmt.Sprintf("CloudType provider to deploy resource into. Accepted values are %s", StringSliceToDocsMarkdown(mtypes.CloudType.GetAllValues())),
+	Description:   fmt.Sprintf("Cloud provider to deploy resource into. Accepted values are %s", StringSliceToDocsMarkdown(mtypes.CloudType.GetAllValues())),
 	Required:      true,
 	Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.CloudType)},
 	PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
@@ -26,7 +26,7 @@ var CloudsSchema = tfsdk.Attribute{
 
 var LocationSchema = tfsdk.Attribute{
 	Type:          mtypes.LocationType,
-	Description:   fmt.Sprintf("LocationType to deploy resource into. Accepted values are %s", StringSliceToDocsMarkdown(mtypes.LocationType.GetAllValues())),
+	Description:   fmt.Sprintf("Location to deploy resource into. Accepted values are %s", StringSliceToDocsMarkdown(mtypes.LocationType.GetAllValues())),
 	Required:      true,
 	Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.LocationType)},
 	PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},

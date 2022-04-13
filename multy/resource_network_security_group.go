@@ -35,9 +35,10 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 				Required:    true,
 			},
 			"virtual_network_id": {
-				Type:        types.StringType,
-				Description: "ID of `virtual_network` resource",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "ID of `virtual_network` resource",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,

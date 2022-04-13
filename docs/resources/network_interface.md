@@ -38,7 +38,7 @@ resource "multy_network_interface" "nic" {
 
 ### Required
 
-- `cloud` (String) CloudType provider to deploy resource into. Accepted values are `aws`, `azure`,
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure`,
 - `name` (String) Name of Network Interface
 - `subnet_id` (String) ID of `subnet` resource
 
