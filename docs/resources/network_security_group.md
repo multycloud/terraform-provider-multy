@@ -52,8 +52,8 @@ resource "multy_network_security_group" "nsg" {
 
 ### Required
 
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure`,
-- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
+- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland` or `uk`
 - `name` (String) Name of Network Security Group
 - `virtual_network_id` (String) ID of `virtual_network` resource
 
@@ -71,10 +71,10 @@ resource "multy_network_security_group" "nsg" {
 Required:
 
 - `cidr_block` (String) CIDR block of network rule
-- `direction` (String) Direction of network rule. Accepted values are `ingress`, `egress`, `both`,
+- `direction` (String) Direction of network rule. Accepted values are `ingress`, `egress` or `both`
 - `from_port` (Number) From port of network rule port range. Value must be in between 0 and 0
 - `priority` (Number) Priority of network rule. Value must be in between 0 and 0
-- `protocol` (String) Protocol of network rule. Accepted values are `tcp`,
+- `protocol` (String) Protocol of network rule. Accepted values are `tcp`
 - `to_port` (Number) To port of network rule port range. Value must be in between 0 and 0
 
 

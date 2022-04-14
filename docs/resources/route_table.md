@@ -53,6 +53,6 @@ resource "multy_route_table" "rt" {
 Required:
 
 - `cidr_block` (String) CIDR block of network rule
-- `destination` (String) Destination of route. Accepted values are `internet`,
+- `destination` (String) Destination of route. Accepted values are `internet`
 
 

@@ -29,8 +29,8 @@ resource multy_virtual_network vn {
 ### Required
 
 - `cidr_block` (String) CIDR Block of Virtual Network
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure`,
-- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
+- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland` or `uk`
 - `name` (String) Name of Virtual Network
 
 ### Read-Only

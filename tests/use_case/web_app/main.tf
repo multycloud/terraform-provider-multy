@@ -132,9 +132,6 @@ resource multy_virtual_machine vm {
     db_host_secret_name : multy_vault_secret.db_host[each.key].name,
     db_username_secret_name : multy_vault_secret.db_username[each.key].name,
     db_password_secret_name : multy_vault_secret.db_password[each.key].name,
-    db_host : multy_database.example_db["aws"].hostname,
-    db_username : multy_database.example_db["aws"].username,
-    db_password : multy_database.example_db["aws"].password
   }))
   #  user_data                  = base64encode("#!/bin/bash -xe\nsudo su; yum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on ${each.key}</h1>\" > /var/www/html/index.html")
   network_security_group_ids = [multy_network_security_group.nsg[each.key].id]
@@ -193,7 +190,6 @@ resource "multy_vault_access_policy" "kv_ap" {
   identity = multy_virtual_machine.vm[each.key].identity
   access   = "owner"
 }
-
 output "endpoint" {
   value = {
   for k, vm in multy_virtual_machine.vm : k => "http://${vm.public_ip}:4000"

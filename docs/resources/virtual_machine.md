@@ -44,11 +44,11 @@ resource "multy_virtual_machine" "vm" {
 
 ### Required
 
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure`,
-- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
+- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland` or `uk`
 - `name` (String) Name of Virtual Machine
-- `operating_system` (String) Operating System of Virtual Machine. Accepted values are `linux`,
-- `size` (String) Size of Virtual Machine. Accepted values are `micro`, `medium`, `large`,
+- `operating_system` (String) Operating System of Virtual Machine. Accepted values are `linux`
+- `size` (String) Size of Virtual Machine. Accepted values are `micro`, `medium` or `large`
 - `subnet_id` (String) ID of `subnet` resource
 
 ### Optional
