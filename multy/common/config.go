@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"fmt"
 	mproto "github.com/multycloud/multy/api/proto"
 	"github.com/multycloud/multy/api/proto/credspb"
 	"google.golang.org/grpc/metadata"
@@ -37,7 +36,6 @@ func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(b))
 	ctx = metadata.AppendToOutgoingContext(ctx, "cloud-creds-bin", string(b))
 	// TODO: retrieve user id from api key
 	return metadata.AppendToOutgoingContext(ctx, "api_key", c.ApiKey), nil

@@ -21,7 +21,7 @@ resource "multy_route_table" "rt" {
   }
 }
 
-resource "multy_route_table_association" "rta" {
+resource "multy_route_table_association" "subnet" {
   route_table_id = multy_route_table.rt.id
   subnet_id      = multy_subnet.subnet.id
 }

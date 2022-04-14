@@ -61,7 +61,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 			"user_data": {
 				Type: types.StringType,
 				// fixme check instance launch or boot
-				Description:   "Base64 User Data script of Virtual Machine that will run on instance launch",
+				Description:   "User Data script of Virtual Machine that will run on instance launch",
 				Optional:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
@@ -75,7 +75,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Type:        types.StringType,
 				Description: "ID of `public_ip` resource. Cannot be used with `public_ip`",
 				Optional:    true,
-				// TODO: validate if not empty string
+				Validators:  []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 			},
 			"generate_public_ip": {
 				Type:        types.BoolType,
