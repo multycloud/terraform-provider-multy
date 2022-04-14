@@ -7,6 +7,7 @@ import (
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"os"
 	"strings"
+	"sync"
 	"terraform-provider-multy/multy/common"
 
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
@@ -25,8 +26,60 @@ func New() tfsdk.Provider {
 }
 
 type Provider struct {
-	Configured bool
-	Client     *common.ProviderConfig
+	Configured  bool
+	Client      *common.ProviderConfig
+	refreshCall *sync.Once
+}
+
+var awsSchema = tfsdk.Attribute{
+	Optional:    true,
+	Computed:    true,
+	Description: "Credentials for AWS Cloud",
+	Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+		"access_key_id": {
+			Optional:    true,
+			Description: "AWS Access Key ID. " + common.HelperValueViaEnvVar("AWS_ACCESS_KEY_ID"),
+			Type:        types.StringType,
+			Sensitive:   true,
+		},
+		"access_key_secret": {
+			Optional:    true,
+			Description: "AWS Secret Access Key. " + common.HelperValueViaEnvVar("AWS_SECRET_ACCESS_KEY"),
+			Type:        types.StringType,
+			Sensitive:   true,
+		},
+	}),
+}
+
+var azureSchema = tfsdk.Attribute{
+	Optional:    true,
+	Description: "Credentials for Azure Cloud. See how to authenticate through Service Principal in the [Azure docs](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret#creating-a-service-principal)",
+	Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+		"subscription_id": {
+			Optional:    true,
+			Description: "Azure Subscription ID. " + common.HelperValueViaEnvVar("ARM_SUBSCRIPTION_ID"),
+			Type:        types.StringType,
+			Sensitive:   true,
+		},
+		"client_id": {
+			Optional:    true,
+			Description: "Azure Client ID " + common.HelperValueViaEnvVar("ARM_CLIENT_ID"),
+			Type:        types.StringType,
+			Sensitive:   true,
+		},
+		"client_secret": {
+			Optional:    true,
+			Description: "Azure Client Secret " + common.HelperValueViaEnvVar("ARM_CLIENT_SECRET"),
+			Type:        types.StringType,
+			Sensitive:   true,
+		},
+		"tenant_id": {
+			Optional:    true,
+			Description: "Azure Tenant ID " + common.HelperValueViaEnvVar("ARM_TENANT_ID"),
+			Type:        types.StringType,
+			Sensitive:   true,
+		},
+	}),
 }
 
 func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
@@ -39,55 +92,8 @@ func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Optional:    true,
 				Sensitive:   true,
 			},
-			"aws": {
-				Optional:    true,
-				Computed:    true,
-				Description: "Credentials for AWS Cloud",
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"access_key_id": {
-						Optional:    true,
-						Description: "AWS Access Key ID. " + common.HelperValueViaEnvVar("AWS_ACCESS_KEY_ID"),
-						Type:        types.StringType,
-						Sensitive:   true,
-					},
-					"access_key_secret": {
-						Optional:    true,
-						Description: "AWS Secret Access Key. " + common.HelperValueViaEnvVar("AWS_SECRET_ACCESS_KEY"),
-						Type:        types.StringType,
-						Sensitive:   true,
-					},
-				}),
-			},
-			"azure": {
-				Optional:    true,
-				Description: "Credentials for Azure Cloud. See how to authenticate through Service Principal in the [Azure docs](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret#creating-a-service-principal)",
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"subscription_id": {
-						Optional:    true,
-						Description: "Azure Subscription ID. " + common.HelperValueViaEnvVar("ARM_SUBSCRIPTION_ID"),
-						Type:        types.StringType,
-						Sensitive:   true,
-					},
-					"client_id": {
-						Optional:    true,
-						Description: "Azure Client ID " + common.HelperValueViaEnvVar("ARM_CLIENT_ID"),
-						Type:        types.StringType,
-						Sensitive:   true,
-					},
-					"client_secret": {
-						Optional:    true,
-						Description: "Azure Client Secret " + common.HelperValueViaEnvVar("ARM_CLIENT_SECRET"),
-						Type:        types.StringType,
-						Sensitive:   true,
-					},
-					"tenant_id": {
-						Optional:    true,
-						Description: "Azure Tenant ID " + common.HelperValueViaEnvVar("ARM_TENANT_ID"),
-						Type:        types.StringType,
-						Sensitive:   true,
-					},
-				}),
-			},
+			"aws":   awsSchema,
+			"azure": azureSchema,
 			"server_endpoint": {
 				Type:        types.StringType,
 				Description: "Address of the multy server. Defaults to `api.multy.dev`. If local, it will be run without SSL",
@@ -119,14 +125,18 @@ type providerAzureConfig struct {
 
 func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
 	var config providerData
-	var err error
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	p.ConfigureProvider(ctx, config, resp)
+}
+
+func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, resp *tfsdk.ConfigureProviderResponse) {
 	var apiKey string
+	var err error
 	if config.ApiKey.Unknown {
 		resp.Diagnostics.AddWarning(
 			"Unable to create Client",
@@ -202,8 +212,8 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 
 	c := common.ProviderConfig{}
-
 	client := proto.NewMultyResourceServiceClient(conn)
+
 	c.Client = client
 	c.ApiKey = apiKey
 	c.Aws = awsConfig
@@ -217,17 +227,22 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		)
 		return
 	}
-	_, err = client.RefreshState(ctx, &commonpb.Empty{})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to connect to multy server",
-			"Unable to connect to multy server:\n\n"+common.ParseGrpcErrors(err),
-		)
-		return
-	}
 
+	p.refreshCall = &sync.Once{}
 	p.Client = &c
 	p.Configured = true
+}
+
+func (p *Provider) Refresh(ctx context.Context, diags diag.Diagnostics) {
+	p.refreshCall.Do(func() {
+		_, err := p.Client.Client.RefreshState(ctx, &commonpb.Empty{})
+		if err != nil {
+			diags.AddError(
+				"Unable to connect to multy server",
+				"Unable to connect to multy server:\n\n"+common.ParseGrpcErrors(err),
+			)
+		}
+	})
 }
 
 func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {

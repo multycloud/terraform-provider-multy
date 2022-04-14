@@ -1,37 +1,13 @@
-terraform {
-  required_providers {
-    multy = {
-      version = "0.0.1"
-      source  = "hashicorp.com/dev/multy"
-    }
-  }
-}
-
-provider "multy" {
-  api_key = "secret-2"
-  aws     = {}
-}
-
-variable "clouds" {
-  type    = list(string)
+variable clouds {
+  type    = set(string)
   default = ["aws"]
 }
 
-provider "multy" {
-  aws             = {}
-  api_key         = "secret-1"
-  server_endpoint = "localhost:8000"
-}
-
-resource "multy_virtual_network" "vn" {
-  for_each = toset(var.clouds)
+resource multy_virtual_network vn {
+  for_each = var.clouds
 
   name       = "vn_test2"
   cidr_block = "10.0.0.0/16"
+  location   = "us_east"
   cloud      = each.key
-  location   = "ireland"
-}
-
-output "vn" {
-  value = multy_virtual_network.vn
 }

@@ -1,17 +1,3 @@
-terraform {
-  required_providers {
-    multy = {
-      version = "0.0.1"
-      source  = "hashicorp.com/dev/multy"
-    }
-  }
-}
-
-provider "multy" {
-  api_key         = "secret-1"
-  server_endpoint = "localhost:8000"
-  aws             = {}
-}
 resource "multy_database" "example_db" {
   cloud          = "aws"
   location       = "us_east"
