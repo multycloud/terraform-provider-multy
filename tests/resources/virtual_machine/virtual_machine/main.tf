@@ -1,3 +1,8 @@
+variable "cloud" {
+  type    = string
+  default = "aws"
+}
+
 variable "location" {
   type    = string
   default = "ireland"
@@ -6,7 +11,7 @@ variable "location" {
 resource multy_virtual_network vn {
   name       = "test_vm"
   cidr_block = "10.0.0.0/16"
-  cloud      = "aws"
+  cloud      = var.cloud
   location   = var.location
 }
 
@@ -19,7 +24,7 @@ resource multy_subnet subnet {
 resource "multy_network_security_group" nsg {
   name               = "test_vm"
   virtual_network_id = multy_virtual_network.vn.id
-  cloud              = "aws"
+  cloud              = var.cloud
   location           = var.location
   rule {
     protocol   = "tcp"
@@ -56,7 +61,7 @@ resource multy_virtual_machine vm {
   generate_public_ip = true
   user_data          = "#!/bin/bash -xe\nsudo su;\nyum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on AWS</h1>\" > /var/www/html/index.html"
   public_ssh_key     = file("./ssh_key.pub")
-  cloud              = "aws"
+  cloud              = var.cloud
   location           = var.location
 
   depends_on = [multy_network_security_group.nsg]

@@ -1,6 +1,11 @@
+variable "cloud" {
+  type    = string
+  default = "aws"
+}
+
 resource multy_object_storage "obj_storage" {
   name       = "test-storage-123-multy"
-  cloud      = "azure"
+  cloud      = var.cloud
   location   = "us_east"
   versioning = true
 }
