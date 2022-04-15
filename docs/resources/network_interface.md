@@ -38,8 +38,8 @@ resource "multy_network_interface" "nic" {
 
 ### Required
 
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure`,
-- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland`, `uk`,
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
+- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland` or `uk`
 - `name` (String) Name of Network Interface
 - `subnet_id` (String) ID of `subnet` resource
 

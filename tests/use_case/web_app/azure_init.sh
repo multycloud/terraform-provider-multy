@@ -28,13 +28,9 @@ sudo chmod a+rwx .
 git clone https://github.com/FaztTech/nodejs-mysql-links.git
 cd nodejs-mysql-links
 
-#export DATABASE_HOST=$(az keyvault secret show --vault-name '${vault_name}' -n '${db_host_secret_name}' | jq ".value" -r)
-#export DATABASE_USER=$(az keyvault secret show --vault-name '${vault_name}' -n '${db_username_secret_name}' | jq ".value" -r)
-#export DATABASE_PASSWORD=$(az keyvault secret show --vault-name '${vault_name}' -n '${db_password_secret_name}' | jq ".value" -r)
-
-export DATABASE_HOST=${db_host}
-export DATABASE_USER=${db_username}
-export DATABASE_PASSWORD=${db_password}
+export DATABASE_HOST=$(az keyvault secret show --vault-name '${vault_name}' -n '${db_host_secret_name}' | jq ".value" -r)
+export DATABASE_USER=$(az keyvault secret show --vault-name '${vault_name}' -n '${db_username_secret_name}' | jq ".value" -r)
+export DATABASE_PASSWORD=$(az keyvault secret show --vault-name '${vault_name}' -n '${db_password_secret_name}' | jq ".value" -r)
 
 # both aws and az will try to run this command but only one will succeed
 mysql -h "$DATABASE_HOST" -P 3306 -u "$DATABASE_USER" --password="$DATABASE_PASSWORD" -e 'source database/db.sql' || true
