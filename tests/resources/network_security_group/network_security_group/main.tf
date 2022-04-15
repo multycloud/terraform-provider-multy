@@ -3,17 +3,22 @@ variable "location" {
   default = "ireland"
 }
 
+variable "cloud" {
+  type    = string
+  default = "aws"
+}
+
 resource multy_virtual_network vn {
   name       = "test_nsg"
   cidr_block = "10.0.0.0/16"
-  cloud      = "aws"
+  cloud      = var.cloud
   location   = var.location
 }
 
 resource "multy_network_security_group" nsg {
   name               = "test_nsg"
   virtual_network_id = multy_virtual_network.vn.id
-  cloud              = "aws"
+  cloud              = var.cloud
   location           = var.location
   rule {
     protocol   = "tcp"

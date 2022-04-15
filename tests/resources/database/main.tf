@@ -1,5 +1,10 @@
+variable cloud {
+  type    = string
+  default = "aws"
+}
+
 resource "multy_database" "example_db" {
-  cloud          = "aws"
+  cloud          = var.cloud
   location       = "us_east"
   storage_gb     = 10
   name           = "exampledbmulty"
@@ -13,7 +18,7 @@ resource "multy_database" "example_db" {
 resource "multy_virtual_network" "example_vn" {
   name       = "example_vn"
   cidr_block = "10.0.0.0/16"
-  cloud      = "aws"
+  cloud      = var.cloud
   location   = "us_east"
 }
 resource "multy_subnet" "subnet1" {

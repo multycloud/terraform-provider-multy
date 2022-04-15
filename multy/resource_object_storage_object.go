@@ -51,6 +51,12 @@ func (r ResourceObjectStorageObjectType) GetSchema(_ context.Context) (tfsdk.Sch
 				Computed:    true,
 				Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.ObjectAclType)},
 			},
+			// outputs
+			"url": {
+				Type:        types.StringType,
+				Description: "URL of object",
+				Computed:    true,
+			},
 		},
 	}, nil
 }
@@ -110,6 +116,7 @@ type ObjectStorageObject struct {
 	ObjectStorageId string                                               `tfsdk:"object_storage_id"`
 	Content         string                                               `tfsdk:"content"`
 	ContentType     types.String                                         `tfsdk:"content_type"`
+	Url             types.String                                         `tfsdk:"url"`
 }
 
 func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) ObjectStorageObject {
@@ -120,6 +127,7 @@ func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) 
 		ObjectStorageId: res.ObjectStorageId,
 		Content:         res.Content,
 		ContentType:     common.DefaultToNull[types.String](res.ContentType),
+		Url:             types.String{Value: res.Url},
 	}
 }
 
