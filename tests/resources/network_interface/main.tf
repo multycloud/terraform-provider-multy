@@ -16,10 +16,10 @@ resource "multy_virtual_network" "example_vn" {
   location   = var.location
 }
 resource "multy_subnet" "subnet" {
-  for_each        = var.clouds
-  name            = "nic_test"
-  cidr_block      = "10.0.2.0/24"
-  virtual_network = multy_virtual_network.example_vn.id
+  for_each           = var.clouds
+  name               = "nic_test"
+  cidr_block         = "10.0.2.0/24"
+  virtual_network_id = multy_virtual_network.example_vn.id
 }
 resource "multy_network_interface" "private-nic" {
   for_each  = var.clouds
