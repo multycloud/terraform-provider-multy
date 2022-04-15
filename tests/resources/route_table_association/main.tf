@@ -26,12 +26,10 @@ resource "multy_subnet" "subnet2" {
 resource multy_route_table rt {
   name               = "rta_test"
   virtual_network_id = multy_virtual_network.example_vn.id
-  routes             = [
-    {
-      cidr_block  = "0.0.0.0/0"
-      destination = "internet"
-    }
-  ]
+  route {
+    cidr_block  = "0.0.0.0/0"
+    destination = "internet"
+  }
 }
 
 resource multy_route_table_association subnet1 {
