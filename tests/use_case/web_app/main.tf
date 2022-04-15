@@ -133,7 +133,6 @@ resource multy_virtual_machine vm {
     db_username_secret_name : multy_vault_secret.db_username[each.key].name,
     db_password_secret_name : multy_vault_secret.db_password[each.key].name,
   }))
-  #  user_data                  = base64encode("#!/bin/bash -xe\nsudo su; yum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on ${each.key}</h1>\" > /var/www/html/index.html")
   network_security_group_ids = [multy_network_security_group.nsg[each.key].id]
 
   public_ssh_key = file("./ssh_key.pub")
