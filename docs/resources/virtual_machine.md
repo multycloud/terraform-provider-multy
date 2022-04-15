@@ -58,7 +58,7 @@ resource "multy_virtual_machine" "vm" {
 - `network_security_group_ids` (List of String) IDs of `network_security_group` resource
 - `public_ip_id` (String) ID of `public_ip` resource. Cannot be used with `public_ip`
 - `public_ssh_key` (String) Public SSH Key of Virtual Machine
-- `user_data` (String) Base64 User Data script of Virtual Machine that will run on instance launch
+- `user_data` (String) User Data script of Virtual Machine that will run on instance launch
 
 ### Read-Only
 

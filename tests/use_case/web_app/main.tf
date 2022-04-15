@@ -21,7 +21,7 @@ variable "location" {
 }
 
 variable "clouds" {
-  type    = list(string)
+  type    = set(string)
   default = ["aws"]
 }
 
@@ -31,7 +31,7 @@ variable "db_cloud" {
 }
 
 resource multy_virtual_network vn {
-  for_each   = toset(var.clouds)
+  for_each   = var.clouds
   name       = "web_app_vn"
   cidr_block = "10.0.0.0/16"
   cloud      = each.key
@@ -39,14 +39,14 @@ resource multy_virtual_network vn {
 }
 
 resource multy_subnet public_subnet {
-  for_each           = toset(var.clouds)
+  for_each           = var.clouds
   name               = "web_app_public_subnet"
   cidr_block         = "10.0.10.0/24"
   virtual_network_id = multy_virtual_network.vn[each.key].id
 }
 
 resource multy_subnet private_subnet {
-  for_each           = toset(var.clouds)
+  for_each           = var.clouds
   name               = "web_app_private_subnet"
   cidr_block         = "10.0.11.0/24"
   virtual_network_id = multy_virtual_network.vn[each.key].id
@@ -54,7 +54,7 @@ resource multy_subnet private_subnet {
 }
 
 resource multy_subnet private_subnet2 {
-  for_each           = toset(var.clouds)
+  for_each           = var.clouds
   name               = "web_app_private_subnet2"
   cidr_block         = "10.0.12.0/24"
   virtual_network_id = multy_virtual_network.vn[each.key].id
@@ -62,7 +62,7 @@ resource multy_subnet private_subnet2 {
 }
 
 resource "multy_route_table" "rt" {
-  for_each           = toset(var.clouds)
+  for_each           = var.clouds
   name               = "web_app_rt"
   virtual_network_id = multy_virtual_network.vn[each.key].id
   route {
@@ -72,24 +72,24 @@ resource "multy_route_table" "rt" {
 }
 
 resource multy_route_table_association rta1 {
-  for_each       = toset(var.clouds)
+  for_each       = var.clouds
   route_table_id = multy_route_table.rt[each.key].id
   subnet_id      = multy_subnet.public_subnet[each.key].id
 }
 // fixme: For a DB instance to be publicly accessible, all of the subnets in its DB subnet group must be public. If a subnet that is associated with a publicly accessible DB instance changes from public to private, it can affect DB instance availability.
 resource multy_route_table_association rta2 {
-  for_each       = toset(var.clouds)
+  for_each       = var.clouds
   route_table_id = multy_route_table.rt[each.key].id
   subnet_id      = multy_subnet.private_subnet[each.key].id
 }
 resource multy_route_table_association rta3 {
-  for_each       = toset(var.clouds)
+  for_each       = var.clouds
   route_table_id = multy_route_table.rt[each.key].id
   subnet_id      = multy_subnet.private_subnet2[each.key].id
 }
 
 resource "multy_network_security_group" nsg {
-  for_each           = toset(var.clouds)
+  for_each           = var.clouds
   name               = "web_app_nsg"
   virtual_network_id = multy_virtual_network.vn[each.key].id
   cloud              = each.key
@@ -121,7 +121,7 @@ resource "multy_network_security_group" nsg {
 }
 
 resource multy_virtual_machine vm {
-  for_each           = toset(var.clouds)
+  for_each           = var.clouds
   name               = "web_app_vm"
   size               = each.key == "azure" ? "large" : "micro"
   operating_system   = "linux"
@@ -147,7 +147,6 @@ resource multy_virtual_machine vm {
 }
 
 resource "multy_database" "example_db" {
-  for_each       = toset([var.db_cloud])
   storage_gb     = 10
   name           = "exampledbmulty"
   engine         = "mysql"
@@ -156,39 +155,38 @@ resource "multy_database" "example_db" {
   password       = "multy-Admin123!"
   size           = "micro"
   subnet_ids     = [multy_subnet.private_subnet[each.key].id, multy_subnet.private_subnet2[each.key].id]
-  cloud          = each.key
+  cloud          = var.db_cloud
   location       = var.location
 
   depends_on = [multy_route_table_association.rta2, multy_route_table_association.rta3]
 }
 
 resource "multy_vault" "web_app_vault" {
-  for_each = toset(var.clouds)
-  #  for_each = toset(var.clouds)
+  for_each = var.clouds
   name     = "web-app-vault-test"
   cloud    = each.key
   location = var.location
 }
 resource "multy_vault_secret" "db_host" {
-  for_each = toset(var.clouds)
+  for_each = var.clouds
   name     = "db-host"
   vault_id = multy_vault.web_app_vault[each.key].id
   value    = multy_database.example_db[var.db_cloud].hostname
 }
 resource "multy_vault_secret" "db_username" {
-  for_each = toset(var.clouds)
+  for_each = var.clouds
   name     = "db-username"
   vault_id = multy_vault.web_app_vault[each.key].id
   value    = multy_database.example_db[var.db_cloud].username
 }
 resource "multy_vault_secret" "db_password" {
-  for_each = toset(var.clouds)
+  for_each = var.clouds
   name     = "db-password"
   vault_id = multy_vault.web_app_vault[each.key].id
   value    = multy_database.example_db[var.db_cloud].password
 }
 resource "multy_vault_access_policy" "kv_ap" {
-  for_each = toset(var.clouds)
+  for_each = var.clouds
   vault_id = multy_vault.web_app_vault[each.key].id
   identity = multy_virtual_machine.vm[each.key].identity
   access   = "owner"
