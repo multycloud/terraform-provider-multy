@@ -1,10 +1,10 @@
-variable "clouds" {
-  type    = set(string)
-  default = ["aws"]
+variable "cloud" {
+  type    = string
+  default = "aws"
 }
 
 resource "multy_vault" "v" {
   name     = "multyvault"
-  cloud    = "aws"
+  cloud    = var.cloud
   location = "us_east"
 }

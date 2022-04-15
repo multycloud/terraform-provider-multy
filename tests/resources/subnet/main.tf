@@ -1,7 +1,12 @@
+variable "cloud" {
+  type    = string
+  default = "aws"
+}
+
 resource multy_virtual_network vn {
   name       = "test_subnet"
   cidr_block = "10.0.0.0/16"
-  cloud      = "aws"
+  cloud      = var.cloud
   location   = "us_east"
 }
 

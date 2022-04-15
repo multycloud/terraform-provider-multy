@@ -1,8 +1,13 @@
+variable "cloud" {
+  type    = string
+  default = "aws"
+}
+
 resource "multy_virtual_network" "example_vn" {
   name       = "rta_test"
   cidr_block = "10.0.0.0/16"
   location   = "ireland"
-  cloud      = "aws"
+  cloud      = var.cloud
 }
 
 resource "multy_subnet" "subnet" {

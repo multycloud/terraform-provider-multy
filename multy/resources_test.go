@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -42,13 +43,14 @@ func TestAccResources(t *testing.T) {
 			continue
 		}
 		t.Run(filepath.Base(filepath.Dir(path)), func(t *testing.T) {
+			isError := strings.HasSuffix(filepath.Base(filepath.Dir(path)), "_failed")
 			resource.Test(t, resource.TestCase{
 				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 					"multy": func() (tfprotov6.ProviderServer, error) {
 						return tfsdk.NewProtocol6Server(&Provider{}), nil
 					},
 				},
-				Steps: []resource.TestStep{getStep(string(contents))},
+				Steps: []resource.TestStep{getStep(string(contents), isError)},
 			})
 		})
 	}
@@ -63,14 +65,21 @@ provider "multy" {
 }
 `
 
-func getStep(config string) resource.TestStep {
-	return resource.TestStep{
+func getStep(config string, isError bool) resource.TestStep {
+	step := resource.TestStep{
 		Config: config + providerBlock,
-		Check: func(state *terraform.State) error {
+	}
+
+	if isError {
+		step.ExpectError = regexp.MustCompile(".*")
+	} else {
+		step.Check = func(state *terraform.State) error {
 			if !state.HasResources() {
 				return fmt.Errorf("no resources")
 			}
 			return nil
-		},
+		}
 	}
+
+	return step
 }
