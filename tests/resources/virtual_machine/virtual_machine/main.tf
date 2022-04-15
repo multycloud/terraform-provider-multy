@@ -1,16 +1,3 @@
-terraform {
-  required_providers {
-    multy = {
-      source = "multycloud/multy"
-    }
-  }
-}
-
-provider "multy" {
-  api_key         = "multy_local"
-  server_endpoint = "localhost:8000"
-}
-
 variable "location" {
   type    = string
   default = "ireland"

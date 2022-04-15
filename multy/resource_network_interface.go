@@ -5,8 +5,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/mtypes"
 )
 
 type ResourceNetworkInterfaceType struct{}
@@ -31,7 +33,8 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
-			"cloud": common.CloudsSchema,
+			"cloud":    common.CloudsSchema,
+			"location": common.LocationSchema,
 		},
 	}, nil
 }
@@ -85,9 +88,11 @@ func deleteNetworkInterface(ctx context.Context, p Provider, state NetworkInterf
 }
 
 type NetworkInterface struct {
-	Id       types.String `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	SubnetId types.String `tfsdk:"subnet_id"`
+	Id       types.String                             `tfsdk:"id"`
+	Name     types.String                             `tfsdk:"name"`
+	SubnetId types.String                             `tfsdk:"subnet_id"`
+	Cloud    mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 }
 
 func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) NetworkInterface {
@@ -95,11 +100,17 @@ func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) Networ
 		Id:       types.String{Value: res.CommonParameters.ResourceId},
 		Name:     types.String{Value: res.Name},
 		SubnetId: types.String{Value: res.SubnetId},
+		Cloud:    mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location: mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
 func convertFromNetworkInterface(plan NetworkInterface) *resourcespb.NetworkInterfaceArgs {
 	return &resourcespb.NetworkInterfaceArgs{
+		CommonParameters: &commonpb.ResourceCommonArgs{
+			Location:      plan.Location.Value,
+			CloudProvider: plan.Cloud.Value,
+		},
 		Name:     plan.Name.Value,
 		SubnetId: plan.SubnetId.Value,
 	}

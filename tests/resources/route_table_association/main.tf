@@ -1,16 +1,3 @@
-terraform {
-  required_providers {
-    multy = {
-      version = "0.0.1"
-      source  = "hashicorp.com/dev/multy"
-    }
-  }
-}
-
-provider "multy" {
-  api_key = "multy_local"
-}
-
 resource "multy_virtual_network" "example_vn" {
   name       = "rta_test"
   cidr_block = "10.0.0.0/16"
@@ -42,7 +29,7 @@ resource multy_route_table rt {
   ]
 }
 
-resource multy_route_table_association rta {
+resource multy_route_table_association subnet1 {
   route_table_id = multy_route_table.rt.id
   subnet_id      = multy_subnet.subnet1.id
 }

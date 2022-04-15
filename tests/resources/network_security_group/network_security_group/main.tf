@@ -1,19 +1,6 @@
-terraform {
-  required_providers {
-    multy = {
-      version = "0.0.1"
-      source  = "hashicorp.com/dev/multy"
-    }
-  }
-}
-
 variable "location" {
   type    = string
   default = "ireland"
-}
-
-provider "multy" {
-  api_key = "123"
 }
 
 resource multy_virtual_network vn {
