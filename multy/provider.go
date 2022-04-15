@@ -252,6 +252,7 @@ func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 		"multy_virtual_machine":         ResourceVirtualMachineType{},
 		"multy_network_security_group":  ResourceNetworkSecurityGroupType{},
 		"multy_network_interface":       ResourceNetworkInterfaceType{},
+		"multy_public_ip":               ResourcePublicIpType{},
 		"multy_route_table":             ResourceRouteTableType{},
 		"multy_route_table_association": ResourceRouteTableAssociationType{},
 		"multy_object_storage_object":   ResourceObjectStorageObjectType{},
