@@ -15,9 +15,9 @@ resource "multy_virtual_network" "example_vn" {
   location   = var.location
 }
 resource "multy_subnet" "subnet" {
-  name            = "nic_test"
-  cidr_block      = "10.0.2.0/24"
-  virtual_network = multy_virtual_network.example_vn.id
+  name               = "nic_test"
+  cidr_block         = "10.0.2.0/24"
+  virtual_network_id = multy_virtual_network.example_vn.id
 }
 resource "multy_network_interface" "private-nic" {
   cloud     = var.cloud

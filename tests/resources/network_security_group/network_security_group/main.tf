@@ -15,25 +15,6 @@ resource multy_virtual_network vn {
   location   = var.location
 }
 
-#resource multy_subnet subnet {
-#  name               = "test_nsg"
-#  cidr_block         = "10.0.10.0/24"
-#  virtual_network_id = multy_virtual_network.vn.id
-#  cloud              = "aws"
-#  location           = var.location
-#}
-
-#resource multy_virtual_machine vm {
-#  name             = "test_vm"
-#  size             = "micro"
-#  operating_system = "linux"
-#  subnet_id        = multy_subnet.subnet.id
-#  public_ip_id     = "123"
-#  ssh_key          = file("./ssh_key")
-#  cloud            = "aws"
-#  location         = "ireland"
-#}
-
 resource "multy_network_security_group" nsg {
   name               = "test_nsg"
   virtual_network_id = multy_virtual_network.vn.id

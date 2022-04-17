@@ -187,7 +187,7 @@ func convertFromNetworkSecurityGroup(plan NetworkSecurityGroup) *resourcespb.Net
 			Priority: item.Priority.Value,
 			PortRange: &resourcespb.PortRange{
 				From: int32(item.FromPort.Value),
-				To:   int32(item.FromPort.Value),
+				To:   int32(item.ToPort.Value),
 			},
 			CidrBlock: item.CidrBlock.Value,
 			Direction: ruleDirection,

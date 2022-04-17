@@ -38,9 +38,9 @@ resource "multy_network_security_group" nsg {
     protocol   = "xx"
     priority   = "120"
     from_port  = "-9"
-    to_port    = "xxx"
+    to_port    = "9"
     cidr_block = "0.0.0.0"
-    direction  = "xxx"
+    direction  = "down"
   }
 }
 

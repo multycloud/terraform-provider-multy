@@ -59,7 +59,7 @@ resource multy_virtual_machine vm {
   operating_system   = "linux"
   subnet_id          = multy_subnet.subnet.id
   generate_public_ip = true
-  user_data          = "#!/bin/bash -xe\nsudo su;\nyum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on AWS</h1>\" > /var/www/html/index.html"
+  user_data          = base64encode("#!/bin/bash -xe\nsudo su;\nyum update -y; yum install -y httpd.x86_64; systemctl start httpd.service; systemctl enable httpd.service; touch /var/www/html/index.html; echo \"<h1>Hello from Multy on AWS</h1>\" > /var/www/html/index.html")
   public_ssh_key     = file("./ssh_key.pub")
   cloud              = var.cloud
   location           = var.location
