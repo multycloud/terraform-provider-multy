@@ -58,7 +58,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Description: "IDs of `network_security_group` resource",
 				Optional:    true,
 			},
-			"user_data": {
+			"user_data_base64": {
 				Type: types.StringType,
 				// fixme check instance launch or boot
 				Description:   "User Data script of Virtual Machine that will run on instance launch",
@@ -177,8 +177,8 @@ func convertToVirtualMachine(res *resourcespb.VirtualMachineResource) VirtualMac
 		SubnetId:                types.String{Value: res.SubnetId},
 		NetworkInterfaceIds:     common.DefaultSliceToNull(common.TypesStringToStringSlice(res.NetworkInterfaceIds)),
 		NetworkSecurityGroupIds: common.DefaultSliceToNull(common.TypesStringToStringSlice(res.NetworkSecurityGroupIds)),
-		UserData:                types.String{Value: res.UserData},
-		PublicSshKey:            types.String{Value: res.PublicSshKey},
+		UserDataBase64:          common.DefaultToNull[types.String](res.UserDataBase64),
+		PublicSshKey:            common.DefaultToNull[types.String](res.PublicSshKey),
 		PublicIpId:              common.DefaultToNull[types.String](res.PublicIpId),
 		GeneratePublicIp:        types.Bool{Value: res.GeneratePublicIp},
 		Cloud:                   mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
@@ -199,7 +199,7 @@ func convertFromVirtualMachine(plan VirtualMachine) *resourcespb.VirtualMachineA
 		NetworkInterfaceIds:     common.StringSliceToTypesString(plan.NetworkInterfaceIds),
 		NetworkSecurityGroupIds: common.StringSliceToTypesString(plan.NetworkSecurityGroupIds),
 		VmSize:                  plan.Size.Value,
-		UserData:                plan.UserData.Value,
+		UserDataBase64:          plan.UserDataBase64.Value,
 		SubnetId:                plan.SubnetId.Value,
 		PublicSshKey:            plan.PublicSshKey.Value,
 		PublicIpId:              plan.PublicIpId.Value,
@@ -215,7 +215,7 @@ type VirtualMachine struct {
 	SubnetId                types.String                                    `tfsdk:"subnet_id"`
 	NetworkInterfaceIds     []types.String                                  `tfsdk:"network_interface_ids"`
 	NetworkSecurityGroupIds []types.String                                  `tfsdk:"network_security_group_ids"`
-	UserData                types.String                                    `tfsdk:"user_data"`
+	UserDataBase64          types.String                                    `tfsdk:"user_data_base64"`
 	PublicSshKey            types.String                                    `tfsdk:"public_ssh_key"`
 	PublicIpId              types.String                                    `tfsdk:"public_ip_id"`
 	GeneratePublicIp        types.Bool                                      `tfsdk:"generate_public_ip"`
