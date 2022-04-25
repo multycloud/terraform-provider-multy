@@ -9,6 +9,7 @@ terraform {
 }
 
 provider "multy" {
-  aws = {}
+  aws     = {}
+  api_key = "b-anana"
   #  server_endpoint = "localhost:8000"
 }

@@ -32,7 +32,7 @@ resource "multy_virtual_machine" "vm" {
   operating_system   = "linux"
   subnet_id          = multy_subnet.subnet.id
   generate_public_ip = true
-  user_data          = "echo 'Hello World'"
+  user_data_base64          = "echo 'Hello World'"
   public_ssh_key     = file("./ssh_key.pub")
   cloud              = "aws"
   location           = "ireland"
@@ -58,7 +58,7 @@ resource "multy_virtual_machine" "vm" {
 - `network_security_group_ids` (List of String) IDs of `network_security_group` resource
 - `public_ip_id` (String) ID of `public_ip` resource. Cannot be used with `public_ip`
 - `public_ssh_key` (String) Public SSH Key of Virtual Machine
-- `user_data` (String) User Data script of Virtual Machine that will run on instance launch
+- `user_data_base64` (String) User Data script of Virtual Machine that will run on instance launch
 
 ### Read-Only
 
