@@ -33,7 +33,7 @@ jobs:
         run: go build .
 
   test:
-    needs: [build]
+    needs: [ build ]
     runs-on: ubuntu-latest
     steps:
       - name: Install multy
@@ -51,8 +51,8 @@ jobs:
         run: |
           wget https://raw.githubusercontent.com/multycloud/multy/main/db/init.sql
           mysql -uroot -h127.0.0.1 -e 'source init.sql'
-          mysql -uroot -h127.0.0.1 -D multydb -e 'INSERT INTO ApiKeys (ApiKey, UserId) VALUES ("test-secret-aws", 9991);'
-          mysql -uroot -h127.0.0.1 -D multydb -e 'INSERT INTO ApiKeys (ApiKey, UserId) VALUES ("test-secret-azure", 9992);'
+          mysql -uroot -h127.0.0.1 -D multydb -e 'INSERT INTO ApiKeys (ApiKey, UserId) VALUES ("test-secret-aws", "9991");'
+          mysql -uroot -h127.0.0.1 -D multydb -e 'INSERT INTO ApiKeys (ApiKey, UserId) VALUES ("test-secret-azure", "9992");'
 
       - name: Start server
         run: |
