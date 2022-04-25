@@ -1,13 +1,14 @@
 terraform {
   required_providers {
     multy = {
-      version = "0.0.1"
-      source  = "hashicorp.com/dev/multy"
+      #      version = "0.0.1"
+      #      source  = "hashicorp.com/dev/multy"
+      source = "multycloud/multy"
     }
   }
 }
 
 provider "multy" {
-  api_key         = "secret-1"
-  server_endpoint = "localhost:8000"
+  aws = {}
+  #  server_endpoint = "localhost:8000"
 }

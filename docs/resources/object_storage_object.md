@@ -44,5 +44,6 @@ resource "multy_object_storage_object" "obj_storage" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `url` (String) URL of object
 
 

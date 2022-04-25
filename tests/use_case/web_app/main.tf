@@ -22,7 +22,7 @@ variable "location" {
 
 variable "clouds" {
   type    = set(string)
-  default = ["aws"]
+  default = ["aws", "azure"]
 }
 
 variable "db_cloud" {
@@ -167,19 +167,19 @@ resource "multy_vault_secret" "db_host" {
   for_each = var.clouds
   name     = "db-host"
   vault_id = multy_vault.web_app_vault[each.key].id
-  value    = multy_database.example_db[var.db_cloud].hostname
+  value    = multy_database.example_db.hostname
 }
 resource "multy_vault_secret" "db_username" {
   for_each = var.clouds
   name     = "db-username"
   vault_id = multy_vault.web_app_vault[each.key].id
-  value    = multy_database.example_db[var.db_cloud].username
+  value    = multy_database.example_db.username
 }
 resource "multy_vault_secret" "db_password" {
   for_each = var.clouds
   name     = "db-password"
   vault_id = multy_vault.web_app_vault[each.key].id
-  value    = multy_database.example_db[var.db_cloud].password
+  value    = multy_database.example_db.password
 }
 resource "multy_vault_access_policy" "kv_ap" {
   for_each = var.clouds
@@ -187,6 +187,25 @@ resource "multy_vault_access_policy" "kv_ap" {
   identity = multy_virtual_machine.vm[each.key].identity
   access   = "owner"
 }
+resource multy_object_storage app {
+  name     = "multy-web-app-test"
+  cloud    = var.db_cloud
+  location = var.location
+}
+resource "null_resource" "app_upload" {
+  provisioner "local-exec" {
+    command = "aws s3 sync nodejs-mysql-links s3://${multy_object_storage.app.name} --acl public-read"
+  }
+}
+#resource multy_object_storage_object app_aws {
+#  for_each = contains(var.clouds, "aws") ? fileset("./nodejs-mysql-links", "**/*.*") : []
+#
+#  name              = each.value
+#  object_storage_id = multy_object_storage.app["aws"].id
+#  content           = file("./nodejs-mysql-links/${each.value}")
+#  content_type      = "text/html"
+#  acl               = "public_read"
+#}
 output "endpoint" {
   value = {
   for k, vm in multy_virtual_machine.vm : k => "http://${vm.public_ip}:4000"
