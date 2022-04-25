@@ -261,6 +261,7 @@ func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 		"multy_vault":                   ResourceVaultType{},
 		"multy_vault_secret":            ResourceVaultSecretType{},
 		"multy_vault_access_policy":     ResourceVaultAccessPolicyType{},
+		"multy_kubernetes_cluster":      ResourceKubernetesClusterType{},
 	}, nil
 }
 

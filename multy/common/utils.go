@@ -3,55 +3,14 @@ package common
 import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/errorspb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"strings"
 )
 
 const DebugMode = true
-
-func GetEnumNames(vals map[string]int32) []string {
-	var keys []string
-	for l := range vals {
-		keys = append(keys, strings.ToLower(l))
-	}
-	return keys
-}
-
-func GetVmOperatingSystem() []string {
-	return GetEnumNames(commonpb.OperatingSystem_Enum_value)
-}
-
-func GetVmSize() []string {
-	return GetEnumNames(commonpb.VmSize_Enum_value)
-}
-
-func GetRouteDestinations() []string {
-	return GetEnumNames(resourcespb.RouteDestination_value)
-}
-
-func StringToVmOperatingSystem(os string) commonpb.OperatingSystem_Enum {
-	return StringToEnum[commonpb.OperatingSystem_Enum](commonpb.OperatingSystem_Enum_value, os)
-}
-
-func StringToVmSize(os string) commonpb.VmSize_Enum {
-	return StringToEnum[commonpb.VmSize_Enum](commonpb.VmSize_Enum_value, os)
-}
-
-func StringToEnum[T ~int32](values map[string]int32, value string) T {
-	if value == "" {
-		return T(0)
-	}
-	return T(values[strings.ToUpper(value)])
-}
-
-func StringToRouteDestination(route string) resourcespb.RouteDestination {
-	return resourcespb.RouteDestination(resourcespb.RouteDestination_value[strings.ToUpper(route)])
-}
 
 func StringToRuleDirection(dir string) resourcespb.Direction {
 	if strings.EqualFold(dir, "both") {
@@ -139,24 +98,6 @@ func NullToDefault[OutT any, T attr.Value](t T) OutT {
 	}
 
 	return *returnVal
-}
-
-type protoEnum interface {
-	String() string
-	Number() protoreflect.EnumNumber
-}
-
-func DefaultEnumToNullString(p protoEnum) types.String {
-	return types.String{
-		Null:  p.Number() == 0,
-		Value: strings.ToLower(p.String()),
-	}
-}
-
-func EnumToString(p protoEnum) types.String {
-	return types.String{
-		Value: strings.ToLower(p.String()),
-	}
 }
 
 func DefaultSliceToNull[T attr.Value](t []T) []T {
