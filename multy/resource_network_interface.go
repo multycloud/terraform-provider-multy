@@ -23,9 +23,10 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
-				Type:        types.StringType,
-				Description: "Name of Network Interface",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Name of Network Interface",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
 			},
 			"subnet_id": {
 				Type:          types.StringType,

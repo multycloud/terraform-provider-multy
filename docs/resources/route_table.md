@@ -36,7 +36,7 @@ resource "multy_route_table" "rt" {
 
 ### Required
 
-- `name` (String) Name of RouteTable
+- `name` (String) Name of Route Table
 - `virtual_network_id` (String) ID of `virtual_network` resource
 
 ### Optional

@@ -20,9 +20,10 @@ func (r ResourceVaultSecretType) GetSchema(_ context.Context) (tfsdk.Schema, dia
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
-				Type:        types.StringType,
-				Description: "Name of the secret",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Name of the secret",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"value": {
 				Type:        types.StringType,

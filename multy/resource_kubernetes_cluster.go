@@ -23,9 +23,10 @@ func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schem
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
-				Type:        types.StringType,
-				Description: "Name of the cluster",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Name of the cluster",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"subnet_ids": {
 				Type:          types.ListType{ElemType: types.StringType},

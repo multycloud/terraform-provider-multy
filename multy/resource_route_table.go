@@ -25,13 +25,14 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 			},
 			"name": {
 				Type:        types.StringType,
-				Description: "Name of RouteTable",
+				Description: "Name of Route Table",
 				Required:    true,
+				// todo: if not aws
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"virtual_network_id": {
-				Type:        types.StringType,
-				Description: "ID of `virtual_network` resource",
-				// fixme is it optional or required?
+				Type:          types.StringType,
+				Description:   "ID of `virtual_network` resource",
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},

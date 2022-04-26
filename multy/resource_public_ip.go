@@ -23,9 +23,10 @@ func (r ResourcePublicIpType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
-				Type:        types.StringType,
-				Description: "Name of Public IP",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Name of Public IP",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
 			},
 			"network_interface_id": {
 				Type:        types.StringType,

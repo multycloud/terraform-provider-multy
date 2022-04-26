@@ -8,15 +8,15 @@ import (
 )
 
 type StringInSliceValidator struct {
-	Enum []string
+	Values []string
 }
 
 func (v StringInSliceValidator) Description(_ context.Context) string {
-	return fmt.Sprintf("string value must be one of %v", v.Enum)
+	return fmt.Sprintf("string value must be one of %v", v.Values)
 }
 
 func (v StringInSliceValidator) MarkdownDescription(_ context.Context) string {
-	return fmt.Sprintf("string value must be one of %v", v.Enum)
+	return fmt.Sprintf("string value must be one of %v", v.Values)
 }
 func (v StringInSliceValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	var str types.String
@@ -30,7 +30,7 @@ func (v StringInSliceValidator) Validate(ctx context.Context, req tfsdk.Validate
 		return
 	}
 
-	for _, v := range v.Enum {
+	for _, v := range v.Values {
 		if v == str.Value {
 			return
 		}
@@ -39,6 +39,6 @@ func (v StringInSliceValidator) Validate(ctx context.Context, req tfsdk.Validate
 	resp.Diagnostics.AddAttributeError(
 		req.AttributePath,
 		"Invalid value",
-		fmt.Sprintf("expected %s to be one of %v", v.Enum, str.Value),
+		fmt.Sprintf("expected %s to be one of %v", v.Values, str.Value),
 	)
 }

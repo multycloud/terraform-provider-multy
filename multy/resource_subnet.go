@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
+	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/validators"
 )
 
@@ -21,16 +22,17 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
-				Type:        types.StringType,
-				Description: "Name of Subnet",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Name of Subnet",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
 			},
 			"cidr_block": {
 				Type:          types.StringType,
 				Description:   "CIDR block of Subnet",
 				Required:      true,
 				Validators:    []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
 			},
 			"virtual_network_id": {
 				Type:          types.StringType,

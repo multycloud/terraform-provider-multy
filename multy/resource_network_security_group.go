@@ -52,7 +52,7 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 						Type:        types.StringType,
 						Description: fmt.Sprintf("Protocol of network rule. Accepted values are %s", common.StringSliceToDocsMarkdown(ruleProtocols)),
 						Required:    true,
-						Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: ruleProtocols}},
+						Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Values: ruleProtocols}},
 					},
 					"priority": {
 						Type:        types.Int64Type,
@@ -81,7 +81,7 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 						Type:        types.StringType,
 						Description: fmt.Sprintf("Direction of network rule. Accepted values are %s", common.StringSliceToDocsMarkdown(ruleDirections)),
 						Required:    true,
-						Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Enum: ruleDirections}},
+						Validators:  []tfsdk.AttributeValidator{validators.StringInSliceValidator{Values: ruleDirections}},
 					},
 				},
 				NestingMode: tfsdk.BlockNestingModeList,

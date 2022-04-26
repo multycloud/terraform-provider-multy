@@ -24,9 +24,10 @@ func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
-				Type:        types.StringType,
-				Description: "Name of vault resource",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Name of vault resource",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,

@@ -23,9 +23,10 @@ func (r ResourceObjectStorageType) GetSchema(_ context.Context) (tfsdk.Schema, d
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
-				Type:        types.StringType,
-				Description: "Name of Virtual Network",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Name of Object Storage",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"versioning": {
 				Type:        types.BoolType,
