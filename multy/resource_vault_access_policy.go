@@ -29,9 +29,10 @@ func (r ResourceVaultAccessPolicyType) GetSchema(_ context.Context) (tfsdk.Schem
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"identity": {
-				Type:        types.StringType,
-				Description: "identity",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "identity",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"access": {
 				Type:        mtypes.VaultAclType,

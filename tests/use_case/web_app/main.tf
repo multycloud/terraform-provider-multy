@@ -9,7 +9,6 @@ terraform {
 }
 
 provider "multy" {
-  api_key         = "secret-2"
   server_endpoint = "localhost:8000"
   aws             = {}
   azure           = {}
