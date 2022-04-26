@@ -25,9 +25,10 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"name": {
-				Type:        types.StringType,
-				Description: "Name of the database",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Name of the database. If cloud is azure, name needs to be unique globally.",
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
 			},
 			"engine": {
 				Type:          mtypes.DbEngineType,
@@ -37,9 +38,11 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"engine_version": {
-				Type:        types.StringType,
-				Description: "Engine version",
-				Required:    true,
+				Type:          types.StringType,
+				Description:   "Engine version",
+				Required:      true,
+				Validators:    []tfsdk.AttributeValidator{validators.StringInSliceValidator{Values: []string{"5.7", "8.0"}}},
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"storage_gb": {
 				Type:        types.Int64Type,
@@ -63,10 +66,10 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Required:    true,
 			},
 			"subnet_ids": {
-				Type:          types.ListType{ElemType: types.StringType},
-				Description:   "Subnets associated with this database. At least 2 in different availability zones are required.",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Type:        types.ListType{ElemType: types.StringType},
+				Description: "Subnets associated with this database. At least 2 in different availability zones are required.",
+				Required:    true,
+				// TODO: validate length
 			},
 
 			"cloud":    common.CloudsSchema,
@@ -74,7 +77,7 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 
 			"hostname": {
 				Type:        types.StringType,
-				Description: "Database endpoint to connect to",
+				Description: "The hostname of the RDS instance.",
 				Computed:    true,
 			},
 		},

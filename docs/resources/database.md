@@ -40,7 +40,7 @@ resource "multy_database" "example_db" {
 - `engine` (String) Database engine. Available values are [mysql]
 - `engine_version` (String) Engine version
 - `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland` or `uk`
-- `name` (String) Name of the database
+- `name` (String) Name of the database. If cloud is azure, name needs to be unique globally.
 - `password` (String) Password for the database user
 - `size` (String) Database size. Available values are [nano micro medium]
 - `storage_gb` (Number) Database engine. Available values are
@@ -49,7 +49,7 @@ resource "multy_database" "example_db" {
 
 ### Read-Only
 
-- `hostname` (String) Database endpoint to connect to
+- `hostname` (String) The hostname of the RDS instance.
 - `id` (String) The ID of this resource.
 
 

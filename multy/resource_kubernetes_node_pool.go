@@ -38,9 +38,10 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 		},
 		"name": {
-			Type:        types.StringType,
-			Description: "Name of kubernetes node pool",
-			Required:    true,
+			Type:          types.StringType,
+			Description:   "Name of kubernetes node pool",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 		},
 		"subnet_ids": {
 			Type:          types.ListType{ElemType: types.StringType},
@@ -66,15 +67,17 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 			Required:    true,
 		},
 		"vm_size": {
-			Type:        mtypes.VmSizeType,
-			Description: fmt.Sprintf("Size of Virtual Machine used for the nodes. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.VmSizeType.GetAllValues())),
-			Required:    true,
-			Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.VmSizeType)},
+			Type:          mtypes.VmSizeType,
+			Description:   fmt.Sprintf("Size of Virtual Machine used for the nodes. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.VmSizeType.GetAllValues())),
+			Required:      true,
+			Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.VmSizeType)},
+			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 		},
 		"disk_size_gb": {
-			Type:        types.Int64Type,
-			Description: "Disk size used for each node.",
-			Required:    true,
+			Type:          types.Int64Type,
+			Description:   "Disk size used for each node.",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 		},
 		"labels": {
 			Type:        types.MapType{ElemType: types.StringType},
@@ -84,9 +87,10 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 		},
 
 		"cluster_id": {
-			Type:        types.StringType,
-			Description: "Id of the multy kubernetes cluster",
-			Computed:    true,
+			Type:          types.StringType,
+			Description:   "Id of the multy kubernetes cluster",
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 		},
 	}
 }

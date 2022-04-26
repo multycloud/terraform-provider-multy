@@ -1,9 +1,14 @@
 package common
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"golang.org/x/exp/slices"
 	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
 )
@@ -40,4 +45,19 @@ var AwsSchema = tfsdk.Attribute{
 var AzureSchema = tfsdk.Attribute{
 	Type:     types.MapType{},
 	Computed: true,
+}
+
+func RequiresReplaceIfCloudEq(replaceIfCloud ...string) tfsdk.AttributePlanModifier {
+	return validators.RequiresReplaceIf(func(ctx context.Context, state, config attr.Value, plan tfsdk.Plan) (bool, diag.Diagnostics) {
+		return requiresReplaceIfCloudEq(plan, replaceIfCloud...)
+	}, fmt.Sprintf("Resource is replaced if cloud is %s", replaceIfCloud), fmt.Sprintf("Resource is replaced if cloud is %s", replaceIfCloud))
+}
+
+func requiresReplaceIfCloudEq(plan tfsdk.Plan, replaceIfCloud ...string) (bool, diag.Diagnostics) {
+	cloud := ""
+	diags := plan.GetAttribute(context.Background(), tftypes.NewAttributePath().WithAttributeName("cloud"), &cloud)
+	if diags.HasError() {
+		return false, diags
+	}
+	return slices.Contains(replaceIfCloud, cloud), nil
 }
