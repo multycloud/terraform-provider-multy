@@ -191,11 +191,11 @@ resource multy_object_storage app {
   cloud    = var.db_cloud
   location = var.location
 }
-resource "null_resource" "app_upload" {
-  provisioner "local-exec" {
-    command = "aws s3 sync nodejs-mysql-links s3://${multy_object_storage.app.name} --acl public-read"
-  }
-}
+#resource "null_resource" "app_upload" {
+#  provisioner "local-exec" {
+#    command = "aws s3 sync nodejs-mysql-links s3://${multy_object_storage.app.name} --acl public-read"
+#  }
+#}
 #resource multy_object_storage_object app_aws {
 #  for_each = contains(var.clouds, "aws") ? fileset("./nodejs-mysql-links", "**/*.*") : []
 #
