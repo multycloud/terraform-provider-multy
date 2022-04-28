@@ -34,10 +34,11 @@ func (r ResourceObjectStorageObjectType) GetSchema(_ context.Context) (tfsdk.Sch
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
-			"content": {
+			"content_base64": {
 				Type:        types.StringType,
 				Description: "Content of the object",
 				Required:    true,
+				Validators:  []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 			},
 			"content_type": {
 				Type:        types.StringType,
@@ -115,7 +116,7 @@ type ObjectStorageObject struct {
 	Name            string                                               `tfsdk:"name"`
 	Acl             mtypes.EnumValue[resourcespb.ObjectStorageObjectAcl] `tfsdk:"acl"`
 	ObjectStorageId string                                               `tfsdk:"object_storage_id"`
-	Content         string                                               `tfsdk:"content"`
+	ContentBase64   string                                               `tfsdk:"content_base64"`
 	ContentType     types.String                                         `tfsdk:"content_type"`
 	Url             types.String                                         `tfsdk:"url"`
 }
@@ -126,7 +127,7 @@ func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) 
 		Name:            res.Name,
 		Acl:             mtypes.ObjectAclType.NewVal(res.Acl),
 		ObjectStorageId: res.ObjectStorageId,
-		Content:         res.Content,
+		ContentBase64:   res.ContentBase64,
 		ContentType:     common.DefaultToNull[types.String](res.ContentType),
 		Url:             types.String{Value: res.Url},
 	}
@@ -137,7 +138,7 @@ func convertFromObjectStorageObject(plan ObjectStorageObject) *resourcespb.Objec
 		Name:            plan.Name,
 		Acl:             plan.Acl.Value,
 		ObjectStorageId: plan.ObjectStorageId,
-		Content:         plan.Content,
+		ContentBase64:   plan.ContentBase64,
 		ContentType:     common.NullToDefault[string](plan.ContentType),
 	}
 }
