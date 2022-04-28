@@ -32,7 +32,7 @@ resource "multy_object_storage_object" "obj_storage" {
 
 ### Required
 
-- `content` (String) Content of the object
+- `content_base64` (String) Content of the object
 - `name` (String) Name of object storage object
 - `object_storage_id` (String) Id of object storage
 
