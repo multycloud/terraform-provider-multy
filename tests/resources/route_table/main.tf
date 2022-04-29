@@ -6,7 +6,7 @@ variable "cloud" {
 resource "multy_virtual_network" "example_vn" {
   name       = "rta_test"
   cidr_block = "10.0.0.0/16"
-  location   = "ireland"
+  location   = "eu_west_1"
   cloud      = var.cloud
 }
 

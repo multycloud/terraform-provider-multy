@@ -3,14 +3,14 @@ resource "multy_virtual_network" "vn" {
   name       = "dev-nsg"
   cidr_block = "10.0.0.0/16"
   cloud      = "aws"
-  location   = "ireland"
+  location   = "eu_west_1"
 }
 
 resource "multy_network_security_group" "nsg" {
   name               = "dev-nsg"
   virtual_network_id = multy_virtual_network.vn.id
   cloud              = "aws"
-  location           = "ireland"
+  location           = "eu_west_1"
 
   rule {
     protocol   = "tcp"

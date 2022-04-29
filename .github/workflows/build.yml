@@ -61,6 +61,7 @@ jobs:
         env:
           MULTY_DB_CONN_STRING: "root:@tcp(localhost:3306)/multydb?parseTime=true"
           MULTY_API_ENDPOINT: "localhost:8000"
+          USER_STORAGE_NAME: "prod-users-config"
 
       - name: Set up Go
         uses: actions/setup-go@v2

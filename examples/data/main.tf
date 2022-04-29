@@ -9,7 +9,7 @@ terraform {
 
 provider "multy" {
   api_key  = "123"
-  location = "ireland"
+  location = "eu_west_1"
 }
 
 data multy_virtual_network vn {

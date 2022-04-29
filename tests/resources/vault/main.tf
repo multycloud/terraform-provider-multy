@@ -6,5 +6,5 @@ variable "cloud" {
 resource "multy_vault" "v" {
   name     = "multyvault"
   cloud    = var.cloud
-  location = "us_east"
+  location = "us_east_1"
 }

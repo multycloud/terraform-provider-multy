@@ -6,7 +6,7 @@ variable "cloud" {
 resource multy_object_storage "obj_storage" {
   name       = "test-storage-123-multy"
   cloud      = var.cloud
-  location   = "us_east"
+  location   = "us_east_1"
   versioning = true
 }
 

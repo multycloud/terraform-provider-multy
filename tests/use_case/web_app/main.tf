@@ -16,7 +16,7 @@ provider "multy" {
 
 variable "location" {
   type    = string
-  default = "ireland"
+  default = "eu_west_1"
 }
 
 variable "clouds" {

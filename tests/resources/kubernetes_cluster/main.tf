@@ -5,7 +5,7 @@ variable cloud {
 
 resource "multy_kubernetes_cluster" "cluster1" {
   cloud      = var.cloud
-  location   = "us_east"
+  location   = "us_east_1"
   name       = "multy_cluster_1"
   subnet_ids = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
 
@@ -25,7 +25,7 @@ resource "multy_kubernetes_cluster" "cluster1" {
 
 resource "multy_kubernetes_cluster" "cluster2" {
   cloud      = var.cloud
-  location   = "us_east"
+  location   = "us_east_1"
   name       = "multy_cluster_2"
   subnet_ids = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
 
@@ -46,7 +46,7 @@ resource "multy_virtual_network" "example_vn" {
   name       = "example_vn"
   cidr_block = "10.0.0.0/16"
   cloud      = var.cloud
-  location   = "us_east"
+  location   = "us_east_1"
 }
 resource "multy_subnet" "subnet1" {
   name               = "subnet1"
