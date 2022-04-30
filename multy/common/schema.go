@@ -31,7 +31,7 @@ var CloudsSchema = tfsdk.Attribute{
 
 var LocationSchema = tfsdk.Attribute{
 	Type:          mtypes.LocationType,
-	Description:   fmt.Sprintf("Location to deploy resource into. Accepted values are %s", StringSliceToDocsMarkdown(mtypes.LocationType.GetAllValues())),
+	Description:   "Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)",
 	Required:      true,
 	Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.LocationType)},
 	PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
