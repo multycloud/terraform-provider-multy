@@ -4,7 +4,7 @@ resource "random_password" "password" {
 
 resource "multy_database" "example_db" {
   cloud          = "aws"
-  location       = "us_east"
+  location       = "us_east_1"
   storage_gb     = 10
   name           = "multydb"
   engine         = "mysql"

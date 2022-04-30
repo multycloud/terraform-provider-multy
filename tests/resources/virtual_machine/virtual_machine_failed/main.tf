@@ -7,14 +7,14 @@ resource multy_virtual_network vn {
   name       = "test"
   cidr_block = "10.0.0.0/10"
   cloud      = var.cloud
-  location   = "ireland"
+  location   = "eu_west_1"
 }
 
 resource multy_subnet subnet {
   name               = "test_subnet"
   cidr_block         = "10.0.10.0/24"
   virtual_network_id = multy_virtual_network.vn.id
-  location           = "ireland"
+  location           = "eu_west_1"
 }
 
 resource multy_virtual_machine vm {
@@ -25,5 +25,5 @@ resource multy_virtual_machine vm {
   public_ip_id       = "123"
   generate_public_ip = false
   cloud              = var.cloud
-  location           = "ireland"
+  location           = "eu_west_1"
 }

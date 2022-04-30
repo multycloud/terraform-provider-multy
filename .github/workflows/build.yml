@@ -61,6 +61,7 @@ jobs:
         env:
           MULTY_DB_CONN_STRING: "root:@tcp(localhost:3306)/multydb?parseTime=true"
           MULTY_API_ENDPOINT: "localhost:8000"
+          USER_STORAGE_NAME: "prod-users-config"
 
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -91,6 +92,10 @@ jobs:
 
       - name: Generate documentation
         run: go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+
+      # https://github.com/actions/checkout/issues/760
+      - name: work around permission issue
+        run: git config --global --add safe.directory /github/workspace
 
       - name: Check if there are changes
         id: changes

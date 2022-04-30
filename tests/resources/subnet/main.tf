@@ -7,7 +7,7 @@ resource multy_virtual_network vn {
   name       = "test_subnet"
   cidr_block = "10.0.0.0/16"
   cloud      = var.cloud
-  location   = "us_east"
+  location   = "us_east_1"
 }
 
 resource multy_subnet subnet {

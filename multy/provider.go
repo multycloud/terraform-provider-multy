@@ -184,7 +184,7 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 		}
 
 	}
-	endpoint := "api2.multy.dev:443"
+	endpoint := "api.multy.dev:443"
 	if !config.ServerEndpoint.Null {
 		endpoint = config.ServerEndpoint.Value
 	}

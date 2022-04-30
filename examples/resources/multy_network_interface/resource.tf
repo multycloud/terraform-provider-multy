@@ -3,7 +3,7 @@ resource "multy_virtual_network" "example_vn" {
   name       = "dev-nic"
   cidr_block = "10.0.0.0/16"
   cloud      = "aws"
-  location   = "ireland"
+  location   = "eu_west_1"
 }
 
 resource "multy_subnet" "subnet" {

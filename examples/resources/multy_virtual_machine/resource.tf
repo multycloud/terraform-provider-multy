@@ -2,7 +2,7 @@ resource "multy_virtual_network" "vn" {
   name       = "dev-vn"
   cidr_block = "10.0.0.0/16"
   cloud      = "aws"
-  location   = "ireland"
+  location   = "eu_west_1"
 }
 
 resource "multy_subnet" "subnet" {
@@ -20,5 +20,5 @@ resource "multy_virtual_machine" "vm" {
   user_data_base64   = "echo 'Hello World'"
   public_ssh_key     = file("./ssh_key.pub")
   cloud              = "aws"
-  location           = "ireland"
+  location           = "eu_west_1"
 }

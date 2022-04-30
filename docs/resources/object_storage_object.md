@@ -16,7 +16,7 @@ Provides Multy Object Storage Object resource
 resource "multy_object_storage" "obj_storage" {
   name     = "test-storage-123-multy"
   cloud    = "azure"
-  location = "us_east"
+  location = "us_east_1"
 }
 
 resource "multy_object_storage_object" "obj_storage" {
@@ -32,7 +32,7 @@ resource "multy_object_storage_object" "obj_storage" {
 
 ### Required
 
-- `content` (String) Content of the object
+- `content_base64` (String) Content of the object
 - `name` (String) Name of object storage object
 - `object_storage_id` (String) Id of object storage
 

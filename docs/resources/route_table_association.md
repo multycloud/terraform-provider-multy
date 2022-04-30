@@ -17,7 +17,7 @@ Provides Multy Route Table Association resource
 resource "multy_virtual_network" "vn" {
   name       = "dev-vn"
   cidr_block = "10.0.0.0/16"
-  location   = "ireland"
+  location   = "eu_west_1"
   cloud      = "aws"
 }
 

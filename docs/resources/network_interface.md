@@ -18,7 +18,7 @@ resource "multy_virtual_network" "example_vn" {
   name       = "dev-nic"
   cidr_block = "10.0.0.0/16"
   cloud      = "aws"
-  location   = "ireland"
+  location   = "eu_west_1"
 }
 
 resource "multy_subnet" "subnet" {
@@ -39,7 +39,7 @@ resource "multy_network_interface" "nic" {
 ### Required
 
 - `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
-- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland` or `uk`
+- `location` (String) Location to deploy resource into. Accepted values are `us_east_1`, `us_east_2`, `us_west_1`, `us_west_2`, `eu_west_1`, `eu_west_2`, `eu_west_3` or `eu_north_1`
 - `name` (String) Name of Network Interface
 - `subnet_id` (String) ID of `subnet` resource
 
