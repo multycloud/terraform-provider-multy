@@ -18,14 +18,14 @@ resource "multy_virtual_network" "vn" {
   name       = "dev-nsg"
   cidr_block = "10.0.0.0/16"
   cloud      = "aws"
-  location   = "ireland"
+  location   = "eu_west_1"
 }
 
 resource "multy_network_security_group" "nsg" {
   name               = "dev-nsg"
   virtual_network_id = multy_virtual_network.vn.id
   cloud              = "aws"
-  location           = "ireland"
+  location           = "eu_west_1"
 
   rule {
     protocol   = "tcp"
@@ -53,7 +53,7 @@ resource "multy_network_security_group" "nsg" {
 ### Required
 
 - `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
-- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland` or `uk`
+- `location` (String) Location to deploy resource into. Accepted values are `us_east_1`, `us_east_2`, `us_west_1`, `us_west_2`, `eu_west_1`, `eu_west_2`, `eu_west_3` or `eu_north_1`
 - `name` (String) Name of Network Security Group
 - `virtual_network_id` (String) ID of `virtual_network` resource
 

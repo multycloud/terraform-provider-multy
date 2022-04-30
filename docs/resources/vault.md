@@ -18,7 +18,7 @@ Provides Multy Vault resource
 ### Required
 
 - `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
-- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland` or `uk`
+- `location` (String) Location to deploy resource into. Accepted values are `us_east_1`, `us_east_2`, `us_west_1`, `us_west_2`, `eu_west_1`, `eu_west_2`, `eu_west_3` or `eu_north_1`
 - `name` (String) Name of vault resource
 
 ### Read-Only
