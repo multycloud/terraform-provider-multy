@@ -19,7 +19,7 @@ Provides Multy Kubernetes Cluster resource
 
 - `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
 - `default_node_pool` (Attributes) Default node pool to associate with this cluster. (see [below for nested schema](#nestedatt--default_node_pool))
-- `location` (String) Location to deploy resource into. Accepted values are `us_east_1`, `us_east_2`, `us_west_1`, `us_west_2`, `eu_west_1`, `eu_west_2`, `eu_west_3` or `eu_north_1`
+- `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of the cluster
 - `subnet_ids` (List of String) Subnets associated with this cluster. At least one must be public.
 
