@@ -95,11 +95,11 @@ jobs:
 
       # https://github.com/actions/checkout/issues/760
       - name: work around permission issue
-        run: git config --global --add safe.directory /github/workspace
+        run: git config --global --add safe.directory /terraform-provider-multy
 
       - name: Check if there are changes
         id: changes
-        uses: UnicornGlobal/has-changes-action@v1.0.11
+        uses: UnicornGlobal/has-changes-action@v1.0.12
 
       - name: Process changes
         if: steps.changes.outputs.changed == 1
