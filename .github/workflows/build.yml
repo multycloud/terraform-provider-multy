@@ -93,6 +93,10 @@ jobs:
       - name: Generate documentation
         run: go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
+      # https://github.com/actions/checkout/issues/760
+      - name: work around permission issue
+        run: git config --global --add safe.directory /github/workspace
+
       - name: Check if there are changes
         id: changes
         uses: UnicornGlobal/has-changes-action@v1.0.11
