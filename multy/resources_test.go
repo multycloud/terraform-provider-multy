@@ -43,7 +43,7 @@ func TestAccResources(t *testing.T) {
 			t.Errorf("unable to open %s, %s", fileName, err)
 			continue
 		}
-		t.Run(filepath.Base(filepath.Dir(path)), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s_%s", filepath.Base(filepath.Dir(path)), os.Getenv("TF_VAR_cloud")), func(t *testing.T) {
 			isError := strings.HasSuffix(filepath.Base(filepath.Dir(path)), "_failed")
 			resource.Test(t, resource.TestCase{
 				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
@@ -55,7 +55,6 @@ func TestAccResources(t *testing.T) {
 			})
 		})
 	}
-
 }
 
 var providerBlock = `
