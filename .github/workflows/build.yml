@@ -56,7 +56,7 @@ jobs:
 
       - name: Start server
         run: |
-          ~/.multy/bin/multy serve --port=8000 --dry_run &
+          ~/.multy/bin/multy serve --port=8000 --dry_run &> $HOME/server-logs.txt &
           sleep 2
         env:
           MULTY_DB_CONN_STRING: "root:@tcp(localhost:3306)/multydb?parseTime=true"
@@ -77,6 +77,10 @@ jobs:
           TF_ACC: 1
           MULTY_API_ENDPOINT: "localhost:8000"
           MULTY_DB_CONN_STRING: "root:@tcp(localhost:3306)/multydb?parseTime=true"
+
+      - name: Print server logs
+        if: always()
+        run: "cat $HOME/server-logs.txt"
 
 
   check-documentation:
