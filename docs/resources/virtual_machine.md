@@ -45,9 +45,9 @@ resource "multy_virtual_machine" "vm" {
 ### Required
 
 - `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
+- `image_reference` (Attributes) (see [below for nested schema](#nestedatt--image_reference))
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of Virtual Machine
-- `operating_system` (String) Operating System of Virtual Machine. Accepted values are `linux`
 - `size` (String) Size of Virtual Machine. Accepted values are `micro`, `medium` or `large`
 - `subnet_id` (String) ID of `subnet` resource
 
@@ -65,5 +65,13 @@ resource "multy_virtual_machine" "vm" {
 - `id` (String) The ID of this resource.
 - `identity` (String) Identity of Virtual Machine
 - `public_ip` (String) Public IP of Virtual Machine
+
+<a id="nestedatt--image_reference"></a>
+### Nested Schema for `image_reference`
+
+Required:
+
+- `os` (String) Operating System of Virtual Machine. Accepted values are `ubuntu`, `debian` or `cent_os`
+- `version` (String) OS Version
 
 
