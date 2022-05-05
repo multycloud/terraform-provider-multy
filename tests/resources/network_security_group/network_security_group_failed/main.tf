@@ -19,14 +19,13 @@ resource multy_subnet subnet {
 }
 
 resource multy_virtual_machine vm {
-  name             = "test_vm"
-  size             = "micro"
-  operating_system = "linux"
-  subnet_id        = multy_subnet.subnet.id
-  public_ip_id     = "123"
-  ssh_key          = file("./ssh_key")
-  cloud            = var.cloud
-  location         = "eu_west_1"
+  name         = "test_vm"
+  size         = "micro"
+  subnet_id    = multy_subnet.subnet.id
+  public_ip_id = "123"
+  ssh_key      = file("./ssh_key")
+  cloud        = var.cloud
+  location     = "eu_west_1"
 }
 
 resource "multy_network_security_group" nsg {
