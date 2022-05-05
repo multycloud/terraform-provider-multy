@@ -43,6 +43,9 @@ var (
 	VaultAclType = EnumType[resourcespb.VaultAccess_Enum]{
 		ValueMap: resourcespb.VaultAccess_Enum_value,
 	}
+	ImageOsDistroType = EnumType[resourcespb.ImageReference_OperatingSystemDistribution]{
+		ValueMap: resourcespb.ImageReference_OperatingSystemDistribution_value,
+	}
 )
 
 type ProtoEnum interface {
