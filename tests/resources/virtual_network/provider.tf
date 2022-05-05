@@ -8,6 +8,5 @@ terraform {
 }
 
 provider "multy" {
-  aws             = {}
-  server_endpoint = "localhost:8000"
+  aws = {}
 }

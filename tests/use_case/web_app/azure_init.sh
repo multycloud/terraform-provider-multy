@@ -2,28 +2,15 @@
 
 {
 date
-sudo yum update -y
-
-sudo yum install epel-release -y
-sudo yum install jq -y
-
-region=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+sudo apt-get update -y
 
 # az cli
-sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-sudo sh -c 'echo -e "[azure-cli]
-name=Azure CLI
-baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
-sudo yum install azure-cli -y
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 az login --identity --allow-no-subscriptions
 
-curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash
-sudo yum -y install git
-sudo yum -y install nodejs
-sudo yum -y install mysql
+sudo apt-get -y install git npm mysql-client curl jq
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
 sudo chmod a+rwx .
 git clone https://github.com/FaztTech/nodejs-mysql-links.git
 cd nodejs-mysql-links
@@ -35,6 +22,8 @@ export DATABASE_PASSWORD=$(az keyvault secret show --vault-name '${vault_name}' 
 # both aws and az will try to run this command but only one will succeed
 mysql -h "$DATABASE_HOST" -P 3306 -u "$DATABASE_USER" --password="$DATABASE_PASSWORD" -e 'source database/db.sql' || true
 
+curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
+source ~/.profile
 npm i
 npm run build
 date

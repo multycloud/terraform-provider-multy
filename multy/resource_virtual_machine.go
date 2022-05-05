@@ -80,6 +80,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
 			},
 			"image_reference": {
+				Description: "Virtual Machine image definition",
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"os": {
 						Type:        mtypes.ImageOsDistroType,

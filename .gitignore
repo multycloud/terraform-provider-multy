@@ -8,8 +8,6 @@ vendor
 **/.terraform/*
 .terraform.lock.hcl
 
-ssh_key
-
 # .tfstate files
 *.tfstate
 *.tfstate.*
@@ -26,3 +24,5 @@ override.tf.json
 terraform.rc
 terraform
 ./multy
+
+example_key

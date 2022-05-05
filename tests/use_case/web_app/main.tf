@@ -9,9 +9,9 @@ terraform {
 }
 
 provider "multy" {
-  server_endpoint = "localhost:8000"
-  aws             = {}
-  azure           = {}
+  #  server_endpoint = "localhost:8000"
+  aws   = {}
+  azure = {}
 }
 
 variable "location" {
@@ -111,6 +111,14 @@ resource "multy_network_security_group" nsg {
   }
   rule {
     protocol   = "tcp"
+    priority   = 133
+    from_port  = 80
+    to_port    = 80
+    cidr_block = "0.0.0.0/0"
+    direction  = "both"
+  }
+  rule {
+    protocol   = "tcp"
     priority   = 132
     from_port  = 4000
     to_port    = 4000
@@ -120,10 +128,13 @@ resource "multy_network_security_group" nsg {
 }
 
 resource multy_virtual_machine vm {
-  for_each           = var.clouds
-  name               = "web_app_vm"
-  size               = each.key == "azure" ? "large" : "micro"
-  operating_system   = "linux"
+  for_each        = var.clouds
+  name            = "web_app_vm"
+  size            = each.key == "azure" ? "large" : "micro"
+  image_reference = {
+    os      = "ubuntu"
+    version = "18.04"
+  }
   subnet_id          = multy_subnet.public_subnet[each.key].id
   generate_public_ip = true
   user_data_base64   = base64encode(templatefile("./${each.key}_init.sh", {
@@ -134,7 +145,7 @@ resource multy_virtual_machine vm {
   }))
   network_security_group_ids = [multy_network_security_group.nsg[each.key].id]
 
-  public_ssh_key = file("./ssh_key.pub")
+  public_ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCf3a02CbBVs6w3QVsf5yZ+WU+AAVpP86SufnMsSOV29DNXKmAGsB16jqJYq+znqDFTscOmf8WkR/AEKDwU+Q9auvBIWKtwB8aUrd5hCTC0EhC/2322PsOoOs0fEOki39xbaF9vWRXKPES/GM7lHR3xV5TFB4GBiq12mH7ALhHbcAjafxf+/Q3PzCYeJxRDSl7RvjihiMoOgjK9jy1DqlVLgOJUQuLgwxv1Nm1EwVygi5czBoYFXhDGszOuq4xpq8rUBTIGEczMn7glVLIyAIADLUkD0x+frjamI6I3BX1yn9GfJ3BPa8vC5GXsWnLelLeMg5SX8AiB4MfpTirQuvFeMfGPvFvKK6YwcuVHPDYd2/oisIf/wFlmjxXoTA1LEdH7o5/C5swIisEpppcaIO7F0v7gJwEdktpORzSxZEIirYGf8eTrmz2Mx3GH/vGUbUhJtwazx/7Lnv6FZH0ncqlV4DX0BCQZi3AHGWcPcFW/sGTv8EAS8PCQUZdnEptZLI8= joao@Joaos-MB"
   cloud          = each.key
   location       = var.location
 
