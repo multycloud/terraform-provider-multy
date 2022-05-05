@@ -50,6 +50,12 @@ var awsSchema = tfsdk.Attribute{
 			Type:        types.StringType,
 			Sensitive:   true,
 		},
+		"session_token": {
+			Optional:    true,
+			Description: "Optional AWS session token. Used to authenticate  " + common.HelperValueViaEnvVar("AWS_SESSION_TOKEN"),
+			Type:        types.StringType,
+			Sensitive:   true,
+		},
 	}),
 }
 
@@ -116,6 +122,7 @@ type providerData struct {
 type providerAwsConfig struct {
 	AccessKeyId     types.String `tfsdk:"access_key_id"`
 	AccessKeySecret types.String `tfsdk:"access_key_secret"`
+	SessionToken    types.String `tfsdk:"session_token"`
 }
 
 type providerAzureConfig struct {
@@ -283,18 +290,23 @@ func (p *Provider) validateAwsConfig(ctx context.Context, config *providerAwsCon
 		return nil, fmt.Errorf("cannot use unknown value as access_key_id")
 	}
 	if config.AccessKeySecret.Unknown {
-		return nil, fmt.Errorf("cannot use unknown value as access_key_seceret")
+		return nil, fmt.Errorf("cannot use unknown value as access_key_secret")
+	}
+	if config.SessionToken.Unknown {
+		return nil, fmt.Errorf("cannot use unknown value as session_token")
 	}
 	awsConfig = common.AwsConfig{
 		AccessKeyId:     config.AccessKeyId.Value,
 		AccessKeySecret: config.AccessKeySecret.Value,
+		SessionToken:    config.SessionToken.Value,
 	}
 	if len(awsConfig.AccessKeyId) > 0 && len(awsConfig.AccessKeyId) > 0 {
 		return &awsConfig, nil
 	}
 	awsConfig.AccessKeyId = os.Getenv("AWS_ACCESS_KEY_ID")
 	awsConfig.AccessKeySecret = os.Getenv("AWS_SECRET_ACCESS_KEY")
-	if awsConfig.AccessKeyId != "" && awsConfig.AccessKeySecret != "" {
+	awsConfig.SessionToken = os.Getenv("AWS_SESSION_TOKEN")
+	if len(awsConfig.AccessKeyId) > 0 && len(awsConfig.AccessKeyId) > 0 {
 		return &awsConfig, nil
 	}
 
