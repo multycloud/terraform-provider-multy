@@ -27,9 +27,12 @@ resource "multy_subnet" "subnet" {
 }
 
 resource "multy_virtual_machine" "vm" {
-  name               = "dev-vm"
-  size               = "micro"
-  operating_system   = "linux"
+  name            = "dev-vm"
+  size            = "micro"
+  image_reference = {
+    os      = "ubuntu"
+    version = "20.04"
+  }
   subnet_id          = multy_subnet.subnet.id
   generate_public_ip = true
   user_data_base64   = "echo 'Hello World'"

@@ -2,17 +2,12 @@
 
 {
 date
-sudo yum update -y
-
-sudo amazon-linux-extras install epel
-sudo yum install jq -y
+sudo apt-get update -y
 
 region=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
 
-curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash
-sudo yum -y install git
-sudo yum -y install nodejs
-sudo yum -y install mysql
+sudo apt-get -y install git mysql-client npm nodejs jq awscli curl
+
 sudo chmod a+rwx .
 git clone https://github.com/FaztTech/nodejs-mysql-links.git
 cd nodejs-mysql-links
@@ -24,6 +19,9 @@ export DATABASE_PASSWORD=$(aws ssm get-parameter --with-decryption --name "/${va
 # both aws and az will try to run this command but only one will succeed
 mysql -h $DATABASE_HOST -P 3306 -u $DATABASE_USER --password=$DATABASE_PASSWORD -e 'source database/db.sql' || true
 
+curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
+source ~/.profile
+nvm install v10.13.0
 npm i
 npm run build
 date

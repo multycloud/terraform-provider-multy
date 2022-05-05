@@ -40,13 +40,12 @@ func TestAccResources(t *testing.T) {
 
 	for fileName, path := range allTests {
 		contents, err := ioutil.ReadFile(path)
-		testString := strings.Replace(string(contents), "file(\"./ssh_key.pub\")", fmt.Sprintf("\"%s\"", "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFRQk+HkW4QXy1EdEd6BcCQcaT8pb/ySF98GvbXFTP/qZEnzl074SaBzefMP0zZi3N5vQD6tBWe/uxpZUKsHqkti+l6S3eR8Ols0E7jSpbLvfV+cBeNle7bdzH76V0SjUc3xEkAZNLrcKTNQgnot69ChE/Z5URwL1dMeD8GXATVtSH/AvGat3PSexkL75rWbCBXXmr+5/Re8kLSqYPf6WsLUbI6rIp3Okd1Kmo8pIHq9fqm/B9HSJjOXl08G2RC2H02+HIzRc6AIIqFBbPTQwjw5VEHaZiUC7tl5S117CpAx8oiv8njjR6+sNfEocjaPYl9ks/cVmpY1jCtEiP/5rBmfTSaBVm1BqAqbyLt+H2j7E/IzJBT1SWSy/tlk7r/E32b+JXCLfytNkoOlX7v3PrY9gy8927+4n0rmkLAHcglpXt93/Qqy81fv/QMmhLsnxL6JFrlvjx1X5GIiHvid3AG3K9Pm925whxMNN3HOLHxQPHghtB2iCgiv0DpU9sLjs= joao@Joaos-MBP"), -1)
 		if err != nil {
 			t.Errorf("unable to open %s, %s", fileName, err)
 			continue
 		}
 		testNumber += 1
-		t.Run(fmt.Sprintf("%s_%s", filepath.Base(filepath.Dir(path)), os.Getenv("TF_VAR_cloud")), getTestFunc(path, testString, testNumber))
+		t.Run(fmt.Sprintf("%s_%s", filepath.Base(filepath.Dir(path)), os.Getenv("TF_VAR_cloud")), getTestFunc(path, string(contents), testNumber))
 	}
 }
 
