@@ -28,7 +28,9 @@ func New() tfsdk.Provider {
 type Provider struct {
 	Configured  bool
 	Client      *common.ProviderConfig
-	refreshCall *sync.Once
+	refreshed   bool
+	refreshErr  error
+	refreshLock *sync.Mutex
 }
 
 var awsSchema = tfsdk.Attribute{
@@ -228,21 +230,24 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 		return
 	}
 
-	p.refreshCall = &sync.Once{}
+	p.refreshLock = &sync.Mutex{}
 	p.Client = &c
 	p.Configured = true
 }
 
 func (p *Provider) Refresh(ctx context.Context, diags diag.Diagnostics) {
-	p.refreshCall.Do(func() {
-		_, err := p.Client.Client.RefreshState(ctx, &commonpb.Empty{})
-		if err != nil {
-			diags.AddError(
-				"Unable to connect to multy server",
-				"Unable to connect to multy server:\n\n"+common.ParseGrpcErrors(err),
-			)
-		}
-	})
+	p.refreshLock.Lock()
+	defer p.refreshLock.Unlock()
+	if !p.refreshed {
+		_, p.refreshErr = p.Client.Client.RefreshState(ctx, &commonpb.Empty{})
+	}
+	p.refreshed = true
+	if p.refreshErr != nil {
+		diags.AddError(
+			"Unable to connect to multy server",
+			"Unable to connect to multy server:\n\n"+common.ParseGrpcErrors(p.refreshErr),
+		)
+	}
 }
 
 func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
