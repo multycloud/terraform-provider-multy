@@ -21,6 +21,8 @@ func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error
 		cloudCreds.AwsCreds = &credspb.AwsCredentials{
 			AccessKey: c.Aws.AccessKeyId,
 			SecretKey: c.Aws.AccessKeySecret,
+
+			SessionToken: c.Aws.SessionToken,
 		}
 	}
 	if c.Azure != nil {
@@ -52,6 +54,8 @@ func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error
 type AwsConfig struct {
 	AccessKeyId     string
 	AccessKeySecret string
+
+	SessionToken string
 }
 
 type AzureConfig struct {
