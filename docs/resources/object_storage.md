@@ -16,7 +16,7 @@ Provides Multy Object Storage resource
 resource "multy_object_storage" "obj_storage" {
   name       = "dev-storage"
   cloud      = "aws"
-  location   = "ireland"
+  location   = "eu_west_1"
   versioning = true
 }
 ```
@@ -27,7 +27,7 @@ resource "multy_object_storage" "obj_storage" {
 ### Required
 
 - `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
-- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland` or `uk`
+- `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of Object Storage
 
 ### Optional

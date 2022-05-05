@@ -371,8 +371,6 @@ github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh
 github.com/mitchellh/reflectwalk v1.0.0/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zxSIeXaQ=
 github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
-github.com/multycloud/multy v0.1.28 h1:fXnU4npwrCCpz95Or+3oVf/iR2SbO78Yyu5zNipGFRA=
-github.com/multycloud/multy v0.1.28/go.mod h1:7UgWKaZr5GqBU2OP1dy/XrJs+W5eKpjVZHd+p0pw6BY=
 github.com/multycloud/multy v0.1.29 h1:SRy4ocWeDKtXgFryxVUZxKZKYE7hvgdaqd5hENKVWi0=
 github.com/multycloud/multy v0.1.29/go.mod h1:7UgWKaZr5GqBU2OP1dy/XrJs+W5eKpjVZHd+p0pw6BY=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=

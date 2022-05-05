@@ -17,13 +17,13 @@ resource "multy_network_interface" "public-nic" {
   name      = "test-public-nic"
   subnet_id = multy_subnet.subnet.id
   cloud     = "aws"
-  location  = "ireland"
+  location  = "eu_west_1"
 }
 resource "multy_public_ip" "ip" {
   name                 = "test-ip"
   network_interface_id = multy_network_interface.public-nic.id
   cloud                = "aws"
-  location             = "ireland"
+  location             = "eu_west_1"
 }
 ```
 
@@ -33,7 +33,7 @@ resource "multy_public_ip" "ip" {
 ### Required
 
 - `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
-- `location` (String) Location to deploy resource into. Accepted values are `us_east`, `ireland` or `uk`
+- `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of Public IP
 
 ### Optional

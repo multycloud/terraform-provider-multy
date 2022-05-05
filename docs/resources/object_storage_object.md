@@ -16,7 +16,7 @@ Provides Multy Object Storage Object resource
 resource "multy_object_storage" "obj_storage" {
   name     = "test-storage-123-multy"
   cloud    = "azure"
-  location = "us_east"
+  location = "us_east_1"
 }
 
 resource "multy_object_storage_object" "obj_storage" {
