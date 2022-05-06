@@ -46,7 +46,7 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 			},
 			"storage_gb": {
 				Type:        types.Int64Type,
-				Description: "Database engine. Available values are",
+				Description: "Size of database storage in gigabytes",
 				Required:    true,
 			},
 			"size": {

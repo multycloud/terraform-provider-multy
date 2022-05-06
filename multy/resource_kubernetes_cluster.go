@@ -30,7 +30,7 @@ func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schem
 			},
 			"subnet_ids": {
 				Type:          types.ListType{ElemType: types.StringType},
-				Description:   "Subnets associated with this cluster. At least one must be public.",
+				Description:   "Subnets associated with this cluster. At least one must be public. Must at least span two availability zones.",
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},

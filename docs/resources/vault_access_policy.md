@@ -32,7 +32,7 @@ resource "multy_vault_access_policy" "kv_ap" {
 ### Required
 
 - `access` (String) Access control, available values are [read write owner]
-- `identity` (String) identity
+- `identity` (String) Identity of the resource that is being granted access to the `vault`
 - `vault_id` (String) Id of the associated vault
 
 ### Read-Only

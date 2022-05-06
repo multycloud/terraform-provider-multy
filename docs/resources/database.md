@@ -43,7 +43,7 @@ resource "multy_database" "example_db" {
 - `name` (String) Name of the database. If cloud is azure, name needs to be unique globally.
 - `password` (String) Password for the database user
 - `size` (String) Database size. Available values are [nano micro medium]
-- `storage_gb` (Number) Database engine. Available values are
+- `storage_gb` (Number) Size of database storage in gigabytes
 - `subnet_ids` (List of String) Subnets associated with this database. At least 2 in different availability zones are required.
 - `username` (String) Username for the database user
 

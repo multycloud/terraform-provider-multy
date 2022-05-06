@@ -30,7 +30,7 @@ func (r ResourceVaultAccessPolicyType) GetSchema(_ context.Context) (tfsdk.Schem
 			},
 			"identity": {
 				Type:          types.StringType,
-				Description:   "identity",
+				Description:   "Identity of the resource that is being granted access to the `vault`",
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},

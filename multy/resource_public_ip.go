@@ -30,7 +30,7 @@ func (r ResourcePublicIpType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 			},
 			"network_interface_id": {
 				Type:        types.StringType,
-				Description: "Associate Public IP to `network_interface` resource",
+				Description: "Id of the network interface to associate public IP with",
 				Optional:    true,
 			},
 			"cloud":    common.CloudsSchema,
