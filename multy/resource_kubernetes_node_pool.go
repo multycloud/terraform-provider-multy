@@ -167,6 +167,7 @@ func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) Ku
 		MaxNodeCount:      types.Int64{Value: int64(res.MaxNodeCount)},
 		DiskSizeGb:        types.Int64{Value: res.DiskSizeGb},
 		Labels:            common.GoMapToMapType(res.Labels),
+		ClusterId:         types.String{Value: res.ClusterId},
 	}
 }
 
