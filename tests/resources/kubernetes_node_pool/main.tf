@@ -1,6 +1,6 @@
 variable cloud {
   type    = string
-  default = "aws"
+  default = "azure"
 }
 
 resource "multy_kubernetes_cluster" "cluster1" {
@@ -25,7 +25,7 @@ resource "multy_kubernetes_cluster" "cluster1" {
 
 resource "multy_kubernetes_node_pool" "node_pool" {
   cluster_id     = multy_kubernetes_cluster.cluster1.id
-  name           = "node_pool"
+  name           = "pool"
   min_node_count = 1
   max_node_count = 3
   vm_size        = "medium"
