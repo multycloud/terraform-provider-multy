@@ -7,7 +7,6 @@ import (
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"os"
 	"strings"
-	"sync"
 	"terraform-provider-multy/multy/common"
 
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
@@ -26,11 +25,8 @@ func New() tfsdk.Provider {
 }
 
 type Provider struct {
-	Configured  bool
-	Client      *common.ProviderConfig
-	refreshed   bool
-	refreshErr  error
-	refreshLock *sync.Mutex
+	Configured bool
+	Client     *common.ProviderConfig
 }
 
 var awsSchema = tfsdk.Attribute{
@@ -139,7 +135,6 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
 	p.ConfigureProvider(ctx, config, resp)
 }
 
@@ -237,22 +232,16 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 		return
 	}
 
-	p.refreshLock = &sync.Mutex{}
 	p.Client = &c
 	p.Configured = true
 }
 
-func (p *Provider) Refresh(ctx context.Context, diags diag.Diagnostics) {
-	p.refreshLock.Lock()
-	defer p.refreshLock.Unlock()
-	if !p.refreshed {
-		_, p.refreshErr = p.Client.Client.RefreshState(ctx, &commonpb.Empty{})
-	}
-	p.refreshed = true
-	if p.refreshErr != nil {
+func (p *Provider) Refresh(ctx context.Context, diags *diag.Diagnostics) {
+	_, err := p.Client.Client.RefreshState(ctx, &commonpb.Empty{})
+	if err != nil {
 		diags.AddError(
 			"Unable to connect to multy server",
-			"Unable to connect to multy server:\n\n"+common.ParseGrpcErrors(p.refreshErr),
+			"Unable to connect to multy server:\n\n"+common.ParseGrpcErrors(err),
 		)
 	}
 }
@@ -274,6 +263,7 @@ func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 		"multy_vault_secret":            ResourceVaultSecretType{},
 		"multy_vault_access_policy":     ResourceVaultAccessPolicyType{},
 		"multy_kubernetes_cluster":      ResourceKubernetesClusterType{},
+		"multy_kubernetes_node_pool":    ResourceKubernetesNodePoolType{},
 	}, nil
 }
 

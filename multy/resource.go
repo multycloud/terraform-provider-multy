@@ -64,7 +64,7 @@ func (r MultyResource[T]) Read(ctx context.Context, req tfsdk.ReadResourceReques
 		return
 	}
 
-	r.p.Refresh(ctx, resp.Diagnostics)
+	r.p.Refresh(ctx, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
