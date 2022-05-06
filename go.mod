@@ -19,7 +19,6 @@ require (
 //require github.com/multycloud/multy v0.1.24
 //replace github.com/multycloud/multy v0.1.24 => "../multy"
 
-
 require (
 	github.com/Azure/azure-sdk-for-go v59.2.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
