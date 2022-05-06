@@ -59,7 +59,7 @@ resource "multy_virtual_machine" "vm" {
 - `generate_public_ip` (Boolean) If true, a public IP will be automatically generated. Cannot be used with `public_ip_id`
 - `network_interface_ids` (List of String) IDs of `network_interface` resource
 - `network_security_group_ids` (List of String) IDs of `network_security_group` resource
-- `public_ip_id` (String) ID of `public_ip` resource. Cannot be used with `public_ip`
+- `public_ip_id` (String) ID of `public_ip` resource. Cannot be used with `generate_public_ip`
 - `public_ssh_key` (String) Public SSH Key of Virtual Machine
 - `user_data_base64` (String) User Data script of Virtual Machine that will run on instance launch
 

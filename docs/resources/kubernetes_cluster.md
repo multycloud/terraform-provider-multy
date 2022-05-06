@@ -40,7 +40,7 @@ resource "multy_kubernetes_cluster" "cluster1" {
 - `default_node_pool` (Attributes) Default node pool to associate with this cluster. (see [below for nested schema](#nestedatt--default_node_pool))
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of the cluster
-- `subnet_ids` (List of String) Subnets associated with this cluster. At least one must be public.
+- `subnet_ids` (List of String) Subnets associated with this cluster. At least one must be public. Must at least span two availability zones.
 
 ### Read-Only
 
@@ -59,7 +59,7 @@ Required:
 - `min_node_count` (Number) Minimum number of nodes.
 - `name` (String) Name of kubernetes node pool
 - `starting_node_count` (Number) Number of initial nodes. Defaults to the minimum number of nodes.
-- `subnet_ids` (List of String) Subnets associated with this cluster. At least one must be public.
+- `subnet_ids` (List of String) Subnets associated with this cluster.
 - `vm_size` (String) Size of Virtual Machine used for the nodes. Accepted values are `micro`, `medium` or `large`
 
 

@@ -32,7 +32,7 @@ func (r ResourceVaultSecretType) GetSchema(_ context.Context) (tfsdk.Schema, dia
 			},
 			"vault_id": {
 				Type:          types.StringType,
-				Description:   "Secret value",
+				Description:   "Id of `vault` to store the secret in",
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},

@@ -38,7 +38,7 @@ resource "multy_public_ip" "ip" {
 
 ### Optional
 
-- `network_interface_id` (String) Associate Public IP to `network_interface` resource
+- `network_interface_id` (String) Id of the network interface to associate public IP with
 
 ### Read-Only
 

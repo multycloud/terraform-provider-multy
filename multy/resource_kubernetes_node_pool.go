@@ -45,7 +45,7 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 		},
 		"subnet_ids": {
 			Type:          types.ListType{ElemType: types.StringType},
-			Description:   "Subnets associated with this cluster. At least one must be public.",
+			Description:   "Subnets associated with this cluster.",
 			Required:      true,
 			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 		},

@@ -61,13 +61,13 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 					},
 					"from_port": {
 						Type:        types.Int64Type,
-						Description: fmt.Sprintf("From port of network rule port range. Value must be in between %d and %d", 0, 0),
+						Description: fmt.Sprintf("From port of network rule port range. Value must be in between %d and %d", 0, 65535),
 						Required:    true,
 						//Validators: validateRulePort,
 					},
 					"to_port": {
 						Type:        types.Int64Type,
-						Description: fmt.Sprintf("To port of network rule port range. Value must be in between %d and %d", 0, 0),
+						Description: fmt.Sprintf("To port of network rule port range. Value must be in between %d and %d", 0, 65535),
 						Required:    true,
 						//Validators: validateRulePort,
 					},

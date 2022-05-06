@@ -32,7 +32,7 @@ resource "multy_vault_secret" s {
 
 - `name` (String) Name of the secret
 - `value` (String) Secret value
-- `vault_id` (String) Secret value
+- `vault_id` (String) Id of `vault` to store the secret in
 
 ### Read-Only
 

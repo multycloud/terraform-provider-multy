@@ -68,7 +68,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 			},
 			"public_ip_id": {
 				Type:        types.StringType,
-				Description: "ID of `public_ip` resource. Cannot be used with `public_ip`",
+				Description: "ID of `public_ip` resource. Cannot be used with `generate_public_ip`",
 				Optional:    true,
 				Validators:  []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 			},
