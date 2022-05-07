@@ -63,6 +63,7 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 			"password": {
 				Type:        types.StringType,
 				Description: "Password for the database user",
+				Sensitive:   true,
 				Required:    true,
 			},
 			"subnet_ids": {
