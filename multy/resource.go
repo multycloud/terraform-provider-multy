@@ -64,11 +64,6 @@ func (r MultyResource[T]) Read(ctx context.Context, req tfsdk.ReadResourceReques
 		return
 	}
 
-	r.p.Refresh(ctx, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Get current state
 	state := new(T)
 	diags := req.State.Get(ctx, state)
