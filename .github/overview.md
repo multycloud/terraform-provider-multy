@@ -50,8 +50,7 @@ cd terraform-provider-multy
 2. Setup project
 
 ```bash
-# adjust $OS_ARCH
-make build
+make
 ```
 
 - Set environment variables
