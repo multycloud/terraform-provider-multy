@@ -38,10 +38,9 @@ The Multy Engine is a GRPC server that translates a multy infrastructure resourc
 
 0. Setup local server
 
-If you want to locally run a server
-Follow the overview guide from
+If you want to locally run a server, follow the overview guide from the [engine repo](https://github.com/multycloud/multy/.github/overview.md)
 
-2. Clone repository
+1. Clone repository
 
 ```bash
 git clone https://github.com/multycloud/terraform-provider-multy.git
@@ -89,9 +88,9 @@ provider "multy" {
 
 Run the following commands to apply your configuration
 
-**Note: if not on a free tier, these command will deploy resources into your account which might incur a cost.**
+**Note: if not on a free tier, these command will deploy resources into your account which might incur a cost. To avoid deploying resources, run the server locally with the `--dry-run` flag.**
 
-To avoid deploying resources, run the server locally with the `--dry-run` flag.
+
 
 ```bash
 terraform init    # download the terraform providers 
