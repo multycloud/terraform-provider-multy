@@ -12,6 +12,8 @@ Documentation: [https://registry.terraform.io/providers/multycloud/multy/latest/
 
 ### Test
 
+---
+
 First, build and install the provider.
 
 ```
@@ -29,3 +31,16 @@ Run the following command to initialize the workspace and apply the sample confi
 ```
 $ terraform init && terraform apply
 ```
+
+### Getting started
+
+---
+
+To get started, have a look at our contributing guide, overview document and join us on
+discord!
+
+Contributing guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+Repo overview: [OVERVIEW.md](./.github/overview.md)
+
+Discord Channel: [https://discord.gg/rgaKXY4tCZ](https://discord.gg/rgaKXY4tCZ)

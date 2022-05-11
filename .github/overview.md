@@ -1,8 +1,8 @@
 ## Overview
 
-This repository is the brain of Multy which translates Multy resources into cloud specific infrastructure.
+This repository is the Multy Terraform Provider what allows you to deploy Multy resources through Terraform.
 
-The Multy Engine is a GRPC server that translates a multy infrastructure resource request into cloud specific resources.
+The provider is uses the [Plugin Framework](https://www.terraform.io/plugin/framework).
 
 ## File Structure
 
@@ -38,7 +38,8 @@ The Multy Engine is a GRPC server that translates a multy infrastructure resourc
 
 0. Setup local server
 
-If you want to locally run a server, follow the overview guide from the [engine repo](https://github.com/multycloud/multy/.github/overview.md)
+If you want to locally run a server, follow the overview guide from
+the [engine repo](https://github.com/multycloud/multy/.github/overview.md)
 
 1. Clone repository
 
@@ -87,9 +88,8 @@ provider "multy" {
 
 Run the following commands to apply your configuration
 
-**Note: if not on a free tier, these command will deploy resources into your account which might incur a cost. To avoid deploying resources, run the server locally with the `--dry-run` flag.**
-
-
+**Note: if not on a free tier, these command will deploy resources into your account which might incur a cost. To avoid
+deploying resources, run the server locally with the `--dry-run` flag.**
 
 ```bash
 terraform init    # download the terraform providers 
