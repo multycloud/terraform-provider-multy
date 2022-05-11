@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	"github.com/multycloud/multy/api/proto/commonpb"
 	"os"
 	"strings"
 	"terraform-provider-multy/multy/common"
@@ -234,16 +233,6 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 
 	p.Client = &c
 	p.Configured = true
-}
-
-func (p *Provider) Refresh(ctx context.Context, diags *diag.Diagnostics) {
-	_, err := p.Client.Client.RefreshState(ctx, &commonpb.Empty{})
-	if err != nil {
-		diags.AddError(
-			"Unable to connect to multy server",
-			"Unable to connect to multy server:\n\n"+common.ParseGrpcErrors(err),
-		)
-	}
 }
 
 func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
