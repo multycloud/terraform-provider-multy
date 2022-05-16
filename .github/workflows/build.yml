@@ -1,7 +1,5 @@
 name: "Build"
 
-concurrency: "test"
-
 on:
   push:
     branches: [ main ]
@@ -43,28 +41,11 @@ jobs:
         with:
           terraform_version: '1.1.*'
           terraform_wrapper: false
-      - uses: shogo82148/actions-setup-mysql@v1
-        with:
-          mysql-version: '8.0'
-
-      - name: Init database
-        run: |
-          wget https://raw.githubusercontent.com/multycloud/multy/main/db/init.sql
-          mysql -uroot -h127.0.0.1 -e 'source init.sql'
-          for i in {1..500}
-          do
-            mysql -uroot -h127.0.0.1 -D multydb -e "INSERT INTO ApiKeys (ApiKey, UserId) VALUES ('aws-${{github.run_id}}-$i', 'aws-${{github.run_id}}-$i');"
-            mysql -uroot -h127.0.0.1 -D multydb -e "INSERT INTO ApiKeys (ApiKey, UserId) VALUES ('azure-${{github.run_id}}-$i', 'azure-${{github.run_id}}-$i');"
-          done
 
       - name: Start server
         run: |
-          ~/.multy/bin/multy serve --port=8000 --dry_run &> $HOME/server-logs.txt &
+          ~/.multy/bin/multy serve --port=8000 --dry_run --env=local &> $HOME/server-logs.txt &
           sleep 2
-        env:
-          MULTY_DB_CONN_STRING: "root:@tcp(localhost:3306)/multydb?parseTime=true"
-          MULTY_API_ENDPOINT: "localhost:8000"
-          USER_STORAGE_NAME: "test-multy-users-config"
 
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -78,8 +59,6 @@ jobs:
         run: "parallel --tagstring '{%}' TF_ACC=1 TF_VAR_cloud={} USER_SECRET_PREFIX={}-${{github.run_id}} go test ./multy/... -v -timeout 60m ::: aws azure"
         env:
           TF_ACC: 1
-          MULTY_API_ENDPOINT: "localhost:8000"
-          MULTY_DB_CONN_STRING: "root:@tcp(localhost:3306)/multydb?parseTime=true"
 
       - name: Print server logs
         if: always()
