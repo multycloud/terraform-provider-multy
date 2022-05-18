@@ -5,6 +5,6 @@ resource "multy_kubernetes_node_pool" "node_pool" {
   max_node_count = 3
   vm_size        = "medium"
   disk_size_gb   = 10
-  subnet_ids     = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
+  subnet_id      = multy_subnet.subnet1.id
   labels         = { "os" : "multy" }
 }
