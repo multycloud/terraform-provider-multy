@@ -43,9 +43,9 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 			Required:      true,
 			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 		},
-		"subnet_ids": {
-			Type:          types.ListType{ElemType: types.StringType},
-			Description:   "Subnets associated with this cluster.",
+		"subnet_id": {
+			Type:          types.StringType,
+			Description:   "Subnet to place the node and pods in. Must have access to the Internet to connect with the control plane.",
 			Required:      true,
 			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 		},
@@ -148,7 +148,7 @@ type KubernetesNodePool struct {
 	ClusterId         types.String                           `tfsdk:"cluster_id"`
 	Name              types.String                           `tfsdk:"name"`
 	VmSize            mtypes.EnumValue[commonpb.VmSize_Enum] `tfsdk:"vm_size"`
-	SubnetIds         []types.String                         `tfsdk:"subnet_ids"`
+	SubnetId          types.String                           `tfsdk:"subnet_id"`
 	StartingNodeCount types.Int64                            `tfsdk:"starting_node_count"`
 	MinNodeCount      types.Int64                            `tfsdk:"min_node_count"`
 	MaxNodeCount      types.Int64                            `tfsdk:"max_node_count"`
@@ -161,7 +161,7 @@ func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) Ku
 		Id:                types.String{Value: res.CommonParameters.ResourceId},
 		Name:              types.String{Value: res.Name},
 		VmSize:            mtypes.VmSizeType.NewVal(res.VmSize),
-		SubnetIds:         common.TypesStringToStringSlice(res.SubnetIds),
+		SubnetId:          types.String{Value: res.SubnetId},
 		StartingNodeCount: common.DefaultToNull[types.Int64](int64(res.StartingNodeCount)),
 		MinNodeCount:      types.Int64{Value: int64(res.MinNodeCount)},
 		MaxNodeCount:      types.Int64{Value: int64(res.MaxNodeCount)},
@@ -178,7 +178,7 @@ func convertFromKubernetesNodePool(plan KubernetesNodePool) *resourcespb.Kuberne
 	}
 	return &resourcespb.KubernetesNodePoolArgs{
 		Name:              plan.Name.Value,
-		SubnetIds:         common.StringSliceToTypesString(plan.SubnetIds),
+		SubnetId:          plan.SubnetId.Value,
 		ClusterId:         clusterId,
 		StartingNodeCount: int32(plan.StartingNodeCount.Value),
 		MinNodeCount:      int32(plan.MinNodeCount.Value),

@@ -28,10 +28,17 @@ func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schem
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
-			"subnet_ids": {
-				Type:          types.ListType{ElemType: types.StringType},
-				Description:   "Subnets associated with this cluster. At least one must be public. Must at least span two availability zones.",
+			"virtual_network_id": {
+				Type:          types.StringType,
+				Description:   "Virtual network where cluster and associated node pools should be in.",
 				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			},
+			"service_cidr": {
+				Type:          types.StringType,
+				Description:   "CIDR block for service nodes.",
+				Computed:      true,
+				Optional:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"default_node_pool": {
@@ -94,23 +101,25 @@ func deleteKubernetesCluster(ctx context.Context, p Provider, state KubernetesCl
 }
 
 type KubernetesCluster struct {
-	Id        types.String                             `tfsdk:"id"`
-	Name      types.String                             `tfsdk:"name"`
-	SubnetIds []types.String                           `tfsdk:"subnet_ids"`
-	Cloud     mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location  mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	Id               types.String                             `tfsdk:"id"`
+	Name             types.String                             `tfsdk:"name"`
+	VirtualNetworkId types.String                             `tfsdk:"virtual_network_id"`
+	ServiceCidr      types.String                             `tfsdk:"service_cidr"`
+	Cloud            mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location         mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 
 	DefaultNodePool KubernetesNodePool `tfsdk:"default_node_pool"`
 }
 
 func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) KubernetesCluster {
 	return KubernetesCluster{
-		Id:              types.String{Value: res.CommonParameters.ResourceId},
-		Name:            types.String{Value: res.Name},
-		SubnetIds:       common.TypesStringToStringSlice(res.SubnetIds),
-		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		DefaultNodePool: convertToKubernetesNodePool(res.GetDefaultNodePool()),
+		Id:               types.String{Value: res.CommonParameters.ResourceId},
+		Name:             types.String{Value: res.Name},
+		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
+		ServiceCidr:      types.String{Value: res.ServiceCidr},
+		Cloud:            mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:         mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		DefaultNodePool:  convertToKubernetesNodePool(res.GetDefaultNodePool()),
 	}
 }
 
@@ -120,8 +129,9 @@ func convertFromKubernetesCluster(plan KubernetesCluster) *resourcespb.Kubernete
 			Location:      plan.Location.Value,
 			CloudProvider: plan.Cloud.Value,
 		},
-		Name:            plan.Name.Value,
-		SubnetIds:       common.StringSliceToTypesString(plan.SubnetIds),
-		DefaultNodePool: convertFromKubernetesNodePool(plan.DefaultNodePool),
+		Name:             plan.Name.Value,
+		VirtualNetworkId: plan.VirtualNetworkId.Value,
+		ServiceCidr:      plan.ServiceCidr.Value,
+		DefaultNodePool:  convertFromKubernetesNodePool(plan.DefaultNodePool),
 	}
 }

@@ -14,10 +14,10 @@ Provides Multy Kubernetes Cluster resource
 
 ```terraform
 resource "multy_kubernetes_cluster" "cluster1" {
-  cloud      = var.cloud
-  location   = "us_east_1"
-  name       = "multy_cluster_1"
-  subnet_ids = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
+  cloud              = var.cloud
+  location           = "us_east_1"
+  name               = "multy_cluster_1"
+  virtual_network_id = multy_virtual_network.vn.id
 
   default_node_pool = {
     name                = "default"
@@ -26,7 +26,7 @@ resource "multy_kubernetes_cluster" "cluster1" {
     max_node_count      = 3
     vm_size             = "medium"
     disk_size_gb        = 10
-    subnet_ids          = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
+    subnet_id           = multy_subnet.subnet1.id
   }
 }
 ```
@@ -40,7 +40,11 @@ resource "multy_kubernetes_cluster" "cluster1" {
 - `default_node_pool` (Attributes) Default node pool to associate with this cluster. (see [below for nested schema](#nestedatt--default_node_pool))
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of the cluster
-- `subnet_ids` (List of String) Subnets associated with this cluster. At least one must be public. Must at least span two availability zones.
+- `virtual_network_id` (String) Virtual network where cluster and associated node pools should be in.
+
+### Optional
+
+- `service_cidr` (String) CIDR block for service nodes.
 
 ### Read-Only
 
@@ -59,7 +63,7 @@ Required:
 - `min_node_count` (Number) Minimum number of nodes.
 - `name` (String) Name of kubernetes node pool
 - `starting_node_count` (Number) Number of initial nodes. Defaults to the minimum number of nodes.
-- `subnet_ids` (List of String) Subnets associated with this cluster.
+- `subnet_id` (String) Subnet to place the node and pods in. Must have access to the Internet to connect with the control plane.
 - `vm_size` (String) Size of Virtual Machine used for the nodes. Accepted values are `micro`, `medium` or `large`
 
 

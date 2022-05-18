@@ -1,13 +1,13 @@
 variable cloud {
   type    = string
-  default = "azure"
+  default = "aws"
 }
 
 resource "multy_kubernetes_cluster" "cluster1" {
-  cloud      = var.cloud
-  location   = "us_east_1"
-  name       = "multy_cluster_1"
-  subnet_ids = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
+  cloud              = var.cloud
+  location           = "us_east_1"
+  name               = "multy_cluster_1"
+  virtual_network_id = multy_virtual_network.example_vn.id
 
   default_node_pool = {
     name                = "default"
@@ -16,7 +16,7 @@ resource "multy_kubernetes_cluster" "cluster1" {
     max_node_count      = 3
     vm_size             = "medium"
     disk_size_gb        = 10
-    subnet_ids          = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
+    subnet_id           = multy_subnet.subnet1.id
   }
 
   depends_on = [multy_route_table_association.subnet1]
@@ -30,7 +30,7 @@ resource "multy_kubernetes_node_pool" "node_pool" {
   max_node_count = 3
   vm_size        = "medium"
   disk_size_gb   = 10
-  subnet_ids     = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
+  subnet_id      = multy_subnet.subnet2.id
   labels         = { "os" : "multy" }
 }
 
@@ -65,4 +65,8 @@ resource multy_route_table rt {
 resource multy_route_table_association subnet1 {
   route_table_id = multy_route_table.rt.id
   subnet_id      = multy_subnet.subnet1.id
+}
+resource multy_route_table_association subnet2 {
+  route_table_id = multy_route_table.rt.id
+  subnet_id      = multy_subnet.subnet2.id
 }

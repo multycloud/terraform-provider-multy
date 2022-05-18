@@ -20,7 +20,7 @@ resource "multy_kubernetes_node_pool" "node_pool" {
   max_node_count = 3
   vm_size        = "medium"
   disk_size_gb   = 10
-  subnet_ids     = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
+  subnet_id      = multy_subnet.subnet1.id
   labels         = { "os" : "multy" }
 }
 ```
@@ -35,7 +35,7 @@ resource "multy_kubernetes_node_pool" "node_pool" {
 - `max_node_count` (Number) Maximum number of nodes.
 - `min_node_count` (Number) Minimum number of nodes.
 - `name` (String) Name of kubernetes node pool
-- `subnet_ids` (List of String) Subnets associated with this cluster.
+- `subnet_id` (String) Subnet to place the node and pods in. Must have access to the Internet to connect with the control plane.
 - `vm_size` (String) Size of Virtual Machine used for the nodes. Accepted values are `micro`, `medium` or `large`
 
 ### Optional
