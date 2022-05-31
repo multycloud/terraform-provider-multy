@@ -99,7 +99,7 @@ func convertToPublicIp(res *resourcespb.PublicIpResource) PublicIp {
 	return PublicIp{
 		Id:                 types.String{Value: res.CommonParameters.ResourceId},
 		Name:               types.String{Value: res.Name},
-		NetworkInterfaceId: types.String{Value: res.NetworkInterfaceId},
+		NetworkInterfaceId: common.DefaultToNull[types.String](res.NetworkInterfaceId),
 		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}

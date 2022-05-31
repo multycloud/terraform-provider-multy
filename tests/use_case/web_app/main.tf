@@ -9,7 +9,7 @@ terraform {
 }
 
 provider "multy" {
-  #  server_endpoint = "localhost:8000"
+  #    server_endpoint = "localhost:8000"
   aws   = {}
   azure = {}
 }
@@ -139,9 +139,9 @@ resource multy_virtual_machine vm {
   generate_public_ip = true
   user_data_base64   = base64encode(templatefile("./${each.key}_init.sh", {
     vault_name : multy_vault.web_app_vault[each.key].name,
-    db_host_secret_name : multy_vault_secret.db_host[each.key].name,
-    db_username_secret_name : multy_vault_secret.db_username[each.key].name,
-    db_password_secret_name : multy_vault_secret.db_password[each.key].name,
+    db_host_secret_name : multy_vault_secret.db_host[each.key].value,
+    db_username_secret_name : multy_vault_secret.db_username[each.key].value,
+    db_password_secret_name : multy_vault_secret.db_password[each.key].value,
   }))
   network_security_group_ids = [multy_network_security_group.nsg[each.key].id]
 
