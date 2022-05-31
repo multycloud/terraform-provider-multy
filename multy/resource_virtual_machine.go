@@ -155,7 +155,7 @@ func updateVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) 
 	}
 
 	// Create new order from plan values
-	vm, err := p.Client.Client.CreateVirtualMachine(ctx, &resourcespb.CreateVirtualMachineRequest{
+	vm, err := p.Client.Client.UpdateVirtualMachine(ctx, &resourcespb.UpdateVirtualMachineRequest{
 		Resource: convertFromVirtualMachine(plan),
 	})
 	if err != nil {
