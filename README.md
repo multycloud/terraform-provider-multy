@@ -6,7 +6,7 @@
 
 Terraform provider to manage the lifecycle of Multy resources.
 
-Multy: [https://multy.dev](https://multy.dev=?ref=multy-gh-tf-repo)
+Multy: [https://multy.dev](https://multy.dev/?ref=multy-gh-tf-repo)
 
 Documentation: [https://registry.terraform.io/providers/multycloud/multy/latest/docs](https://registry.terraform.io/providers/multycloud/multy/latest/docs?ref=multy-gh-tf-repo)
 
