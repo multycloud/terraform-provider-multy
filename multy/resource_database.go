@@ -81,6 +81,11 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Description: "The hostname of the RDS instance.",
 				Computed:    true,
 			},
+			"connection_username": {
+				Type:        types.StringType,
+				Description: "The username to connect to the database.",
+				Computed:    true,
+			},
 		},
 	}, nil
 }
@@ -134,34 +139,36 @@ func deleteDatabase(ctx context.Context, p Provider, state Database) error {
 }
 
 type Database struct {
-	Id            types.String                                 `tfsdk:"id"`
-	Name          types.String                                 `tfsdk:"name"`
-	Engine        mtypes.EnumValue[resourcespb.DatabaseEngine] `tfsdk:"engine"`
-	EngineVersion types.String                                 `tfsdk:"engine_version"`
-	StorageGb     types.Int64                                  `tfsdk:"storage_gb"`
-	Size          mtypes.EnumValue[commonpb.DatabaseSize_Enum] `tfsdk:"size"`
-	Username      types.String                                 `tfsdk:"username"`
-	Password      types.String                                 `tfsdk:"password"`
-	SubnetIds     []types.String                               `tfsdk:"subnet_ids"`
-	Cloud         mtypes.EnumValue[commonpb.CloudProvider]     `tfsdk:"cloud"`
-	Location      mtypes.EnumValue[commonpb.Location]          `tfsdk:"location"`
-	Hostname      types.String                                 `tfsdk:"hostname"`
+	Id                 types.String                                 `tfsdk:"id"`
+	Name               types.String                                 `tfsdk:"name"`
+	Engine             mtypes.EnumValue[resourcespb.DatabaseEngine] `tfsdk:"engine"`
+	EngineVersion      types.String                                 `tfsdk:"engine_version"`
+	StorageGb          types.Int64                                  `tfsdk:"storage_gb"`
+	Size               mtypes.EnumValue[commonpb.DatabaseSize_Enum] `tfsdk:"size"`
+	Username           types.String                                 `tfsdk:"username"`
+	Password           types.String                                 `tfsdk:"password"`
+	SubnetIds          []types.String                               `tfsdk:"subnet_ids"`
+	Cloud              mtypes.EnumValue[commonpb.CloudProvider]     `tfsdk:"cloud"`
+	Location           mtypes.EnumValue[commonpb.Location]          `tfsdk:"location"`
+	Hostname           types.String                                 `tfsdk:"hostname"`
+	ConnectionUsername types.String                                 `tfsdk:"connection_username"`
 }
 
 func convertToDatabase(res *resourcespb.DatabaseResource) Database {
 	return Database{
-		Id:            types.String{Value: res.CommonParameters.ResourceId},
-		Name:          types.String{Value: res.Name},
-		Engine:        mtypes.DbEngineType.NewVal(res.Engine),
-		EngineVersion: types.String{Value: res.EngineVersion},
-		StorageGb:     types.Int64{Value: res.StorageGb},
-		Size:          mtypes.DbSizeType.NewVal(res.Size),
-		Username:      types.String{Value: res.Username},
-		Password:      types.String{Value: res.Password},
-		SubnetIds:     common.TypesStringToStringSlice(res.SubnetIds),
-		Cloud:         mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:      mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		Hostname:      types.String{Value: res.Host},
+		Id:                 types.String{Value: res.CommonParameters.ResourceId},
+		Name:               types.String{Value: res.Name},
+		Engine:             mtypes.DbEngineType.NewVal(res.Engine),
+		EngineVersion:      types.String{Value: res.EngineVersion},
+		StorageGb:          types.Int64{Value: res.StorageGb},
+		Size:               mtypes.DbSizeType.NewVal(res.Size),
+		Username:           types.String{Value: res.Username},
+		Password:           types.String{Value: res.Password},
+		SubnetIds:          common.TypesStringToStringSlice(res.SubnetIds),
+		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		Hostname:           types.String{Value: res.Host},
+		ConnectionUsername: types.String{Value: res.ConnectionUsername},
 	}
 }
 

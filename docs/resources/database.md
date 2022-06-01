@@ -37,18 +37,19 @@ resource "multy_database" "example_db" {
 ### Required
 
 - `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
-- `engine` (String) Database engine. Available values are [mysql]
+- `engine` (String) Database engine. Available values are [mysql postgres mariadb]
 - `engine_version` (String) Engine version
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of the database. If cloud is azure, name needs to be unique globally.
 - `password` (String, Sensitive) Password for the database user
-- `size` (String) Database size. Available values are [nano micro medium]
+- `size` (String) Database size. Available values are [micro medium small]
 - `storage_gb` (Number) Size of database storage in gigabytes
 - `subnet_ids` (List of String) Subnets associated with this database. At least 2 in different availability zones are required.
 - `username` (String) Username for the database user
 
 ### Read-Only
 
+- `connection_username` (String) The username to connect to the database.
 - `hostname` (String) The hostname of the RDS instance.
 - `id` (String) The ID of this resource.
 

@@ -127,23 +127,28 @@ func (s EnumValue[T]) Validate() error {
 }
 
 func (n EnumType[T]) GetAllValues() []string {
-	elemTotal := len(n.ValueMap)
-	if !n.allowDefaultValue {
-		elemTotal -= 1
+	var elemTotal int32
+	for _, v := range n.ValueMap {
+		if v >= elemTotal {
+			elemTotal = v + 1
+		}
 	}
 	if elemTotal <= 0 {
 		return nil
 	}
-	allowedVals := make([]string, elemTotal)
+
+	allVals := make([]string, elemTotal)
 	for k, val := range n.ValueMap {
 		if val == 0 && !n.allowDefaultValue {
 			continue
 		}
-		i := val
-		if !n.allowDefaultValue {
-			i -= 1
+		allVals[val] = strings.ToLower(k)
+	}
+	var allowedVals []string
+	for _, v := range allVals {
+		if len(v) > 0 {
+			allowedVals = append(allowedVals, v)
 		}
-		allowedVals[i] = strings.ToLower(k)
 	}
 
 	return allowedVals
