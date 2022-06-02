@@ -9,9 +9,10 @@ terraform {
 }
 
 provider "multy" {
-  #    server_endpoint = "localhost:8000"
-  aws   = {}
-  azure = {}
+  server_endpoint = "localhost:8000"
+  aws             = {}
+  azure           = {}
+  api_key         = "xx"
 }
 
 variable "location" {
@@ -20,6 +21,11 @@ variable "location" {
 }
 
 variable "clouds" {
+  type    = set(string)
+  default = ["aws", "azure"]
+}
+
+variable "vm_clouds" {
   type    = set(string)
   default = ["aws", "azure"]
 }
@@ -75,7 +81,6 @@ resource multy_route_table_association rta1 {
   route_table_id = multy_route_table.rt[each.key].id
   subnet_id      = multy_subnet.public_subnet[each.key].id
 }
-// fixme: For a DB instance to be publicly accessible, all of the subnets in its DB subnet group must be public. If a subnet that is associated with a publicly accessible DB instance changes from public to private, it can affect DB instance availability.
 resource multy_route_table_association rta2 {
   for_each       = var.clouds
   route_table_id = multy_route_table.rt[each.key].id
@@ -128,7 +133,8 @@ resource "multy_network_security_group" nsg {
 }
 
 resource multy_virtual_machine vm {
-  for_each        = var.clouds
+  #  for_each        = var.clouds
+  for_each        = var.vm_clouds
   name            = "web_app_vm"
   size            = each.key == "azure" ? "large" : "micro"
   image_reference = {
@@ -192,7 +198,7 @@ resource "multy_vault_secret" "db_password" {
   value    = multy_database.example_db.password
 }
 resource "multy_vault_access_policy" "kv_ap" {
-  for_each = var.clouds
+  for_each = var.vm_clouds
   vault_id = multy_vault.web_app_vault[each.key].id
   identity = multy_virtual_machine.vm[each.key].identity
   access   = "owner"
@@ -202,20 +208,6 @@ resource multy_object_storage app {
   cloud    = var.db_cloud
   location = var.location
 }
-#resource "null_resource" "app_upload" {
-#  provisioner "local-exec" {
-#    command = "aws s3 sync nodejs-mysql-links s3://${multy_object_storage.app.name} --acl public-read"
-#  }
-#}
-#resource multy_object_storage_object app_aws {
-#  for_each = contains(var.clouds, "aws") ? fileset("./nodejs-mysql-links", "**/*.*") : []
-#
-#  name              = each.value
-#  object_storage_id = multy_object_storage.app["aws"].id
-#  content           = file("./nodejs-mysql-links/${each.value}")
-#  content_type      = "text/html"
-#  acl               = "public_read"
-#}
 output "endpoint" {
   value = {
   for k, vm in multy_virtual_machine.vm : k => "http://${vm.public_ip}:4000"

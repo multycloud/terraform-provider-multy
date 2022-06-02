@@ -21,7 +21,9 @@ mysql -h ${db_host_secret_name} -P 3306 -u ${db_username_secret_name} --password
 
 curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
 source ~/.profile
-nvm install v10.13.0
+nvm uninstall v18.0.0
+nvm install --lts
+nvm use --lts
 npm i
 npm run build
 date

@@ -22,8 +22,11 @@ cd nodejs-mysql-links
 # both aws and az will try to run this command but only one will succeed
 mysql -h ${db_host_secret_name} -P 3306 -u ${db_username_secret_name} --password=${db_password_secret_name} -e 'source database/db.sql' || true
 
-curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
+curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | sudo bash
 source ~/.profile
+nvm uninstall v18.0.0
+nvm install --lts
+nvm use --lts
 npm i
 npm run build
 date
