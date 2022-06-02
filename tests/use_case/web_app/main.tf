@@ -1,7 +1,6 @@
 terraform {
   required_providers {
     multy = {
-      #      source = "multycloud/multy"
       version = "0.0.1"
       source  = "hashicorp.com/dev/multy"
     }
@@ -12,7 +11,7 @@ provider "multy" {
   server_endpoint = "localhost:8000"
   aws             = {}
   azure           = {}
-  api_key         = "xx"
+  api_key         = "xxx"
 }
 
 variable "location" {
@@ -133,7 +132,6 @@ resource "multy_network_security_group" nsg {
 }
 
 resource multy_virtual_machine vm {
-  #  for_each        = var.clouds
   for_each        = var.vm_clouds
   name            = "web_app_vm"
   size            = each.key == "azure" ? "large" : "micro"
@@ -154,6 +152,10 @@ resource multy_virtual_machine vm {
   public_ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCf3a02CbBVs6w3QVsf5yZ+WU+AAVpP86SufnMsSOV29DNXKmAGsB16jqJYq+znqDFTscOmf8WkR/AEKDwU+Q9auvBIWKtwB8aUrd5hCTC0EhC/2322PsOoOs0fEOki39xbaF9vWRXKPES/GM7lHR3xV5TFB4GBiq12mH7ALhHbcAjafxf+/Q3PzCYeJxRDSl7RvjihiMoOgjK9jy1DqlVLgOJUQuLgwxv1Nm1EwVygi5czBoYFXhDGszOuq4xpq8rUBTIGEczMn7glVLIyAIADLUkD0x+frjamI6I3BX1yn9GfJ3BPa8vC5GXsWnLelLeMg5SX8AiB4MfpTirQuvFeMfGPvFvKK6YwcuVHPDYd2/oisIf/wFlmjxXoTA1LEdH7o5/C5swIisEpppcaIO7F0v7gJwEdktpORzSxZEIirYGf8eTrmz2Mx3GH/vGUbUhJtwazx/7Lnv6FZH0ncqlV4DX0BCQZi3AHGWcPcFW/sGTv8EAS8PCQUZdnEptZLI8= joao@Joaos-MB"
   cloud          = each.key
   location       = var.location
+
+  #  aws_override = {
+  #    instance_type = "c4.8xlarge"
+  #  }
 
   depends_on = [multy_network_security_group.nsg]
 }
