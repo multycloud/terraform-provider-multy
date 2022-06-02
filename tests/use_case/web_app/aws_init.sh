@@ -16,12 +16,21 @@ cd nodejs-mysql-links
 #export DATABASE_USER=$(aws ssm get-parameter --with-decryption --name "/${vault_name}/${db_username_secret_name}" --region "$region" | jq ".Parameter.Value" -r)
 #export DATABASE_PASSWORD=$(aws ssm get-parameter --with-decryption --name "/${vault_name}/${db_password_secret_name}" --region "$region" | jq ".Parameter.Value" -r)
 
+export DATABASE_HOST=${db_host_secret_name}
+export DATABASE_USER=${db_username_secret_name}
+export DATABASE_PASSWORD=${db_password_secret_name}
+
 # both aws and az will try to run this command but only one will succeed
 mysql -h ${db_host_secret_name} -P 3306 -u ${db_username_secret_name} --password=${db_password_secret_name} -e 'source database/db.sql' || true
 
+
+
 curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
 source ~/.profile
-nvm install v10.13.0
+source /.nvm/nvm.sh
+nvm uninstall v18.0.0
+nvm install --lts
+nvm use --lts
 npm i
 npm run build
 date

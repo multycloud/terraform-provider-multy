@@ -1,7 +1,6 @@
 terraform {
   required_providers {
     multy = {
-      #      source = "multycloud/multy"
       version = "0.0.1"
       source  = "hashicorp.com/dev/multy"
     }
@@ -9,9 +8,10 @@ terraform {
 }
 
 provider "multy" {
-  #    server_endpoint = "localhost:8000"
-  aws   = {}
-  azure = {}
+  server_endpoint = "localhost:8000"
+  aws             = {}
+  azure           = {}
+  api_key         = "xxx"
 }
 
 variable "location" {
@@ -20,6 +20,11 @@ variable "location" {
 }
 
 variable "clouds" {
+  type    = set(string)
+  default = ["aws", "azure"]
+}
+
+variable "vm_clouds" {
   type    = set(string)
   default = ["aws", "azure"]
 }
@@ -75,7 +80,6 @@ resource multy_route_table_association rta1 {
   route_table_id = multy_route_table.rt[each.key].id
   subnet_id      = multy_subnet.public_subnet[each.key].id
 }
-// fixme: For a DB instance to be publicly accessible, all of the subnets in its DB subnet group must be public. If a subnet that is associated with a publicly accessible DB instance changes from public to private, it can affect DB instance availability.
 resource multy_route_table_association rta2 {
   for_each       = var.clouds
   route_table_id = multy_route_table.rt[each.key].id
@@ -128,7 +132,7 @@ resource "multy_network_security_group" nsg {
 }
 
 resource multy_virtual_machine vm {
-  for_each        = var.clouds
+  for_each        = var.vm_clouds
   name            = "web_app_vm"
   size            = each.key == "azure" ? "large" : "micro"
   image_reference = {
@@ -148,6 +152,10 @@ resource multy_virtual_machine vm {
   public_ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCf3a02CbBVs6w3QVsf5yZ+WU+AAVpP86SufnMsSOV29DNXKmAGsB16jqJYq+znqDFTscOmf8WkR/AEKDwU+Q9auvBIWKtwB8aUrd5hCTC0EhC/2322PsOoOs0fEOki39xbaF9vWRXKPES/GM7lHR3xV5TFB4GBiq12mH7ALhHbcAjafxf+/Q3PzCYeJxRDSl7RvjihiMoOgjK9jy1DqlVLgOJUQuLgwxv1Nm1EwVygi5czBoYFXhDGszOuq4xpq8rUBTIGEczMn7glVLIyAIADLUkD0x+frjamI6I3BX1yn9GfJ3BPa8vC5GXsWnLelLeMg5SX8AiB4MfpTirQuvFeMfGPvFvKK6YwcuVHPDYd2/oisIf/wFlmjxXoTA1LEdH7o5/C5swIisEpppcaIO7F0v7gJwEdktpORzSxZEIirYGf8eTrmz2Mx3GH/vGUbUhJtwazx/7Lnv6FZH0ncqlV4DX0BCQZi3AHGWcPcFW/sGTv8EAS8PCQUZdnEptZLI8= joao@Joaos-MB"
   cloud          = each.key
   location       = var.location
+
+  #  aws_override = {
+  #    instance_type = "c4.8xlarge"
+  #  }
 
   depends_on = [multy_network_security_group.nsg]
 }
@@ -192,7 +200,7 @@ resource "multy_vault_secret" "db_password" {
   value    = multy_database.example_db.password
 }
 resource "multy_vault_access_policy" "kv_ap" {
-  for_each = var.clouds
+  for_each = var.vm_clouds
   vault_id = multy_vault.web_app_vault[each.key].id
   identity = multy_virtual_machine.vm[each.key].identity
   access   = "owner"
@@ -202,20 +210,6 @@ resource multy_object_storage app {
   cloud    = var.db_cloud
   location = var.location
 }
-#resource "null_resource" "app_upload" {
-#  provisioner "local-exec" {
-#    command = "aws s3 sync nodejs-mysql-links s3://${multy_object_storage.app.name} --acl public-read"
-#  }
-#}
-#resource multy_object_storage_object app_aws {
-#  for_each = contains(var.clouds, "aws") ? fileset("./nodejs-mysql-links", "**/*.*") : []
-#
-#  name              = each.value
-#  object_storage_id = multy_object_storage.app["aws"].id
-#  content           = file("./nodejs-mysql-links/${each.value}")
-#  content_type      = "text/html"
-#  acl               = "public_read"
-#}
 output "endpoint" {
   value = {
   for k, vm in multy_virtual_machine.vm : k => "http://${vm.public_ip}:4000"
