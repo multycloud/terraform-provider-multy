@@ -40,11 +40,28 @@ resource "multy_kubernetes_node_pool" "node_pool" {
 
 ### Optional
 
+- `aws_overrides` (Attributes) AWS-specific attributes that will be set if this resource is deployed in AWS (see [below for nested schema](#nestedatt--aws_overrides))
+- `azure_overrides` (Attributes) Azure-specific attributes that will be set if this resource is deployed in Azure (see [below for nested schema](#nestedatt--azure_overrides))
 - `labels` (Map of String) Labels to be applied to each node.
 - `starting_node_count` (Number) Number of initial nodes. Defaults to the minimum number of nodes.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedatt--aws_overrides"></a>
+### Nested Schema for `aws_overrides`
+
+Optional:
+
+- `instance_types` (List of String) The instance type to use for nodes.
+
+
+<a id="nestedatt--azure_overrides"></a>
+### Nested Schema for `azure_overrides`
+
+Optional:
+
+- `vm_size` (String) The size to use for nodes.
 
 

@@ -45,5 +45,6 @@ resource "multy_network_interface" "private-nic" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `resource_group_id` (String)
 
 

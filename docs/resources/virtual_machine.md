@@ -56,6 +56,8 @@ resource "multy_virtual_machine" "vm" {
 
 ### Optional
 
+- `aws_overrides` (Attributes) AWS-specific attributes that will be set if this resource is deployed in AWS (see [below for nested schema](#nestedatt--aws_overrides))
+- `azure_overrides` (Attributes) Azure-specific attributes that will be set if this resource is deployed in Azure (see [below for nested schema](#nestedatt--azure_overrides))
 - `generate_public_ip` (Boolean) If true, a public IP will be automatically generated. Cannot be used with `public_ip_id`
 - `network_interface_ids` (List of String) IDs of `network_interface` resource
 - `network_security_group_ids` (List of String) IDs of `network_security_group` resource
@@ -68,6 +70,7 @@ resource "multy_virtual_machine" "vm" {
 - `id` (String) The ID of this resource.
 - `identity` (String) Identity of Virtual Machine
 - `public_ip` (String) Public IP of Virtual Machine
+- `resource_group_id` (String)
 
 <a id="nestedatt--image_reference"></a>
 ### Nested Schema for `image_reference`
@@ -76,5 +79,21 @@ Required:
 
 - `os` (String) Operating System of Virtual Machine. Accepted values are `ubuntu`, `debian` or `cent_os`
 - `version` (String) OS Version
+
+
+<a id="nestedatt--aws_overrides"></a>
+### Nested Schema for `aws_overrides`
+
+Optional:
+
+- `instance_type` (String) The instance type to use for the instance.
+
+
+<a id="nestedatt--azure_overrides"></a>
+### Nested Schema for `azure_overrides`
+
+Optional:
+
+- `size` (String) The size to use for the instance.
 
 

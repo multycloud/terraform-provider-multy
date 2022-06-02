@@ -60,6 +60,13 @@ func getTestFunc(path string, testString string, testNumber int) func(t *testing
 			},
 			Steps: []resource.TestStep{getStep(testString, isError, testNumber)},
 		})
+
+		t.Cleanup(func() {
+			err := os.RemoveAll(filepath.Join(os.TempDir(), "multy", fmt.Sprintf("%s-%d", os.Getenv("USER_SECRET_PREFIX"), testNumber)))
+			if err != nil {
+				t.Logf("unable to cleanup: %s", err)
+			}
+		})
 	}
 }
 

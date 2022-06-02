@@ -22,6 +22,11 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 				Computed:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
+			"resource_group_id": {
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+			},
 			"name": {
 				Type:          types.StringType,
 				Description:   "Name of Network Interface",
@@ -89,28 +94,31 @@ func deleteNetworkInterface(ctx context.Context, p Provider, state NetworkInterf
 }
 
 type NetworkInterface struct {
-	Id       types.String                             `tfsdk:"id"`
-	Name     types.String                             `tfsdk:"name"`
-	SubnetId types.String                             `tfsdk:"subnet_id"`
-	Cloud    mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	Id              types.String                             `tfsdk:"id"`
+	Name            types.String                             `tfsdk:"name"`
+	SubnetId        types.String                             `tfsdk:"subnet_id"`
+	Cloud           mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location        mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
 }
 
 func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) NetworkInterface {
 	return NetworkInterface{
-		Id:       types.String{Value: res.CommonParameters.ResourceId},
-		Name:     types.String{Value: res.Name},
-		SubnetId: types.String{Value: res.SubnetId},
-		Cloud:    mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location: mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		Id:              types.String{Value: res.CommonParameters.ResourceId},
+		ResourceGroupId: types.String{Value: res.CommonParameters.ResourceGroupId},
+		Name:            types.String{Value: res.Name},
+		SubnetId:        types.String{Value: res.SubnetId},
+		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
 func convertFromNetworkInterface(plan NetworkInterface) *resourcespb.NetworkInterfaceArgs {
 	return &resourcespb.NetworkInterfaceArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      plan.Location.Value,
-			CloudProvider: plan.Cloud.Value,
+			ResourceGroupId: plan.ResourceGroupId.Value,
+			Location:        plan.Location.Value,
+			CloudProvider:   plan.Cloud.Value,
 		},
 		Name:     plan.Name.Value,
 		SubnetId: plan.SubnetId.Value,

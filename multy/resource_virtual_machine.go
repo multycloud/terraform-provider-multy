@@ -25,6 +25,11 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Computed:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
+			"resource_group_id": {
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+			},
 			"name": {
 				Type:          types.StringType,
 				Description:   "Name of Virtual Machine",
@@ -97,7 +102,34 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace(), tfsdk.UseStateForUnknown()},
 			},
-
+			"aws_overrides": {
+				Description: "AWS-specific attributes that will be set if this resource is deployed in AWS",
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"instance_type": {
+						Type:          types.StringType,
+						Description:   fmt.Sprintf("The instance type to use for the instance."),
+						Optional:      true,
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws"), tfsdk.UseStateForUnknown()},
+						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+					},
+				}),
+				Optional:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
+			},
+			"azure_overrides": {
+				Description: "Azure-specific attributes that will be set if this resource is deployed in Azure",
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"size": {
+						Type:          types.StringType,
+						Description:   fmt.Sprintf("The size to use for the instance."),
+						Optional:      true,
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure"), tfsdk.UseStateForUnknown()},
+						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+					},
+				}),
+				Optional:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
+			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
 
@@ -156,7 +188,8 @@ func updateVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) 
 
 	// Create new order from plan values
 	vm, err := p.Client.Client.UpdateVirtualMachine(ctx, &resourcespb.UpdateVirtualMachineRequest{
-		Resource: convertFromVirtualMachine(plan),
+		ResourceId: plan.Id.Value,
+		Resource:   convertFromVirtualMachine(plan),
 	})
 	if err != nil {
 		return VirtualMachine{}, err
@@ -185,6 +218,7 @@ func deleteVirtualMachine(ctx context.Context, p Provider, state VirtualMachine)
 func convertToVirtualMachine(res *resourcespb.VirtualMachineResource) VirtualMachine {
 	return VirtualMachine{
 		Id:                      types.String{Value: res.CommonParameters.ResourceId},
+		ResourceGroupId:         types.String{Value: res.CommonParameters.ResourceGroupId},
 		Name:                    types.String{Value: res.Name},
 		Size:                    mtypes.VmSizeType.NewVal(res.VmSize),
 		SubnetId:                types.String{Value: res.SubnetId},
@@ -194,22 +228,25 @@ func convertToVirtualMachine(res *resourcespb.VirtualMachineResource) VirtualMac
 		PublicSshKey:            common.DefaultToNull[types.String](res.PublicSshKey),
 		PublicIpId:              common.DefaultToNull[types.String](res.PublicIpId),
 		GeneratePublicIp:        types.Bool{Value: res.GeneratePublicIp},
+		PublicIp:                types.String{Value: res.PublicIp},
+		Identity:                types.String{Value: res.IdentityId},
 		ImageReference: &ImageReference{
 			OS:      mtypes.ImageOsDistroType.NewVal(res.ImageReference.Os),
 			Version: types.String{Value: res.ImageReference.Version},
 		},
-		Cloud:    mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location: mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		PublicIp: types.String{Value: res.PublicIp},
-		Identity: types.String{Value: res.IdentityId},
+		AwsOverrides:   convertToVirtualMachineAwsOverrides(res.AwsOverride),
+		AzureOverrides: convertToVirtualMachineAzureOverrides(res.AzureOverride),
+		Cloud:          mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:       mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
 func convertFromVirtualMachine(plan VirtualMachine) *resourcespb.VirtualMachineArgs {
 	return &resourcespb.VirtualMachineArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      plan.Location.Value,
-			CloudProvider: plan.Cloud.Value,
+			Location:        plan.Location.Value,
+			CloudProvider:   plan.Cloud.Value,
+			ResourceGroupId: plan.ResourceGroupId.Value,
 		},
 		Name:                    plan.Name.Value,
 		NetworkInterfaceIds:     common.StringSliceToTypesString(plan.NetworkInterfaceIds),
@@ -221,6 +258,8 @@ func convertFromVirtualMachine(plan VirtualMachine) *resourcespb.VirtualMachineA
 		PublicIpId:              plan.PublicIpId.Value,
 		GeneratePublicIp:        plan.GeneratePublicIp.Value,
 		ImageReference:          convertFromImageRef(plan.ImageReference),
+		AwsOverride:             convertFromVirtualMachineAwsOverrides(plan.AwsOverrides),
+		AzureOverride:           convertFromVirtualMachineAzureOverrides(plan.AzureOverrides),
 	}
 }
 
@@ -235,8 +274,44 @@ func convertFromImageRef(ref *ImageReference) *resourcespb.ImageReference {
 	}
 }
 
+func convertFromVirtualMachineAwsOverrides(ref *VirtualMachineAwsOverrides) *resourcespb.VirtualMachineAwsOverride {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.VirtualMachineAwsOverride{
+		InstanceType: ref.InstanceType.Value,
+	}
+}
+
+func convertToVirtualMachineAwsOverrides(ref *resourcespb.VirtualMachineAwsOverride) *VirtualMachineAwsOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &VirtualMachineAwsOverrides{InstanceType: common.DefaultToNull[types.String](ref.InstanceType)}
+}
+func convertFromVirtualMachineAzureOverrides(ref *VirtualMachineAzureOverrides) *resourcespb.VirtualMachineAzureOverride {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.VirtualMachineAzureOverride{
+		Size: ref.Size.Value,
+	}
+}
+
+func convertToVirtualMachineAzureOverrides(ref *resourcespb.VirtualMachineAzureOverride) *VirtualMachineAzureOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &VirtualMachineAzureOverrides{Size: common.DefaultToNull[types.String](ref.Size)}
+}
+
 type VirtualMachine struct {
 	Id                      types.String                           `tfsdk:"id"`
+	ResourceGroupId         types.String                           `tfsdk:"resource_group_id"`
 	Name                    types.String                           `tfsdk:"name"`
 	Size                    mtypes.EnumValue[commonpb.VmSize_Enum] `tfsdk:"size"`
 	SubnetId                types.String                           `tfsdk:"subnet_id"`
@@ -249,6 +324,8 @@ type VirtualMachine struct {
 	PublicIp                types.String                           `tfsdk:"public_ip"`
 	Identity                types.String                           `tfsdk:"identity"`
 	ImageReference          *ImageReference                        `tfsdk:"image_reference"`
+	AwsOverrides            *VirtualMachineAwsOverrides            `tfsdk:"aws_overrides"`
+	AzureOverrides          *VirtualMachineAzureOverrides          `tfsdk:"azure_overrides"`
 
 	Cloud    mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
 	Location mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
@@ -257,4 +334,11 @@ type VirtualMachine struct {
 type ImageReference struct {
 	OS      mtypes.EnumValue[resourcespb.ImageReference_OperatingSystemDistribution] `tfsdk:"os"`
 	Version types.String                                                             `tfsdk:"version"`
+}
+
+type VirtualMachineAwsOverrides struct {
+	InstanceType types.String `tfsdk:"instance_type"`
+}
+type VirtualMachineAzureOverrides struct {
+	Size types.String `tfsdk:"size"`
 }
