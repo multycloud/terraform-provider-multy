@@ -37,5 +37,6 @@ resource "multy_object_storage" "obj_storage" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `resource_group_id` (String)
 
 

@@ -24,6 +24,11 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Computed:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
+			"resource_group_id": {
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+			},
 			"name": {
 				Type:          types.StringType,
 				Description:   "Name of the database. If cloud is azure, name needs to be unique globally.",
@@ -140,6 +145,7 @@ func deleteDatabase(ctx context.Context, p Provider, state Database) error {
 
 type Database struct {
 	Id                 types.String                                 `tfsdk:"id"`
+	ResourceGroupId    types.String                                 `tfsdk:"resource_group_id"`
 	Name               types.String                                 `tfsdk:"name"`
 	Engine             mtypes.EnumValue[resourcespb.DatabaseEngine] `tfsdk:"engine"`
 	EngineVersion      types.String                                 `tfsdk:"engine_version"`
@@ -157,6 +163,7 @@ type Database struct {
 func convertToDatabase(res *resourcespb.DatabaseResource) Database {
 	return Database{
 		Id:                 types.String{Value: res.CommonParameters.ResourceId},
+		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
 		Name:               types.String{Value: res.Name},
 		Engine:             mtypes.DbEngineType.NewVal(res.Engine),
 		EngineVersion:      types.String{Value: res.EngineVersion},
@@ -183,8 +190,9 @@ func convertFromDatabase(plan Database) *resourcespb.DatabaseArgs {
 		Password:      plan.Password.Value,
 		SubnetIds:     common.StringSliceToTypesString(plan.SubnetIds),
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      plan.Location.Value,
-			CloudProvider: plan.Cloud.Value,
+			ResourceGroupId: plan.ResourceGroupId.Value,
+			Location:        plan.Location.Value,
+			CloudProvider:   plan.Cloud.Value,
 		},
 	}
 }

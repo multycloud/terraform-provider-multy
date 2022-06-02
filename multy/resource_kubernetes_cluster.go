@@ -22,6 +22,11 @@ func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schem
 				Computed:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
+			"resource_group_id": {
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+			},
 			"name": {
 				Type:          types.StringType,
 				Description:   "Name of the cluster",
@@ -107,6 +112,7 @@ type KubernetesCluster struct {
 	ServiceCidr      types.String                             `tfsdk:"service_cidr"`
 	Cloud            mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
 	Location         mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	ResourceGroupId  types.String                             `tfsdk:"resource_group_id"`
 
 	DefaultNodePool KubernetesNodePool `tfsdk:"default_node_pool"`
 }
@@ -119,6 +125,7 @@ func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) Kube
 		ServiceCidr:      types.String{Value: res.ServiceCidr},
 		Cloud:            mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:         mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		ResourceGroupId:  types.String{Value: res.CommonParameters.ResourceGroupId},
 		DefaultNodePool:  convertToKubernetesNodePool(res.GetDefaultNodePool()),
 	}
 }
@@ -126,8 +133,9 @@ func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) Kube
 func convertFromKubernetesCluster(plan KubernetesCluster) *resourcespb.KubernetesClusterArgs {
 	return &resourcespb.KubernetesClusterArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      plan.Location.Value,
-			CloudProvider: plan.Cloud.Value,
+			Location:        plan.Location.Value,
+			CloudProvider:   plan.Cloud.Value,
+			ResourceGroupId: plan.ResourceGroupId.Value,
 		},
 		Name:             plan.Name.Value,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,

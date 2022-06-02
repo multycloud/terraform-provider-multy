@@ -23,6 +23,11 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Computed:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
+			"resource_group_id": {
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+			},
 			"name": {
 				Type:          types.StringType,
 				Description:   "Name of Virtual Network",
@@ -91,28 +96,31 @@ func deleteVirtualNetwork(ctx context.Context, p Provider, state VirtualNetwork)
 }
 
 type VirtualNetwork struct {
-	Id        types.String                             `tfsdk:"id"`
-	Name      types.String                             `tfsdk:"name"`
-	CidrBlock types.String                             `tfsdk:"cidr_block"`
-	Cloud     mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location  mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	Id              types.String                             `tfsdk:"id"`
+	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
+	Name            types.String                             `tfsdk:"name"`
+	CidrBlock       types.String                             `tfsdk:"cidr_block"`
+	Cloud           mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location        mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 }
 
 func convertToVirtualNetwork(res *resourcespb.VirtualNetworkResource) VirtualNetwork {
 	return VirtualNetwork{
-		Id:        types.String{Value: res.CommonParameters.ResourceId},
-		Name:      types.String{Value: res.Name},
-		CidrBlock: types.String{Value: res.CidrBlock},
-		Cloud:     mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:  mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		Id:              types.String{Value: res.CommonParameters.ResourceId},
+		ResourceGroupId: types.String{Value: res.CommonParameters.ResourceGroupId},
+		Name:            types.String{Value: res.Name},
+		CidrBlock:       types.String{Value: res.CidrBlock},
+		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
 func convertFromVirtualNetwork(plan VirtualNetwork) *resourcespb.VirtualNetworkArgs {
 	return &resourcespb.VirtualNetworkArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      plan.Location.Value,
-			CloudProvider: plan.Cloud.Value,
+			ResourceGroupId: plan.ResourceGroupId.Value,
+			Location:        plan.Location.Value,
+			CloudProvider:   plan.Cloud.Value,
 		},
 		Name:      plan.Name.Value,
 		CidrBlock: plan.CidrBlock.Value,
