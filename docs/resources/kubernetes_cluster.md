@@ -67,7 +67,7 @@ Required:
 - `name` (String) Name of kubernetes node pool
 - `starting_node_count` (Number) Number of initial nodes. Defaults to the minimum number of nodes.
 - `subnet_id` (String) Subnet to place the node and pods in. Must have access to the Internet to connect with the control plane.
-- `vm_size` (String) Size of Virtual Machine used for the nodes. Accepted values are `general_micro`, `general_medium`, `general_large`, `general_nano`, `general_small`, `general_xlarge`, `general_2xlarge`, `compute_large`, `compute_xlarge`, `compute_2xlarge`, `compute_4xlarge`, `compute_8xlarge`, `memory_medium`, `memory_large`, `memory_xlarge`, `memory_2xlarge`, `memory_4xlarge`, `memory_8xlarge`, `memory_12xlarge` or `memory_16xlarge`
+- `vm_size` (String) Size of Virtual Machine used for the nodes. Accepted values are `general_micro`, `general_medium`, `general_large`, `general_nano`, `general_small`, `general_xlarge`, `general_2xlarge`, `compute_large`, `compute_xlarge`, `compute_2xlarge`, `compute_4xlarge`, `compute_8xlarge`, `memory_large`, `memory_xlarge`, `memory_2xlarge`, `memory_4xlarge`, `memory_8xlarge`, `memory_12xlarge` or `memory_16xlarge`
 
 <a id="nestedatt--default_node_pool--aws_overrides"></a>
 ### Nested Schema for `default_node_pool.aws_overrides`
