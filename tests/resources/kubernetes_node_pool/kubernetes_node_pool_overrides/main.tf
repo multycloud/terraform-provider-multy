@@ -14,7 +14,7 @@ resource "multy_kubernetes_cluster" "cluster1" {
     starting_node_count = 2
     min_node_count      = 1
     max_node_count      = 3
-    vm_size             = "medium"
+    vm_size             = "general_medium"
     disk_size_gb        = 10
     subnet_id           = multy_subnet.subnet1.id
   }
@@ -28,7 +28,7 @@ resource "multy_kubernetes_node_pool" "node_pool" {
   name           = "pool"
   min_node_count = 1
   max_node_count = 3
-  vm_size        = "medium"
+  vm_size        = "general_medium"
   disk_size_gb   = 10
   subnet_id      = multy_subnet.subnet2.id
   labels         = { "os" : "multy" }

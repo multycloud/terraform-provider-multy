@@ -55,7 +55,7 @@ resource "multy_network_security_group" nsg {
 
 resource multy_virtual_machine vm {
   name            = "test_vm"
-  size            = "micro"
+  size            = "general_micro"
   image_reference = {
     os      = "cent_os"
     version = "8.2"
