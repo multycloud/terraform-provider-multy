@@ -12,7 +12,7 @@ resource "multy_database" "example_db" {
   engine_version = "5.7"
   username       = "multyadmin"
   password       = "multy$Admin123!"
-  size           = "general_micro"
+  size           = "micro"
   subnet_ids     = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
 }
 resource "multy_virtual_network" "example_vn" {

@@ -167,7 +167,7 @@ resource "multy_database" "example_db" {
   engine_version = "5.7"
   username       = "multyadmin"
   password       = "multy-Admin123!"
-  size           = "general_micro"
+  size           = "micro"
   subnet_ids     = [multy_subnet.private_subnet[var.db_cloud].id, multy_subnet.private_subnet2[var.db_cloud].id]
   cloud          = var.db_cloud
   location       = var.location
