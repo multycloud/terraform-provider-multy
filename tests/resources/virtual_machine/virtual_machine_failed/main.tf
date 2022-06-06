@@ -19,7 +19,7 @@ resource multy_subnet subnet {
 
 resource multy_virtual_machine vm {
   name               = "test_vm"
-  size               = "micro"
+  size               = "general_micro"
   operating_system   = "xx"
   subnet_id          = multy_subnet.subnet.id
   public_ip_id       = "123"

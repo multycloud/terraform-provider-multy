@@ -138,7 +138,7 @@ resource multy_virtual_machine vm {
 >>>>>>> 90b75f4d8f5d7fe5d11f72f966b67269ed63e1ce
   for_each        = var.vm_clouds
   name            = "web_app_vm"
-  size            = each.key == "azure" ? "large" : "micro"
+  size            = each.key == "azure" ? "general_large" : "general_micro"
   image_reference = {
     os      = "ubuntu"
     version = "18.04"

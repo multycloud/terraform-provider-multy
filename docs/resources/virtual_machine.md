@@ -28,7 +28,7 @@ resource "multy_subnet" "subnet" {
 
 resource "multy_virtual_machine" "vm" {
   name            = "dev-vm"
-  size            = "micro"
+  size            = "general_micro"
   image_reference = {
     os      = "ubuntu"
     version = "20.04"
@@ -51,7 +51,7 @@ resource "multy_virtual_machine" "vm" {
 - `image_reference` (Attributes) Virtual Machine image definition (see [below for nested schema](#nestedatt--image_reference))
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of Virtual Machine
-- `size` (String) Size of Virtual Machine. Accepted values are `micro`, `medium` or `large`
+- `size` (String) Size of Virtual Machine. Accepted values are `general_micro`, `general_medium`, `general_large`, `general_nano`, `general_small`, `general_xlarge`, `general_2xlarge`, `compute_large`, `compute_xlarge`, `compute_2xlarge`, `compute_4xlarge`, `compute_8xlarge`, `memory_large`, `memory_xlarge`, `memory_2xlarge`, `memory_4xlarge`, `memory_8xlarge`, `memory_12xlarge` or `memory_16xlarge`
 - `subnet_id` (String) ID of `subnet` resource
 
 ### Optional
