@@ -16,8 +16,6 @@ require (
 	google.golang.org/protobuf v1.28.0
 )
 
-require github.com/multycloud/multy v0.1.40
-
 replace github.com/multycloud/multy v0.1.40 => ../multy
 
 require (

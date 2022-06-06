@@ -43,5 +43,6 @@ resource "multy_public_ip" "ip" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `resource_group_id` (String)
 
 

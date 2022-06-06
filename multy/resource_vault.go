@@ -23,6 +23,11 @@ func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				Computed:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
+			"resource_group_id": {
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+			},
 			"name": {
 				Type:          types.StringType,
 				Description:   "Name of vault resource",
@@ -84,26 +89,29 @@ func deleteVault(ctx context.Context, p Provider, state Vault) error {
 }
 
 type Vault struct {
-	Id       types.String                             `tfsdk:"id"`
-	Name     types.String                             `tfsdk:"name"`
-	Cloud    mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	Id              types.String                             `tfsdk:"id"`
+	Name            types.String                             `tfsdk:"name"`
+	Cloud           mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location        mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
 }
 
 func convertToVault(res *resourcespb.VaultResource) Vault {
 	return Vault{
-		Id:       types.String{Value: res.CommonParameters.ResourceId},
-		Name:     types.String{Value: res.Name},
-		Cloud:    mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location: mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		Id:              types.String{Value: res.CommonParameters.ResourceId},
+		Name:            types.String{Value: res.Name},
+		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		ResourceGroupId: types.String{Value: res.CommonParameters.ResourceGroupId},
 	}
 }
 
 func convertFromVault(plan Vault) *resourcespb.VaultArgs {
 	return &resourcespb.VaultArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      plan.Location.Value,
-			CloudProvider: plan.Cloud.Value,
+			ResourceGroupId: plan.ResourceGroupId.Value,
+			Location:        plan.Location.Value,
+			CloudProvider:   plan.Cloud.Value,
 		},
 		Name: plan.Name.Value,
 	}

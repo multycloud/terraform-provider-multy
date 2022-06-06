@@ -92,6 +92,33 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 			Computed:      true,
 			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 		},
+		"aws_overrides": {
+			Description: "AWS-specific attributes that will be set if this resource is deployed in AWS",
+			Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+				"instance_types": {
+					Type:          types.ListType{ElemType: types.StringType},
+					Description:   fmt.Sprintf("The instance type to use for nodes."),
+					Optional:      true,
+					PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				},
+			}),
+			Optional: true,
+			//PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
+		},
+		"azure_overrides": {
+			Description: "Azure-specific attributes that will be set if this resource is deployed in Azure",
+			Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+				"vm_size": {
+					Type:          types.StringType,
+					Description:   fmt.Sprintf("The size to use for nodes."),
+					Optional:      true,
+					PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+					Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+				},
+			}),
+			Optional: true,
+			//PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
+		},
 	}
 }
 
@@ -154,11 +181,14 @@ type KubernetesNodePool struct {
 	MaxNodeCount      types.Int64                            `tfsdk:"max_node_count"`
 	DiskSizeGb        types.Int64                            `tfsdk:"disk_size_gb"`
 	Labels            types.Map                              `tfsdk:"labels"`
+	AwsOverrides      *KubernetesNodePoolAwsOverrides        `tfsdk:"aws_overrides"`
+	AzureOverrides    *KubernetesNodePoolAzureOverrides      `tfsdk:"azure_overrides"`
 }
 
 func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) KubernetesNodePool {
 	return KubernetesNodePool{
 		Id:                types.String{Value: res.CommonParameters.ResourceId},
+		ClusterId:         types.String{Value: res.ClusterId},
 		Name:              types.String{Value: res.Name},
 		VmSize:            mtypes.VmSizeType.NewVal(res.VmSize),
 		SubnetId:          types.String{Value: res.SubnetId},
@@ -167,7 +197,8 @@ func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) Ku
 		MaxNodeCount:      types.Int64{Value: int64(res.MaxNodeCount)},
 		DiskSizeGb:        types.Int64{Value: res.DiskSizeGb},
 		Labels:            common.GoMapToMapType(res.Labels),
-		ClusterId:         types.String{Value: res.ClusterId},
+		AwsOverrides:      convertToKubernetesNodePoolAwsOverrides(res.AwsOverride),
+		AzureOverrides:    convertToKubernetesNodePoolAzureOverrides(res.AzureOverride),
 	}
 }
 
@@ -185,6 +216,50 @@ func convertFromKubernetesNodePool(plan KubernetesNodePool) *resourcespb.Kuberne
 		MaxNodeCount:      int32(plan.MaxNodeCount.Value),
 		VmSize:            plan.VmSize.Value,
 		DiskSizeGb:        plan.DiskSizeGb.Value,
+		AwsOverride:       convertFromKubernetesNodePoolAwsOverrides(plan.AwsOverrides),
+		AzureOverride:     convertFromKubernetesNodePoolAzureOverrides(plan.AzureOverrides),
 		Labels:            common.MapTypeToGoMap(plan.Labels),
 	}
+}
+
+type KubernetesNodePoolAwsOverrides struct {
+	InstanceTypes []types.String `tfsdk:"instance_types"`
+}
+type KubernetesNodePoolAzureOverrides struct {
+	VmSize types.String `tfsdk:"vm_size"`
+}
+
+func convertFromKubernetesNodePoolAwsOverrides(ref *KubernetesNodePoolAwsOverrides) *resourcespb.KubernetesNodePoolAwsOverride {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.KubernetesNodePoolAwsOverride{
+		InstanceTypes: common.StringSliceToTypesString(ref.InstanceTypes),
+	}
+}
+
+func convertToKubernetesNodePoolAwsOverrides(ref *resourcespb.KubernetesNodePoolAwsOverride) *KubernetesNodePoolAwsOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &KubernetesNodePoolAwsOverrides{InstanceTypes: common.TypesStringToStringSlice(ref.InstanceTypes)}
+}
+func convertFromKubernetesNodePoolAzureOverrides(ref *KubernetesNodePoolAzureOverrides) *resourcespb.KubernetesNodePoolAzureOverride {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.KubernetesNodePoolAzureOverride{
+		VmSize: ref.VmSize.Value,
+	}
+}
+
+func convertToKubernetesNodePoolAzureOverrides(ref *resourcespb.KubernetesNodePoolAzureOverride) *KubernetesNodePoolAzureOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &KubernetesNodePoolAzureOverrides{VmSize: common.DefaultToNull[types.String](ref.VmSize)}
 }
