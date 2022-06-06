@@ -23,7 +23,7 @@ resource multy_subnet subnet {
 
 resource multy_virtual_machine vm {
   name            = "test_vm"
-  size            = "micro"
+  size            = "general_micro"
   subnet_id       = multy_subnet.subnet.id
   image_reference = {
     os : "ubuntu"

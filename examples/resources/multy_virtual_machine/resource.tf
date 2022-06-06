@@ -13,7 +13,7 @@ resource "multy_subnet" "subnet" {
 
 resource "multy_virtual_machine" "vm" {
   name            = "dev-vm"
-  size            = "micro"
+  size            = "general_micro"
   image_reference = {
     os      = "ubuntu"
     version = "20.04"
