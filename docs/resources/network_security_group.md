@@ -61,6 +61,7 @@ resource "multy_network_security_group" "nsg" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `resource_group_id` (String)
 
 <a id="nestedblock--rule"></a>
 ### Nested Schema for `rule`

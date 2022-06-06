@@ -49,12 +49,15 @@ resource "multy_kubernetes_cluster" "cluster1" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `resource_group_id` (String)
 
 <a id="nestedatt--default_node_pool"></a>
 ### Nested Schema for `default_node_pool`
 
 Required:
 
+- `aws_overrides` (Attributes) AWS-specific attributes that will be set if this resource is deployed in AWS (see [below for nested schema](#nestedatt--default_node_pool--aws_overrides))
+- `azure_overrides` (Attributes) Azure-specific attributes that will be set if this resource is deployed in Azure (see [below for nested schema](#nestedatt--default_node_pool--azure_overrides))
 - `cluster_id` (String) Id of the multy kubernetes cluster
 - `disk_size_gb` (Number) Disk size used for each node.
 - `id` (String) The ID of this resource.
@@ -65,5 +68,20 @@ Required:
 - `starting_node_count` (Number) Number of initial nodes. Defaults to the minimum number of nodes.
 - `subnet_id` (String) Subnet to place the node and pods in. Must have access to the Internet to connect with the control plane.
 - `vm_size` (String) Size of Virtual Machine used for the nodes. Accepted values are `micro`, `medium` or `large`
+
+<a id="nestedatt--default_node_pool--aws_overrides"></a>
+### Nested Schema for `default_node_pool.aws_overrides`
+
+Required:
+
+- `instance_types` (List of String) The instance type to use for nodes.
+
+
+<a id="nestedatt--default_node_pool--azure_overrides"></a>
+### Nested Schema for `default_node_pool.azure_overrides`
+
+Required:
+
+- `vm_size` (String) The size to use for nodes.
 
 

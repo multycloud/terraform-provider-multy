@@ -36,5 +36,6 @@ resource multy_virtual_network vn {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `resource_group_id` (String)
 
 

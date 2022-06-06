@@ -52,5 +52,6 @@ resource "multy_database" "example_db" {
 - `connection_username` (String) The username to connect to the database.
 - `hostname` (String) The hostname of the RDS instance.
 - `id` (String) The ID of this resource.
+- `resource_group_id` (String)
 
 

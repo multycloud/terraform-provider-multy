@@ -29,6 +29,11 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 				Computed:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
+			"resource_group_id": {
+				Type:          types.StringType,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+			},
 			"name": {
 				Type:        types.StringType,
 				Description: "Name of Network Security Group",
@@ -145,6 +150,7 @@ type NetworkSecurityGroup struct {
 	Rules            []Rule                                   `tfsdk:"rule"`
 	Cloud            mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
 	Location         mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	ResourceGroupId  types.String                             `tfsdk:"resource_group_id"`
 }
 
 type Rule struct {
@@ -175,6 +181,7 @@ func convertToNetworkSecurityGroup(res *resourcespb.NetworkSecurityGroupResource
 		Rules:            rules,
 		Cloud:            mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:         mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		ResourceGroupId:  types.String{Value: res.CommonParameters.ResourceGroupId},
 	}
 }
 
@@ -195,8 +202,9 @@ func convertFromNetworkSecurityGroup(plan NetworkSecurityGroup) *resourcespb.Net
 	}
 	return &resourcespb.NetworkSecurityGroupArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			Location:      plan.Location.Value,
-			CloudProvider: plan.Cloud.Value,
+			Location:        plan.Location.Value,
+			CloudProvider:   plan.Cloud.Value,
+			ResourceGroupId: plan.ResourceGroupId.Value,
 		},
 		Name:             plan.Name.Value,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,
