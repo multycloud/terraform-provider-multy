@@ -36,10 +36,6 @@ resource "multy_public_ip" "ip" {
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of Public IP
 
-### Optional
-
-- `network_interface_id` (String) Id of the network interface to associate public IP with
-
 ### Read-Only
 
 - `id` (String) The ID of this resource.

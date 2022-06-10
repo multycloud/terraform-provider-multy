@@ -42,6 +42,10 @@ resource "multy_network_interface" "private-nic" {
 - `name` (String) Name of Network Interface
 - `subnet_id` (String) ID of `subnet` resource
 
+### Optional
+
+- `public_ip_id` (String) ID of `public_ip` resource
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
