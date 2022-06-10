@@ -20,10 +20,9 @@ resource "multy_network_interface" "public-nic" {
   location  = "eu_west_1"
 }
 resource "multy_public_ip" "ip" {
-  name                 = "test-ip"
-  network_interface_id = multy_network_interface.public-nic.id
-  cloud                = "aws"
-  location             = "eu_west_1"
+  name     = "test-ip"
+  cloud    = "aws"
+  location = "eu_west_1"
 }
 ```
 
@@ -35,10 +34,6 @@ resource "multy_public_ip" "ip" {
 - `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of Public IP
-
-### Optional
-
-- `network_interface_id` (String) Id of the network interface to associate public IP with
 
 ### Read-Only
 

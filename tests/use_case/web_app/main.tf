@@ -132,6 +132,7 @@ resource "multy_network_security_group" nsg {
 }
 
 resource multy_virtual_machine vm {
+  #  for_each        = var.clouds
   for_each        = var.vm_clouds
   name            = "web_app_vm"
   size            = each.key == "azure" ? "general_large" : "general_micro"

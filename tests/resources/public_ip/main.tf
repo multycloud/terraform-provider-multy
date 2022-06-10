@@ -33,8 +33,7 @@ resource "multy_network_interface" "private-nic" {
   location  = var.location
 }
 resource "multy_public_ip" "ip" {
-  cloud                = var.cloud
-  name                 = "test-ip"
-  network_interface_id = multy_network_interface.public-nic.id
-  location             = var.location
+  cloud    = var.cloud
+  name     = "test-ip"
+  location = var.location
 }
