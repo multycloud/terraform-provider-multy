@@ -44,7 +44,7 @@ resource "multy_network_interface_security_group_association" "nic-association" 
 
 ### Required
 
-- `network_interface` (String) ID of `network_interface` resource
+- `network_interface_id` (String) ID of `network_interface` resource
 - `security_group_id` (String) ID of `security_group` resource
 
 ### Read-Only
