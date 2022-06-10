@@ -24,11 +24,17 @@ resource "multy_subnet" "subnet" {
   cidr_block         = "10.0.2.0/24"
   virtual_network_id = multy_virtual_network.example_vn.id
 }
+resource "multy_public_ip" "ip" {
+  name     = "test-ip"
+  cloud    = "aws"
+  location = "eu_west_1"
+}
 resource "multy_network_interface" "private-nic" {
-  cloud     = "aws"
-  name      = "test-private-nic"
-  subnet_id = multy_subnet.subnet.id
-  location  = "eu_west_1"
+  cloud        = "aws"
+  name         = "test-private-nic"
+  subnet_id    = multy_subnet.subnet.id
+  public_ip_id = multy_public_ip.ip.id
+  location     = "eu_west_1"
 }
 ```
 
