@@ -33,11 +33,6 @@ func (r ResourcePublicIpType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
 			},
-			"network_interface_id": {
-				Type:        types.StringType,
-				Description: "Id of the network interface to associate public IP with",
-				Optional:    true,
-			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
 		},
@@ -103,12 +98,11 @@ type PublicIp struct {
 
 func convertToPublicIp(res *resourcespb.PublicIpResource) PublicIp {
 	return PublicIp{
-		Id:                 types.String{Value: res.CommonParameters.ResourceId},
-		Name:               types.String{Value: res.Name},
-		NetworkInterfaceId: common.DefaultToNull[types.String](res.NetworkInterfaceId),
-		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
+		Id:              types.String{Value: res.CommonParameters.ResourceId},
+		Name:            types.String{Value: res.Name},
+		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		ResourceGroupId: types.String{Value: res.CommonParameters.ResourceGroupId},
 	}
 }
 
@@ -119,7 +113,6 @@ func convertFromPublicIp(plan PublicIp) *resourcespb.PublicIpArgs {
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
-		Name:               plan.Name.Value,
-		NetworkInterfaceId: plan.NetworkInterfaceId.Value,
+		Name: plan.Name.Value,
 	}
 }

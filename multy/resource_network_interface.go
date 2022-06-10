@@ -39,6 +39,12 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
+			"public_ip_id": {
+				Type:          types.StringType,
+				Description:   "ID of `public_ip` resource",
+				Optional:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
 		},
@@ -97,6 +103,7 @@ type NetworkInterface struct {
 	Id              types.String                             `tfsdk:"id"`
 	Name            types.String                             `tfsdk:"name"`
 	SubnetId        types.String                             `tfsdk:"subnet_id"`
+	PublicIpId      types.String                             `tfsdk:"public_ip_id"`
 	Cloud           mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
 	Location        mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
@@ -108,6 +115,7 @@ func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) Networ
 		ResourceGroupId: types.String{Value: res.CommonParameters.ResourceGroupId},
 		Name:            types.String{Value: res.Name},
 		SubnetId:        types.String{Value: res.SubnetId},
+		PublicIpId:      types.String{Value: res.PublicIpId},
 		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
@@ -120,7 +128,8 @@ func convertFromNetworkInterface(plan NetworkInterface) *resourcespb.NetworkInte
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
-		Name:     plan.Name.Value,
-		SubnetId: plan.SubnetId.Value,
+		Name:       plan.Name.Value,
+		SubnetId:   plan.SubnetId.Value,
+		PublicIpId: plan.PublicIpId.Value,
 	}
 }
