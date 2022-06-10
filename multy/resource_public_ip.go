@@ -88,12 +88,11 @@ func deletePublicIp(ctx context.Context, p Provider, state PublicIp) error {
 }
 
 type PublicIp struct {
-	Id                 types.String                             `tfsdk:"id"`
-	Name               types.String                             `tfsdk:"name"`
-	NetworkInterfaceId types.String                             `tfsdk:"network_interface_id"`
-	Cloud              mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location           mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
-	ResourceGroupId    types.String                             `tfsdk:"resource_group_id"`
+	Id              types.String                             `tfsdk:"id"`
+	Name            types.String                             `tfsdk:"name"`
+	Cloud           mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location        mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
 }
 
 func convertToPublicIp(res *resourcespb.PublicIpResource) PublicIp {
