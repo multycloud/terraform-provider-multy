@@ -26,6 +26,7 @@ resource "multy_network_interface" "nic" {
   name         = "test_nic"
   subnet_id    = multy_subnet.subnet1.id
   public_ip_id = multy_public_ip.pip.id
+  location     = "eu_west_1"
   cloud        = var.cloud
 }
 
