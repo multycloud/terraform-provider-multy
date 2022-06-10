@@ -19,7 +19,7 @@ func (r ResourceNetworkInterfaceSecurityGroupAssociationType) GetSchema(_ contex
 				Computed:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
-			"network_interface": {
+			"network_interface_id": {
 				Type:          types.StringType,
 				Description:   "ID of `network_interface` resource",
 				Required:      true,

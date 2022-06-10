@@ -17,8 +17,9 @@ resource "multy_subnet" "subnet1" {
 }
 
 resource "multy_public_ip" "pip" {
-  name  = "test-pip"
-  cloud = var.cloud
+  name     = "test-pip"
+  location = "eu_west_1"
+  cloud    = var.cloud
 }
 
 resource "multy_network_interface" "nic" {

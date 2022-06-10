@@ -115,7 +115,7 @@ func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) Networ
 		ResourceGroupId: types.String{Value: res.CommonParameters.ResourceGroupId},
 		Name:            types.String{Value: res.Name},
 		SubnetId:        types.String{Value: res.SubnetId},
-		PublicIpId:      types.String{Value: res.PublicIpId},
+		PublicIpId:      common.DefaultToNull[types.String](res.PublicIpId),
 		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
