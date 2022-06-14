@@ -58,6 +58,15 @@ func ParseGrpcErrors(err error) string {
 				str += "\n" + e.ErrorMessage
 			}
 		}
+	} else if s.Code() == codes.Unavailable {
+		str = "Server is unavailable. Please try again in a few minutes.\n"
+		if DebugMode {
+			str += s.Message()
+		}
+	} else if s.Code() == codes.NotFound {
+		str = s.Message()
+	} else if s.Code() == codes.PermissionDenied {
+		str = "Permission denied: " + s.Message()
 	} else {
 		str += s.String()
 	}
