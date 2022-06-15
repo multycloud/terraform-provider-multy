@@ -36,7 +36,7 @@ resource "multy_kubernetes_cluster" "cluster1" {
 
 ### Required
 
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure` or `gcp`
 - `default_node_pool` (Attributes) Default node pool to associate with this cluster. (see [below for nested schema](#nestedatt--default_node_pool))
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of the cluster

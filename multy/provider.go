@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"github.com/mitchellh/go-homedir"
+	"io/ioutil"
 	"os"
 	"strings"
 	"terraform-provider-multy/multy/common"
@@ -84,6 +86,23 @@ var azureSchema = tfsdk.Attribute{
 		},
 	}),
 }
+var gcpSchema = tfsdk.Attribute{
+	Optional:    true,
+	Description: "Credentials for Google Cloud. See how to authenticate through Service Principals in the [Google docs](https://cloud.google.com/compute/docs/authentication)",
+	Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+		"credentials": {
+			Optional:    true,
+			Description: "Either the path to or the contents of a service account key file in JSON format. " + common.HelperValueViaEnvVar("GOOGLE_APPLICATION_CREDENTIALS"),
+			Type:        types.StringType,
+			Sensitive:   true,
+		},
+		"project": {
+			Optional:    true,
+			Description: "The project to manage resources in. " + common.HelperValueViaEnvVar("GOOGLE_CREDENTIALS"),
+			Type:        types.StringType,
+		},
+	}),
+}
 
 func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
@@ -97,6 +116,7 @@ func (p *Provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 			},
 			"aws":   awsSchema,
 			"azure": azureSchema,
+			"gcp":   gcpSchema,
 			"server_endpoint": {
 				Type:        types.StringType,
 				Description: "Address of the multy server. Defaults to `api.multy.dev`. If local, it will be run without SSL",
@@ -112,6 +132,7 @@ type providerData struct {
 	ServerEndpoint types.String         `tfsdk:"server_endpoint"`
 	Aws            *providerAwsConfig   `tfsdk:"aws"`
 	Azure          *providerAzureConfig `tfsdk:"azure"`
+	Gcp            *providerGcpConfig   `tfsdk:"gcp"`
 }
 
 type providerAwsConfig struct {
@@ -125,6 +146,11 @@ type providerAzureConfig struct {
 	ClientId       types.String `tfsdk:"client_id"`
 	ClientSecret   types.String `tfsdk:"client_secret"`
 	TenantId       types.String `tfsdk:"tenant_id"`
+}
+
+type providerGcpConfig struct {
+	Credentials types.String `tfsdk:"credentials"`
+	Project     types.String `tfsdk:"project"`
 }
 
 func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
@@ -168,7 +194,7 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 		awsConfig, err = p.validateAwsConfig(ctx, config.Aws)
 		if err != nil {
 			resp.Diagnostics.AddError(
-				"Unable to connect to AWS",
+				"Unable to retrieve AWS credentials.",
 				err.Error(),
 			)
 			return
@@ -180,13 +206,25 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 		azureConfig, err = p.validateAzureConfig(config.Azure)
 		if err != nil {
 			resp.Diagnostics.AddError(
-				"Unable to connect to Azure",
+				"Unable to retrieve Azure credentials.",
 				err.Error(),
 			)
 			return
 		}
-
 	}
+
+	var gcpConfig *common.GcpConfig
+	if config.Gcp != nil {
+		gcpConfig, err = p.validateGcpConfig(config.Gcp)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Unable to retrieve Azure credentials.",
+				err.Error(),
+			)
+			return
+		}
+	}
+
 	endpoint := "api.multy.dev:443"
 	if !config.ServerEndpoint.Null {
 		endpoint = config.ServerEndpoint.Value
@@ -221,6 +259,7 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 	c.ApiKey = apiKey
 	c.Aws = awsConfig
 	c.Azure = azureConfig
+	c.Gcp = gcpConfig
 
 	ctx, err = c.AddHeaders(ctx)
 	if err != nil {
@@ -366,4 +405,73 @@ func (p *Provider) validateAzureConfig(config *providerAzureConfig) (*common.Azu
 
 	// todo check if access is valid by calling sts.GetCallerIdentity
 	return &azureConfig, fmt.Errorf("azure credentials not set")
+}
+
+func (p *Provider) validateGcpConfig(config *providerGcpConfig) (*common.GcpConfig, error) {
+	var c common.GcpConfig
+
+	if config.Credentials.Unknown {
+		return nil, fmt.Errorf("cannot use unknown value as credentials")
+	}
+	if config.Project.Unknown {
+		return nil, fmt.Errorf("cannot use unknown value as project")
+	}
+
+	if !config.Project.Null {
+		c.Project = config.Project.Value
+	} else if project, ok := os.LookupEnv("GOOGLE_PROJECT"); ok {
+		c.Project = project
+	} else {
+		return nil, fmt.Errorf("google project is not set")
+	}
+
+	if !config.Credentials.Null {
+		contents, _, err := pathOrContents(config.Credentials.Value)
+		if err != nil {
+			return nil, err
+		}
+		c.Credentials = contents
+	} else if creds, ok := os.LookupEnv("GOOGLE_CREDENTIALS"); ok {
+		c.Credentials = creds
+	} else if credsFile, ok := os.LookupEnv("GOOGLE_APPLICATION_CREDENTIALS"); ok {
+		contents, fromFile, err := pathOrContents(credsFile)
+		if err != nil {
+			return nil, err
+		}
+		if !fromFile {
+			return nil, fmt.Errorf(
+				"GOOGLE_APPLICATION_CREDENTIALS should contain a path to the JSON file, but the content was found" +
+					" instead. Did you mean to use GOOGLE_CREDENTIALS?")
+		}
+		c.Credentials = contents
+	} else {
+		return nil, fmt.Errorf("google credentials not set")
+	}
+
+	return &c, nil
+}
+
+func pathOrContents(pathOrContent string) (string, bool, error) {
+	if len(pathOrContent) == 0 {
+		return pathOrContent, false, nil
+	}
+
+	path := pathOrContent
+	if path[0] == '~' {
+		var err error
+		path, err = homedir.Expand(path)
+		if err != nil {
+			return path, true, err
+		}
+	}
+
+	if _, err := os.Stat(path); err == nil {
+		contents, err := ioutil.ReadFile(path)
+		if err != nil {
+			return string(contents), true, err
+		}
+		return string(contents), true, nil
+	}
+
+	return pathOrContent, false, nil
 }

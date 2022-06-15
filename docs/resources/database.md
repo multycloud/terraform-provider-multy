@@ -36,7 +36,7 @@ resource "multy_database" "example_db" {
 
 ### Required
 
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure` or `gcp`
 - `engine` (String) Database engine. Available values are [mysql postgres mariadb]
 - `engine_version` (String) Engine version
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)

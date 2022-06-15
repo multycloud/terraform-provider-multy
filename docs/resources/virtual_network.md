@@ -29,7 +29,7 @@ resource multy_virtual_network vn {
 ### Required
 
 - `cidr_block` (String) CIDR Block of Virtual Network
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure` or `gcp`
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of Virtual Network
 

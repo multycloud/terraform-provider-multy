@@ -47,7 +47,7 @@ resource "multy_virtual_machine" "vm" {
 
 ### Required
 
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure` or `gcp`
 - `image_reference` (Attributes) Virtual Machine image definition (see [below for nested schema](#nestedatt--image_reference))
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of Virtual Machine
