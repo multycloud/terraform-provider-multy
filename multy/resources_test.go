@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"golang.org/x/exp/slices"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -49,8 +50,15 @@ func TestAccResources(t *testing.T) {
 	}
 }
 
+var gcpTests = []string{"TestAccResources/virtual_network_gcp"}
+
 func getTestFunc(path string, testString string, testNumber int) func(t *testing.T) {
 	return func(t *testing.T) {
+		if os.Getenv("TF_VAR_cloud") == "gcp" {
+			if !slices.Contains(gcpTests, t.Name()) {
+				t.Skip("GCP not implemented yet for this resource")
+			}
+		}
 		isError := strings.HasSuffix(filepath.Base(filepath.Dir(path)), "_failed")
 		resource.ParallelTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
@@ -79,6 +87,7 @@ func getProviderBlock(n int) string {
 provider "multy" {
   aws             = {}
   azure           = {}
+  gcp             = { project = "multy-project" }
   server_endpoint = "localhost:8000"
   api_key = "%s-%d"
 }

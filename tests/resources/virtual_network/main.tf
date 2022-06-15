@@ -1,10 +1,10 @@
 variable "cloud" {
   type    = string
-  default = "aws"
+  default = "gcp"
 }
 
 resource "multy_virtual_network" "vn" {
-  name       = "vn_test2"
+  name       = "vn-test2"
   cidr_block = "10.0.0.0/16"
   location   = "eu_west_1"
   cloud      = var.cloud

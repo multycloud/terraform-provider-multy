@@ -13,6 +13,7 @@ type ProviderConfig struct {
 	ApiKey string
 	Aws    *AwsConfig
 	Azure  *AzureConfig
+	Gcp    *GcpConfig
 }
 
 func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error) {
@@ -31,6 +32,13 @@ func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error
 			TenantId:       c.Azure.TenantId,
 			ClientId:       c.Azure.ClientId,
 			ClientSecret:   c.Azure.ClientSecret,
+		}
+	}
+
+	if c.Gcp != nil {
+		cloudCreds.GcpCreds = &credspb.GCPCredentials{
+			Credentials: c.Gcp.Credentials,
+			Project:     c.Gcp.Project,
 		}
 	}
 
@@ -63,4 +71,9 @@ type AzureConfig struct {
 	ClientId       string
 	ClientSecret   string
 	TenantId       string
+}
+
+type GcpConfig struct {
+	Project     string
+	Credentials string
 }

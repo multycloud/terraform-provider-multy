@@ -34,6 +34,7 @@ provider "multy" {
 - `api_key` (String, Sensitive) The Multy API Key necessary to deploy Multy resources. Value can be passed through the `MULTY_API_KEY` environment variable
 - `aws` (Attributes) Credentials for AWS Cloud (see [below for nested schema](#nestedatt--aws))
 - `azure` (Attributes) Credentials for Azure Cloud. See how to authenticate through Service Principal in the [Azure docs](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret#creating-a-service-principal) (see [below for nested schema](#nestedatt--azure))
+- `gcp` (Attributes) Credentials for Google Cloud. See how to authenticate through Service Principals in the [Google docs](https://cloud.google.com/compute/docs/authentication) (see [below for nested schema](#nestedatt--gcp))
 - `server_endpoint` (String, Sensitive) Address of the multy server. Defaults to `api.multy.dev`. If local, it will be run without SSL
 
 <a id="nestedatt--aws"></a>
@@ -55,3 +56,12 @@ Optional:
 - `client_secret` (String, Sensitive) Azure Client Secret Can be provided via the `ARM_CLIENT_SECRET` environment variable
 - `subscription_id` (String, Sensitive) Azure Subscription ID. Can be provided via the `ARM_SUBSCRIPTION_ID` environment variable
 - `tenant_id` (String, Sensitive) Azure Tenant ID Can be provided via the `ARM_TENANT_ID` environment variable
+
+
+<a id="nestedatt--gcp"></a>
+### Nested Schema for `gcp`
+
+Optional:
+
+- `credentials` (String, Sensitive) Either the path to or the contents of a service account key file in JSON format. Can be provided via the `GOOGLE_APPLICATION_CREDENTIALS` environment variable
+- `project` (String) The project to manage resources in. Can be provided via the `GOOGLE_CREDENTIALS` environment variable

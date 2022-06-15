@@ -43,7 +43,7 @@ resource "multy_network_interface" "private-nic" {
 
 ### Required
 
-- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws` or `azure`
+- `cloud` (String) Cloud provider to deploy resource into. Accepted values are `aws`, `azure` or `gcp`
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of Network Interface
 - `subnet_id` (String) ID of `subnet` resource
