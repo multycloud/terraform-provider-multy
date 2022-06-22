@@ -58,6 +58,7 @@ resource "multy_virtual_machine" "vm" {
 
 - `aws_overrides` (Attributes) AWS-specific attributes that will be set if this resource is deployed in AWS (see [below for nested schema](#nestedatt--aws_overrides))
 - `azure_overrides` (Attributes) Azure-specific attributes that will be set if this resource is deployed in Azure (see [below for nested schema](#nestedatt--azure_overrides))
+- `gcp_overrides` (Attributes) GCP-specific attributes that will be set if this resource is deployed in GCP (see [below for nested schema](#nestedatt--gcp_overrides))
 - `generate_public_ip` (Boolean) If true, a public IP will be automatically generated. Cannot be used with `public_ip_id`
 - `network_interface_ids` (List of String) IDs of `network_interface` resource
 - `network_security_group_ids` (List of String) IDs of `network_security_group` resource
@@ -95,5 +96,13 @@ Optional:
 Optional:
 
 - `size` (String) The size to use for the instance.
+
+
+<a id="nestedatt--gcp_overrides"></a>
+### Nested Schema for `gcp_overrides`
+
+Optional:
+
+- `project` (String) The project to use for this resource.
 
 

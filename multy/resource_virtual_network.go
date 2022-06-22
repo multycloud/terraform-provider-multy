@@ -2,9 +2,12 @@ package multy
 
 import (
 	"context"
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/common"
@@ -40,6 +43,21 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Required:      true,
 				Validators:    []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
 				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
+			},
+			"gcp_overrides": {
+				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"project": {
+						Type:          types.StringType,
+						Description:   fmt.Sprintf("The project to use for this resource."),
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+					},
+				}),
+				Optional: true,
+				Computed: true,
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
@@ -96,22 +114,48 @@ func deleteVirtualNetwork(ctx context.Context, p Provider, state VirtualNetwork)
 }
 
 type VirtualNetwork struct {
-	Id              types.String                             `tfsdk:"id"`
-	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
-	Name            types.String                             `tfsdk:"name"`
-	CidrBlock       types.String                             `tfsdk:"cidr_block"`
-	Cloud           mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location        mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	Id                 types.String `tfsdk:"id"`
+	ResourceGroupId    types.String `tfsdk:"resource_group_id"`
+	Name               types.String `tfsdk:"name"`
+	CidrBlock          types.String `tfsdk:"cidr_block"`
+	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
+
+	Cloud    mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+}
+
+func (v VirtualNetwork) UpdatePlan(_ context.Context, config VirtualNetwork, p Provider) (VirtualNetwork, []*tftypes.AttributePath) {
+	if config.Cloud.Value != commonpb.CloudProvider_GCP {
+		return v, nil
+	}
+	var requiresReplace []*tftypes.AttributePath
+	gcpOverrides := v.GetGcpOverrides()
+	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+		if gcpOverrides == nil {
+			gcpOverrides = &VirtualNetworkGcpOverrides{}
+		}
+
+		gcpOverrides.Project = types.String{
+			Unknown: false,
+			Null:    false,
+			Value:   p.Client.Gcp.Project,
+		}
+
+		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
+		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+	}
+	return v, requiresReplace
 }
 
 func convertToVirtualNetwork(res *resourcespb.VirtualNetworkResource) VirtualNetwork {
 	return VirtualNetwork{
-		Id:              types.String{Value: res.CommonParameters.ResourceId},
-		ResourceGroupId: types.String{Value: res.CommonParameters.ResourceGroupId},
-		Name:            types.String{Value: res.Name},
-		CidrBlock:       types.String{Value: res.CidrBlock},
-		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		Id:                 types.String{Value: res.CommonParameters.ResourceId},
+		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
+		Name:               types.String{Value: res.Name},
+		CidrBlock:          types.String{Value: res.CidrBlock},
+		GcpOverridesObject: convertToVirtualNetworkGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
+		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
@@ -122,7 +166,58 @@ func convertFromVirtualNetwork(plan VirtualNetwork) *resourcespb.VirtualNetworkA
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
-		Name:      plan.Name.Value,
-		CidrBlock: plan.CidrBlock.Value,
+		Name:        plan.Name.Value,
+		CidrBlock:   plan.CidrBlock.Value,
+		GcpOverride: convertFromVirtualNetworkGcpOverrides(plan.GetGcpOverrides()),
 	}
+}
+
+func convertFromVirtualNetworkGcpOverrides(ref *VirtualNetworkGcpOverrides) *resourcespb.VirtualNetworkGcpOverride {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.VirtualNetworkGcpOverride{Project: ref.Project.Value}
+}
+
+func convertToVirtualNetworkGcpOverrides(ref *resourcespb.VirtualNetworkGcpOverride) *VirtualNetworkGcpOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &VirtualNetworkGcpOverrides{Project: common.DefaultToNull[types.String](ref.Project)}
+}
+
+func (v VirtualNetwork) GetGcpOverrides() (o *VirtualNetworkGcpOverrides) {
+	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+		return
+	}
+	o = &VirtualNetworkGcpOverrides{
+		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+	}
+	return
+}
+
+func (o *VirtualNetworkGcpOverrides) GcpOverridesToObj() types.Object {
+	result := types.Object{
+		Unknown: false,
+		Null:    false,
+		AttrTypes: map[string]attr.Type{
+			"project": types.StringType,
+		},
+		Attrs: map[string]attr.Value{
+			"project": types.String{Null: true},
+		},
+	}
+	if o != nil {
+		result.Attrs = map[string]attr.Value{
+			"project": o.Project,
+		}
+	}
+
+	return result
+}
+
+type VirtualNetworkGcpOverrides struct {
+	Project types.String
 }

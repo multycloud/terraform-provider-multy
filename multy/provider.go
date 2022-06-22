@@ -218,7 +218,7 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 		gcpConfig, err = p.validateGcpConfig(config.Gcp)
 		if err != nil {
 			resp.Diagnostics.AddError(
-				"Unable to retrieve Azure credentials.",
+				"Unable to retrieve Google credentials.",
 				err.Error(),
 			)
 			return

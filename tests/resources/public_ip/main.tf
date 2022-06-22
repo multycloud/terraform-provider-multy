@@ -10,7 +10,7 @@ variable "cloud" {
 
 resource "multy_virtual_network" "example_vn" {
   cloud      = var.cloud
-  name       = "example_vn"
+  name       = "example-vn"
   cidr_block = "10.0.0.0/16"
   location   = var.location
 }

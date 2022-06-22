@@ -3,9 +3,11 @@ package multy
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/common"
@@ -47,6 +49,21 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
+			"gcp_overrides": {
+				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"project": {
+						Type:          types.StringType,
+						Description:   fmt.Sprintf("The project to use for this resource."),
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+					},
+				}),
+				Optional: true,
+				Computed: true,
+			},
 		},
 		Blocks: map[string]tfsdk.Block{
 			"rule": {
@@ -151,6 +168,8 @@ type NetworkSecurityGroup struct {
 	Cloud            mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
 	Location         mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 	ResourceGroupId  types.String                             `tfsdk:"resource_group_id"`
+
+	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
 }
 
 type Rule struct {
@@ -175,13 +194,14 @@ func convertToNetworkSecurityGroup(res *resourcespb.NetworkSecurityGroupResource
 		})
 	}
 	return NetworkSecurityGroup{
-		Id:               types.String{Value: res.CommonParameters.ResourceId},
-		Name:             types.String{Value: res.Name},
-		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
-		Rules:            rules,
-		Cloud:            mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:         mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		ResourceGroupId:  types.String{Value: res.CommonParameters.ResourceGroupId},
+		Id:                 types.String{Value: res.CommonParameters.ResourceId},
+		Name:               types.String{Value: res.Name},
+		VirtualNetworkId:   types.String{Value: res.VirtualNetworkId},
+		Rules:              rules,
+		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
+		GcpOverridesObject: convertToNetworkSecurityGroupGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
 	}
 }
 
@@ -209,5 +229,79 @@ func convertFromNetworkSecurityGroup(plan NetworkSecurityGroup) *resourcespb.Net
 		Name:             plan.Name.Value,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,
 		Rules:            rules,
+		GcpOverride:      convertFromNetworkSecurityGroupGcpOverrides(plan.GetGcpOverrides()),
 	}
+}
+
+func convertFromNetworkSecurityGroupGcpOverrides(ref *NetworkSecurityGroupGcpOverrides) *resourcespb.NetworkSecurityGroupGcpOverride {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.NetworkSecurityGroupGcpOverride{Project: ref.Project.Value}
+}
+
+func convertToNetworkSecurityGroupGcpOverrides(ref *resourcespb.NetworkSecurityGroupGcpOverride) *NetworkSecurityGroupGcpOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &NetworkSecurityGroupGcpOverrides{Project: common.DefaultToNull[types.String](ref.Project)}
+}
+
+func (v NetworkSecurityGroup) GetGcpOverrides() (o *NetworkSecurityGroupGcpOverrides) {
+	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+		return
+	}
+	o = &NetworkSecurityGroupGcpOverrides{
+		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+	}
+	return
+}
+
+func (o *NetworkSecurityGroupGcpOverrides) GcpOverridesToObj() types.Object {
+	result := types.Object{
+		Unknown: false,
+		Null:    false,
+		AttrTypes: map[string]attr.Type{
+			"project": types.StringType,
+		},
+		Attrs: map[string]attr.Value{
+			"project": types.String{Null: true},
+		},
+	}
+	if o != nil {
+		result.Attrs = map[string]attr.Value{
+			"project": o.Project,
+		}
+	}
+
+	return result
+}
+
+type NetworkSecurityGroupGcpOverrides struct {
+	Project types.String
+}
+
+func (v NetworkSecurityGroup) UpdatePlan(_ context.Context, config NetworkSecurityGroup, p Provider) (NetworkSecurityGroup, []*tftypes.AttributePath) {
+	if config.Cloud.Value != commonpb.CloudProvider_GCP {
+		return v, nil
+	}
+	var requiresReplace []*tftypes.AttributePath
+	gcpOverrides := v.GetGcpOverrides()
+	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+		if gcpOverrides == nil {
+			gcpOverrides = &NetworkSecurityGroupGcpOverrides{}
+		}
+
+		gcpOverrides.Project = types.String{
+			Unknown: false,
+			Null:    false,
+			Value:   p.Client.Gcp.Project,
+		}
+
+		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
+		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+	}
+	return v, requiresReplace
 }

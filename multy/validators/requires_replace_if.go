@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-log/tfsdklog"
 )
 
@@ -33,6 +34,11 @@ func (r RequiresReplaceIfModifier) Modify(ctx context.Context, req tfsdk.ModifyA
 		// shouldn't happen, but let's not panic if it does
 		return
 	}
+
+	tflog.Info(ctx, "state "+req.State.Raw.String())
+	tflog.Info(ctx, "config "+req.Config.Raw.String())
+	tflog.Info(ctx, "plan "+req.Plan.Raw.String())
+	tflog.Info(ctx, "provider meta "+req.ProviderMeta.Raw.String())
 
 	if req.State.Raw.IsNull() {
 		// if we're creating the resource, no need to delete and

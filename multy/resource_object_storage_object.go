@@ -113,10 +113,10 @@ func deleteObjectStorageObject(ctx context.Context, p Provider, state ObjectStor
 
 type ObjectStorageObject struct {
 	Id              types.String                                         `tfsdk:"id"`
-	Name            string                                               `tfsdk:"name"`
+	Name            types.String                                         `tfsdk:"name"`
 	Acl             mtypes.EnumValue[resourcespb.ObjectStorageObjectAcl] `tfsdk:"acl"`
-	ObjectStorageId string                                               `tfsdk:"object_storage_id"`
-	ContentBase64   string                                               `tfsdk:"content_base64"`
+	ObjectStorageId types.String                                         `tfsdk:"object_storage_id"`
+	ContentBase64   types.String                                         `tfsdk:"content_base64"`
 	ContentType     types.String                                         `tfsdk:"content_type"`
 	Url             types.String                                         `tfsdk:"url"`
 }
@@ -124,10 +124,10 @@ type ObjectStorageObject struct {
 func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) ObjectStorageObject {
 	return ObjectStorageObject{
 		Id:              types.String{Value: res.CommonParameters.ResourceId},
-		Name:            res.Name,
+		Name:            types.String{Value: res.Name},
 		Acl:             mtypes.ObjectAclType.NewVal(res.Acl),
-		ObjectStorageId: res.ObjectStorageId,
-		ContentBase64:   res.ContentBase64,
+		ObjectStorageId: types.String{Value: res.ObjectStorageId},
+		ContentBase64:   common.DefaultToNull[types.String](res.ContentBase64),
 		ContentType:     common.DefaultToNull[types.String](res.ContentType),
 		Url:             types.String{Value: res.Url},
 	}
@@ -135,10 +135,10 @@ func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) 
 
 func convertFromObjectStorageObject(plan ObjectStorageObject) *resourcespb.ObjectStorageObjectArgs {
 	return &resourcespb.ObjectStorageObjectArgs{
-		Name:            plan.Name,
+		Name:            plan.Name.Value,
 		Acl:             plan.Acl.Value,
-		ObjectStorageId: plan.ObjectStorageId,
-		ContentBase64:   plan.ContentBase64,
+		ObjectStorageId: plan.ObjectStorageId.Value,
+		ContentBase64:   plan.ContentBase64.Value,
 		ContentType:     common.NullToDefault[string](plan.ContentType),
 	}
 }

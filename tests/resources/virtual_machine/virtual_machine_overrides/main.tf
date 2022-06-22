@@ -9,20 +9,20 @@ variable "location" {
 }
 
 resource multy_virtual_network vn {
-  name       = "test_vm"
+  name       = "test-vm"
   cidr_block = "10.0.0.0/16"
   cloud      = var.cloud
   location   = var.location
 }
 
 resource multy_subnet subnet {
-  name               = "test_vm"
+  name               = "test-vm"
   cidr_block         = "10.0.10.0/24"
   virtual_network_id = multy_virtual_network.vn.id
 }
 
 resource "multy_network_security_group" nsg {
-  name               = "test_vm"
+  name               = "test-vm"
   virtual_network_id = multy_virtual_network.vn.id
   cloud              = var.cloud
   location           = var.location
@@ -54,11 +54,11 @@ resource "multy_network_security_group" nsg {
 }
 
 resource multy_virtual_machine vm {
-  name            = "test_vm"
+  name            = "test-vm"
   size            = "general_micro"
   image_reference = {
-    os      = "cent_os"
-    version = "8.2"
+    os      = "ubuntu"
+    version = "20.04"
   }
   subnet_id          = multy_subnet.subnet.id
   generate_public_ip = true

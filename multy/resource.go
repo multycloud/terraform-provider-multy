@@ -144,6 +144,38 @@ func (r MultyResource[T]) Delete(ctx context.Context, req tfsdk.DeleteResourceRe
 	}
 }
 
+type planUpdater[T any] interface {
+	UpdatePlan(ctx context.Context, config T, p Provider) (VirtualNetwork, []*tftypes.AttributePath)
+}
+
+func (r MultyResource[T]) ModifyPlan(ctx context.Context, req tfsdk.ModifyResourcePlanRequest, resp *tfsdk.ModifyResourcePlanResponse) {
+	plan := new(T)
+	diags := req.Plan.Get(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		tflog.Warn(ctx, "Unable to parse plan when modifying it")
+		return
+	}
+
+	config := new(T)
+	diags = req.Config.Get(ctx, config)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		tflog.Warn(ctx, "Unable to parse config when modifying it")
+		return
+	}
+
+	if c, ok := (any(*plan)).(planUpdater[T]); ok {
+		tflog.Info(ctx, "Updating plan")
+		newPlan, requiresReplace := c.UpdatePlan(ctx, *config, r.p)
+		resp.Plan.Set(ctx, newPlan)
+		resp.RequiresReplace = requiresReplace
+	} else {
+		tflog.Info(ctx, "Not updating plan because it doesn't implement planUpdater")
+	}
+
+}
+
 func (r MultyResource[T]) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	// Save the import identifier in the id attribute
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)

@@ -9,14 +9,14 @@ variable "cloud" {
 }
 
 resource multy_virtual_network vn {
-  name       = "test_nsg"
+  name       = "test-nsg"
   cidr_block = "10.0.0.0/16"
   cloud      = var.cloud
   location   = var.location
 }
 
 resource "multy_network_security_group" nsg {
-  name               = "test_nsg"
+  name               = "test-nsg"
   virtual_network_id = multy_virtual_network.vn.id
   cloud              = var.cloud
   location           = var.location
