@@ -3,9 +3,11 @@ package multy
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
@@ -88,19 +90,22 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Description: "Virtual Machine image definition",
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"os": {
-						Type:        mtypes.ImageOsDistroType,
-						Description: fmt.Sprintf("Operating System of Virtual Machine. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.ImageOsDistroType.GetAllValues())),
-						Required:    true,
-						Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.ImageOsDistroType)},
+						Type:          mtypes.ImageOsDistroType,
+						Description:   fmt.Sprintf("Operating System of Virtual Machine. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.ImageOsDistroType.GetAllValues())),
+						Required:      true,
+						Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.ImageOsDistroType)},
+						PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace(), tfsdk.UseStateForUnknown()},
 					},
 					"version": {
-						Type:        types.StringType,
-						Description: "OS Version",
-						Required:    true,
+						Type:          types.StringType,
+						Description:   "OS Version",
+						Required:      true,
+						PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace(), tfsdk.UseStateForUnknown()},
 					},
 				}),
+				// make this optional + computed and handle unknown values
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace(), tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
 			"aws_overrides": {
 				Description: "AWS-specific attributes that will be set if this resource is deployed in AWS",
@@ -129,6 +134,21 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				}),
 				Optional:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
+			},
+			"gcp_overrides": {
+				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"project": {
+						Type:          types.StringType,
+						Description:   fmt.Sprintf("The project to use for this resource."),
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+					},
+				}),
+				Optional: true,
+				Computed: true,
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
@@ -234,10 +254,11 @@ func convertToVirtualMachine(res *resourcespb.VirtualMachineResource) VirtualMac
 			OS:      mtypes.ImageOsDistroType.NewVal(res.ImageReference.Os),
 			Version: types.String{Value: res.ImageReference.Version},
 		},
-		AwsOverrides:   convertToVirtualMachineAwsOverrides(res.AwsOverride),
-		AzureOverrides: convertToVirtualMachineAzureOverrides(res.AzureOverride),
-		Cloud:          mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:       mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		AwsOverrides:       convertToVirtualMachineAwsOverrides(res.AwsOverride),
+		AzureOverrides:     convertToVirtualMachineAzureOverrides(res.AzureOverride),
+		GcpOverridesObject: convertToVirtualMachineGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
+		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
@@ -260,6 +281,7 @@ func convertFromVirtualMachine(plan VirtualMachine) *resourcespb.VirtualMachineA
 		ImageReference:          convertFromImageRef(plan.ImageReference),
 		AwsOverride:             convertFromVirtualMachineAwsOverrides(plan.AwsOverrides),
 		AzureOverride:           convertFromVirtualMachineAzureOverrides(plan.AzureOverrides),
+		GcpOverride:             convertFromVirtualMachineGcpOverrides(plan.GetGcpOverrides()),
 	}
 }
 
@@ -326,6 +348,7 @@ type VirtualMachine struct {
 	ImageReference          *ImageReference                        `tfsdk:"image_reference"`
 	AwsOverrides            *VirtualMachineAwsOverrides            `tfsdk:"aws_overrides"`
 	AzureOverrides          *VirtualMachineAzureOverrides          `tfsdk:"azure_overrides"`
+	GcpOverridesObject      types.Object                           `tfsdk:"gcp_overrides"`
 
 	Cloud    mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
 	Location mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
@@ -341,4 +364,77 @@ type VirtualMachineAwsOverrides struct {
 }
 type VirtualMachineAzureOverrides struct {
 	Size types.String `tfsdk:"size"`
+}
+
+func convertFromVirtualMachineGcpOverrides(ref *VirtualMachineGcpOverrides) *resourcespb.VirtualMachineGcpOverride {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.VirtualMachineGcpOverride{Project: ref.Project.Value}
+}
+
+func convertToVirtualMachineGcpOverrides(ref *resourcespb.VirtualMachineGcpOverride) *VirtualMachineGcpOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &VirtualMachineGcpOverrides{Project: common.DefaultToNull[types.String](ref.Project)}
+}
+
+func (v VirtualMachine) GetGcpOverrides() (o *VirtualMachineGcpOverrides) {
+	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+		return
+	}
+	o = &VirtualMachineGcpOverrides{
+		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+	}
+	return
+}
+
+func (o *VirtualMachineGcpOverrides) GcpOverridesToObj() types.Object {
+	result := types.Object{
+		Unknown: false,
+		Null:    false,
+		AttrTypes: map[string]attr.Type{
+			"project": types.StringType,
+		},
+		Attrs: map[string]attr.Value{
+			"project": types.String{Null: true},
+		},
+	}
+	if o != nil {
+		result.Attrs = map[string]attr.Value{
+			"project": o.Project,
+		}
+	}
+
+	return result
+}
+
+type VirtualMachineGcpOverrides struct {
+	Project types.String
+}
+
+func (v VirtualMachine) UpdatePlan(_ context.Context, config VirtualMachine, p Provider) (VirtualMachine, []*tftypes.AttributePath) {
+	if config.Cloud.Value != commonpb.CloudProvider_GCP {
+		return v, nil
+	}
+	var requiresReplace []*tftypes.AttributePath
+	gcpOverrides := v.GetGcpOverrides()
+	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+		if gcpOverrides == nil {
+			gcpOverrides = &VirtualMachineGcpOverrides{}
+		}
+
+		gcpOverrides.Project = types.String{
+			Unknown: false,
+			Null:    false,
+			Value:   p.Client.Gcp.Project,
+		}
+
+		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
+		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+	}
+	return v, requiresReplace
 }

@@ -50,7 +50,16 @@ func TestAccResources(t *testing.T) {
 	}
 }
 
-var gcpTests = []string{"TestAccResources/virtual_network_gcp"}
+var gcpTests = []string{
+	"TestAccResources/virtual_network_gcp",
+	"TestAccResources/network_security_group_gcp",
+	"TestAccResources/route_table_gcp",
+	"TestAccResources/route_table_association_gcp",
+	"TestAccResources/subnet_gcp",
+	"TestAccResources/virtual_machine_gcp",
+	"TestAccResources/virtual_machine_default_gcp",
+	"TestAccResources/virtual_machine_failed_gcp",
+}
 
 func getTestFunc(path string, testString string, testNumber int) func(t *testing.T) {
 	return func(t *testing.T) {
