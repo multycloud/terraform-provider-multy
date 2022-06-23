@@ -145,7 +145,7 @@ func (r MultyResource[T]) Delete(ctx context.Context, req tfsdk.DeleteResourceRe
 }
 
 type planUpdater[T any] interface {
-	UpdatePlan(ctx context.Context, config T, p Provider) (VirtualNetwork, []*tftypes.AttributePath)
+	UpdatePlan(ctx context.Context, config T, p Provider) (T, []*tftypes.AttributePath)
 }
 
 func (r MultyResource[T]) ModifyPlan(ctx context.Context, req tfsdk.ModifyResourcePlanRequest, resp *tfsdk.ModifyResourcePlanResponse) {
