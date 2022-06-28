@@ -26,7 +26,7 @@ variable "clouds" {
 
 variable "vm_clouds" {
   type    = set(string)
-  default = ["aws", "azure"]
+  default = ["azure"]
 }
 
 variable "db_cloud" {
