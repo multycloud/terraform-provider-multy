@@ -1,6 +1,6 @@
 variable "cloud" {
   type    = string
-  default = "aws"
+  default = "azure"
 }
 
 variable "location" {
@@ -26,22 +26,6 @@ resource "multy_network_security_group" nsg {
   virtual_network_id = multy_virtual_network.vn.id
   cloud              = var.cloud
   location           = var.location
-  rule {
-    protocol   = "tcp"
-    priority   = 120
-    from_port  = 22
-    to_port    = 22
-    cidr_block = "0.0.0.0/0"
-    direction  = "both"
-  }
-  rule {
-    protocol   = "tcp"
-    priority   = 131
-    from_port  = 443
-    to_port    = 443
-    cidr_block = "0.0.0.0/0"
-    direction  = "both"
-  }
   rule {
     protocol   = "tcp"
     priority   = 132
