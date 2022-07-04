@@ -32,7 +32,6 @@ resource "multy_subnet" "subnet1" {
   name               = "subnet1"
   cidr_block         = "10.0.0.0/24"
   virtual_network_id = multy_virtual_network.example_vn.id
-  availability_zone  = 1
 }
 
 resource multy_route_table rt {

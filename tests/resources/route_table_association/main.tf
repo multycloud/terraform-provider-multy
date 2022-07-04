@@ -20,7 +20,6 @@ resource "multy_subnet" "subnet2" {
   name               = "rta-test-s2"
   cidr_block         = "10.0.2.0/24"
   virtual_network_id = multy_virtual_network.example_vn.id
-  availability_zone  = 2
 }
 
 resource multy_route_table rt {

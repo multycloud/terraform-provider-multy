@@ -36,10 +36,6 @@ resource "multy_subnet" "subnet" {
 - `name` (String) Name of Subnet
 - `virtual_network_id` (String) ID of `virtual_network` resource
 
-### Optional
-
-- `availability_zone` (Number) Availability Zone for subnet. Valid only on `aws`
-
 ### Read-Only
 
 - `id` (String) The ID of this resource.

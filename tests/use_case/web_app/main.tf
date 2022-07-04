@@ -49,20 +49,11 @@ resource multy_subnet public_subnet {
   virtual_network_id = multy_virtual_network.vn[each.key].id
 }
 
-resource multy_subnet private_subnet {
+resource multy_subnet db_subnet {
   for_each           = var.clouds
-  name               = "web_app_private_subnet"
+  name               = "web_app_db_subnet"
   cidr_block         = "10.0.11.0/24"
   virtual_network_id = multy_virtual_network.vn[each.key].id
-  availability_zone  = 1
-}
-
-resource multy_subnet private_subnet2 {
-  for_each           = var.clouds
-  name               = "web_app_private_subnet2"
-  cidr_block         = "10.0.12.0/24"
-  virtual_network_id = multy_virtual_network.vn[each.key].id
-  availability_zone  = 2
 }
 
 resource "multy_route_table" "rt" {
@@ -83,12 +74,7 @@ resource multy_route_table_association rta1 {
 resource multy_route_table_association rta2 {
   for_each       = var.clouds
   route_table_id = multy_route_table.rt[each.key].id
-  subnet_id      = multy_subnet.private_subnet[each.key].id
-}
-resource multy_route_table_association rta3 {
-  for_each       = var.clouds
-  route_table_id = multy_route_table.rt[each.key].id
-  subnet_id      = multy_subnet.private_subnet2[each.key].id
+  subnet_id      = multy_subnet.db_subnet[each.key].id
 }
 
 resource "multy_network_security_group" nsg {
@@ -169,11 +155,11 @@ resource "multy_database" "example_db" {
   username       = "multyadmin"
   password       = "multy-Admin123!"
   size           = "micro"
-  subnet_ids     = [multy_subnet.private_subnet[var.db_cloud].id, multy_subnet.private_subnet2[var.db_cloud].id]
+  subnet_ids     = multy_subnet.db_subnet[var.db_cloud].id
   cloud          = var.db_cloud
   location       = var.location
 
-  depends_on = [multy_route_table_association.rta2, multy_route_table_association.rta3]
+  depends_on = [multy_route_table_association.rta2]
 }
 
 resource "multy_vault" "web_app_vault" {

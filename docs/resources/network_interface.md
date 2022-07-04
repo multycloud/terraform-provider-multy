@@ -50,6 +50,7 @@ resource "multy_network_interface" "private-nic" {
 
 ### Optional
 
+- `availability_zone` (Number) Availability zone where this machine should be placed
 - `public_ip_id` (String) ID of `public_ip` resource
 
 ### Read-Only

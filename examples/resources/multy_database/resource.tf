@@ -12,5 +12,5 @@ resource "multy_database" "example_db" {
   username       = "multyadmin"
   password       = random_password.password.result
   size           = "micro"
-  subnet_ids     = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
+  subnet_ids     = multy_subnet.subnet.id
 }
