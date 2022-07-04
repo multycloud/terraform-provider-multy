@@ -27,7 +27,7 @@ resource "multy_database" "example_db" {
   username       = "multyadmin"
   password       = random_password.password.result
   size           = "micro"
-  subnet_ids     = [multy_subnet.subnet1.id, multy_subnet.subnet2.id]
+  subnet_ids     = multy_subnet.subnet.id
 }
 ```
 
@@ -44,7 +44,7 @@ resource "multy_database" "example_db" {
 - `password` (String, Sensitive) Password for the database user
 - `size` (String) Database size. Available values are [micro medium small]
 - `storage_gb` (Number) Size of database storage in gigabytes
-- `subnet_ids` (List of String) Subnets associated with this database. At least 2 in different availability zones are required.
+- `subnet_id` (String) Subnet associated with this database.
 - `username` (String) Username for the database user
 
 ### Read-Only

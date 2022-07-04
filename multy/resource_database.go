@@ -71,11 +71,10 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Sensitive:   true,
 				Required:    true,
 			},
-			"subnet_ids": {
-				Type:        types.ListType{ElemType: types.StringType},
-				Description: "Subnets associated with this database. At least 2 in different availability zones are required.",
+			"subnet_id": {
+				Type:        types.StringType,
+				Description: "Subnet associated with this database.",
 				Required:    true,
-				// TODO: validate length
 			},
 
 			"cloud":    common.CloudsSchema,
@@ -153,7 +152,7 @@ type Database struct {
 	Size               mtypes.EnumValue[commonpb.DatabaseSize_Enum] `tfsdk:"size"`
 	Username           types.String                                 `tfsdk:"username"`
 	Password           types.String                                 `tfsdk:"password"`
-	SubnetIds          []types.String                               `tfsdk:"subnet_ids"`
+	SubnetId           types.String                                 `tfsdk:"subnet_id"`
 	Cloud              mtypes.EnumValue[commonpb.CloudProvider]     `tfsdk:"cloud"`
 	Location           mtypes.EnumValue[commonpb.Location]          `tfsdk:"location"`
 	Hostname           types.String                                 `tfsdk:"hostname"`
@@ -171,7 +170,7 @@ func convertToDatabase(res *resourcespb.DatabaseResource) Database {
 		Size:               mtypes.DbSizeType.NewVal(res.Size),
 		Username:           types.String{Value: res.Username},
 		Password:           types.String{Value: res.Password},
-		SubnetIds:          common.TypesStringToStringSlice(res.SubnetIds),
+		SubnetId:           types.String{Value: res.SubnetId},
 		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
 		Hostname:           types.String{Value: res.Host},
@@ -188,7 +187,7 @@ func convertFromDatabase(plan Database) *resourcespb.DatabaseArgs {
 		Size:          plan.Size.Value,
 		Username:      plan.Username.Value,
 		Password:      plan.Password.Value,
-		SubnetIds:     common.StringSliceToTypesString(plan.SubnetIds),
+		SubnetId:      plan.SubnetId.Value,
 		CommonParameters: &commonpb.ResourceCommonArgs{
 			ResourceGroupId: plan.ResourceGroupId.Value,
 			Location:        plan.Location.Value,

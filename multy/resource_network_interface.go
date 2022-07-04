@@ -45,6 +45,14 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 				Optional:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
 			},
+			"availability_zone": {
+				Type:          types.Int64Type,
+				Description:   "Availability zone where this machine should be placed",
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyIntValidator},
+			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
 		},
@@ -100,24 +108,26 @@ func deleteNetworkInterface(ctx context.Context, p Provider, state NetworkInterf
 }
 
 type NetworkInterface struct {
-	Id              types.String                             `tfsdk:"id"`
-	Name            types.String                             `tfsdk:"name"`
-	SubnetId        types.String                             `tfsdk:"subnet_id"`
-	PublicIpId      types.String                             `tfsdk:"public_ip_id"`
-	Cloud           mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location        mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
-	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
+	Id               types.String                             `tfsdk:"id"`
+	Name             types.String                             `tfsdk:"name"`
+	SubnetId         types.String                             `tfsdk:"subnet_id"`
+	PublicIpId       types.String                             `tfsdk:"public_ip_id"`
+	Cloud            mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location         mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	ResourceGroupId  types.String                             `tfsdk:"resource_group_id"`
+	AvailabilityZone types.Int64                              `tfsdk:"availability_zone"`
 }
 
 func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) NetworkInterface {
 	return NetworkInterface{
-		Id:              types.String{Value: res.CommonParameters.ResourceId},
-		ResourceGroupId: types.String{Value: res.CommonParameters.ResourceGroupId},
-		Name:            types.String{Value: res.Name},
-		SubnetId:        types.String{Value: res.SubnetId},
-		PublicIpId:      common.DefaultToNull[types.String](res.PublicIpId),
-		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		Id:               types.String{Value: res.CommonParameters.ResourceId},
+		ResourceGroupId:  types.String{Value: res.CommonParameters.ResourceGroupId},
+		Name:             types.String{Value: res.Name},
+		SubnetId:         types.String{Value: res.SubnetId},
+		PublicIpId:       common.DefaultToNull[types.String](res.PublicIpId),
+		AvailabilityZone: types.Int64{Value: int64(res.AvailabilityZone)},
+		Cloud:            mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:         mtypes.LocationType.NewVal(res.CommonParameters.Location),
 	}
 }
 
@@ -128,8 +138,9 @@ func convertFromNetworkInterface(plan NetworkInterface) *resourcespb.NetworkInte
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
-		Name:       plan.Name.Value,
-		SubnetId:   plan.SubnetId.Value,
-		PublicIpId: plan.PublicIpId.Value,
+		Name:             plan.Name.Value,
+		SubnetId:         plan.SubnetId.Value,
+		PublicIpId:       plan.PublicIpId.Value,
+		AvailabilityZone: int32(plan.AvailabilityZone.Value),
 	}
 }

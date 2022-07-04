@@ -67,6 +67,14 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Optional:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
+			"availability_zone": {
+				Type:          types.Int64Type,
+				Description:   "Availability zone where this machine should be placed",
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyIntValidator},
+			},
 			"public_ssh_key": {
 				Type:          types.StringType,
 				Description:   "Public SSH Key of Virtual Machine",
@@ -254,6 +262,7 @@ func convertToVirtualMachine(res *resourcespb.VirtualMachineResource) VirtualMac
 			OS:      mtypes.ImageOsDistroType.NewVal(res.ImageReference.Os),
 			Version: types.String{Value: res.ImageReference.Version},
 		},
+		AvailabilityZone:   types.Int64{Value: int64(res.AvailabilityZone)},
 		AwsOverrides:       convertToVirtualMachineAwsOverrides(res.AwsOverride),
 		AzureOverrides:     convertToVirtualMachineAzureOverrides(res.AzureOverride),
 		GcpOverridesObject: convertToVirtualMachineGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
@@ -278,6 +287,7 @@ func convertFromVirtualMachine(plan VirtualMachine) *resourcespb.VirtualMachineA
 		PublicSshKey:            plan.PublicSshKey.Value,
 		PublicIpId:              plan.PublicIpId.Value,
 		GeneratePublicIp:        plan.GeneratePublicIp.Value,
+		AvailabilityZone:        int32(plan.AvailabilityZone.Value),
 		ImageReference:          convertFromImageRef(plan.ImageReference),
 		AwsOverride:             convertFromVirtualMachineAwsOverrides(plan.AwsOverrides),
 		AzureOverride:           convertFromVirtualMachineAzureOverrides(plan.AzureOverrides),
@@ -346,6 +356,7 @@ type VirtualMachine struct {
 	PublicIp                types.String                           `tfsdk:"public_ip"`
 	Identity                types.String                           `tfsdk:"identity"`
 	ImageReference          *ImageReference                        `tfsdk:"image_reference"`
+	AvailabilityZone        types.Int64                            `tfsdk:"availability_zone"`
 	AwsOverrides            *VirtualMachineAwsOverrides            `tfsdk:"aws_overrides"`
 	AzureOverrides          *VirtualMachineAzureOverrides          `tfsdk:"azure_overrides"`
 	GcpOverridesObject      types.Object                           `tfsdk:"gcp_overrides"`

@@ -56,6 +56,7 @@ resource "multy_virtual_machine" "vm" {
 
 ### Optional
 
+- `availability_zone` (Number) Availability zone where this machine should be placed
 - `aws_overrides` (Attributes) AWS-specific attributes that will be set if this resource is deployed in AWS (see [below for nested schema](#nestedatt--aws_overrides))
 - `azure_overrides` (Attributes) Azure-specific attributes that will be set if this resource is deployed in Azure (see [below for nested schema](#nestedatt--azure_overrides))
 - `gcp_overrides` (Attributes) GCP-specific attributes that will be set if this resource is deployed in GCP (see [below for nested schema](#nestedatt--gcp_overrides))

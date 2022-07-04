@@ -41,13 +41,6 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
-			"availability_zone": {
-				Type:          types.Int64Type,
-				Description:   "Availability Zone for subnet. Valid only on `aws`",
-				Optional:      true,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
-			},
 		},
 	}, nil
 }
@@ -105,7 +98,6 @@ type Subnet struct {
 	Name             types.String `tfsdk:"name"`
 	CidrBlock        types.String `tfsdk:"cidr_block"`
 	VirtualNetworkId types.String `tfsdk:"virtual_network_id"`
-	AvailabilityZone types.Int64  `tfsdk:"availability_zone"`
 }
 
 func convertToSubnet(res *resourcespb.SubnetResource) Subnet {
@@ -113,7 +105,6 @@ func convertToSubnet(res *resourcespb.SubnetResource) Subnet {
 		Id:               types.String{Value: res.CommonParameters.ResourceId},
 		Name:             types.String{Value: res.Name},
 		CidrBlock:        types.String{Value: res.CidrBlock},
-		AvailabilityZone: types.Int64{Value: int64(res.AvailabilityZone)},
 		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
 	}
 
@@ -125,6 +116,5 @@ func convertFromSubnet(plan Subnet) *resourcespb.SubnetArgs {
 		Name:             plan.Name.Value,
 		CidrBlock:        plan.CidrBlock.Value,
 		VirtualNetworkId: plan.VirtualNetworkId.Value,
-		AvailabilityZone: int32(plan.AvailabilityZone.Value),
 	}
 }

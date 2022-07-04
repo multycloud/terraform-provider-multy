@@ -18,7 +18,6 @@ resource "multy_subnet" "subnet" {
   name               = "subnet"
   cidr_block         = "10.0.2.0/24"
   virtual_network_id = multy_virtual_network.example_vn.id
-  availability_zone  = 2
 }
 resource "multy_network_interface" "public-nic" {
   cloud     = var.cloud
