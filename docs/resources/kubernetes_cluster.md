@@ -56,6 +56,7 @@ resource "multy_kubernetes_cluster" "cluster1" {
 
 Required:
 
+- `availability_zones` (List of Number) Zones to place nodes in. If not set, they will be spread across multiple zones selected by the cloud provider.
 - `aws_overrides` (Attributes) AWS-specific attributes that will be set if this resource is deployed in AWS (see [below for nested schema](#nestedatt--default_node_pool--aws_overrides))
 - `azure_overrides` (Attributes) Azure-specific attributes that will be set if this resource is deployed in Azure (see [below for nested schema](#nestedatt--default_node_pool--azure_overrides))
 - `cluster_id` (String) Id of the multy kubernetes cluster

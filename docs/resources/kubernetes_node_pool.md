@@ -40,6 +40,7 @@ resource "multy_kubernetes_node_pool" "node_pool" {
 
 ### Optional
 
+- `availability_zones` (List of Number) Zones to place nodes in. If not set, they will be spread across multiple zones selected by the cloud provider.
 - `aws_overrides` (Attributes) AWS-specific attributes that will be set if this resource is deployed in AWS (see [below for nested schema](#nestedatt--aws_overrides))
 - `azure_overrides` (Attributes) Azure-specific attributes that will be set if this resource is deployed in Azure (see [below for nested schema](#nestedatt--azure_overrides))
 - `labels` (Map of String) Labels to be applied to each node.

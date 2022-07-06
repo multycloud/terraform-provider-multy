@@ -59,6 +59,9 @@ var gcpTests = []string{
 	"TestAccResources/virtual_machine_gcp",
 	"TestAccResources/virtual_machine_default_gcp",
 	"TestAccResources/virtual_machine_failed_gcp",
+	"TestAccResources/kubernetes_cluster_gcp",
+	"TestAccResources/kubernetes_node_pool_gcp",
+	"TestAccResources/kubernetes_node_pool_overrides_gcp",
 }
 
 func getTestFunc(path string, testString string, testNumber int) func(t *testing.T) {
