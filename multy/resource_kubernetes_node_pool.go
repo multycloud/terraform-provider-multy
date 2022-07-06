@@ -86,6 +86,13 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 			Computed:    true,
 		},
 
+		"availability_zones": {
+			Type:          types.ListType{ElemType: types.Int64Type},
+			Description:   "Zones to place nodes in. If not set, they will be spread across multiple zones selected by the cloud provider.",
+			Optional:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+		},
+
 		"cluster_id": {
 			Type:          types.StringType,
 			Description:   "Id of the multy kubernetes cluster",
@@ -181,6 +188,7 @@ type KubernetesNodePool struct {
 	MaxNodeCount      types.Int64                            `tfsdk:"max_node_count"`
 	DiskSizeGb        types.Int64                            `tfsdk:"disk_size_gb"`
 	Labels            types.Map                              `tfsdk:"labels"`
+	AvailabilityZones []types.Int64                          `tfsdk:"availability_zones"`
 	AwsOverrides      *KubernetesNodePoolAwsOverrides        `tfsdk:"aws_overrides"`
 	AzureOverrides    *KubernetesNodePoolAzureOverrides      `tfsdk:"azure_overrides"`
 }
@@ -197,6 +205,7 @@ func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) Ku
 		MaxNodeCount:      types.Int64{Value: int64(res.MaxNodeCount)},
 		DiskSizeGb:        types.Int64{Value: res.DiskSizeGb},
 		Labels:            common.GoMapToMapType(res.Labels),
+		AvailabilityZones: common.GoIntToTfInt(res.AvailabilityZone),
 		AwsOverrides:      convertToKubernetesNodePoolAwsOverrides(res.AwsOverride),
 		AzureOverrides:    convertToKubernetesNodePoolAzureOverrides(res.AzureOverride),
 	}
@@ -219,6 +228,7 @@ func convertFromKubernetesNodePool(plan KubernetesNodePool) *resourcespb.Kuberne
 		AwsOverride:       convertFromKubernetesNodePoolAwsOverrides(plan.AwsOverrides),
 		AzureOverride:     convertFromKubernetesNodePoolAzureOverrides(plan.AzureOverrides),
 		Labels:            common.MapTypeToGoMap(plan.Labels),
+		AvailabilityZone:  common.TfIntToGoInt(plan.AvailabilityZones),
 	}
 }
 

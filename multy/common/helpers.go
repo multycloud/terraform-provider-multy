@@ -24,6 +24,30 @@ func TypesStringToStringSlice(t []string) []types.String {
 	return s
 }
 
+func TfIntToGoInt(t []types.Int64) []int32 {
+	if t == nil {
+		return nil
+	}
+	s := make([]int32, len(t))
+	for i, v := range t {
+		if v.Null {
+			panic("unexpected null value")
+		}
+		s[i] = int32(v.Value)
+	}
+	return s
+}
+
+func GoIntToTfInt(t []int32) []types.Int64 {
+	if t == nil {
+		return nil
+	}
+	s := make([]types.Int64, len(t))
+	for i, v := range t {
+		s[i] = types.Int64{Value: int64(v)}
+	}
+	return s
+}
 func MapTypeToGoMap(t types.Map) map[string]string {
 	if t.Unknown || t.Null {
 		return nil
