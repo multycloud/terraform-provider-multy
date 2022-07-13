@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.3.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/multycloud/multy v0.1.52
+	github.com/multycloud/multy v0.1.53
 	golang.org/x/exp v0.0.0-20220218215828-6cf2b201936e
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0

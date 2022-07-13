@@ -32,11 +32,19 @@ resource "multy_object_storage" "obj_storage" {
 
 ### Optional
 
+- `gcp_overrides` (Attributes) GCP-specific attributes that will be set if this resource is deployed in GCP (see [below for nested schema](#nestedatt--gcp_overrides))
 - `versioning` (Boolean) If true, versioning will be enabled to `object_storage_object`
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
+
+<a id="nestedatt--gcp_overrides"></a>
+### Nested Schema for `gcp_overrides`
+
+Optional:
+
+- `project` (String) The project to use for this resource.
 
 

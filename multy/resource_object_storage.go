@@ -2,9 +2,12 @@ package multy
 
 import (
 	"context"
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/common"
@@ -41,6 +44,21 @@ func (r ResourceObjectStorageType) GetSchema(_ context.Context) (tfsdk.Schema, d
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
+			"gcp_overrides": {
+				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"project": {
+						Type:          types.StringType,
+						Description:   fmt.Sprintf("The project to use for this resource."),
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+					},
+				}),
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}, nil
 }
@@ -100,16 +118,19 @@ type ObjectStorage struct {
 	Cloud           mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
 	Location        mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
+
+	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
 }
 
 func convertToObjectStorage(res *resourcespb.ObjectStorageResource) ObjectStorage {
 	return ObjectStorage{
-		Id:              types.String{Value: res.CommonParameters.ResourceId},
-		Name:            types.String{Value: res.Name},
-		Versioning:      types.Bool{Value: res.Versioning},
-		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		ResourceGroupId: types.String{Value: res.CommonParameters.ResourceGroupId},
+		Id:                 types.String{Value: res.CommonParameters.ResourceId},
+		Name:               types.String{Value: res.Name},
+		Versioning:         types.Bool{Value: res.Versioning},
+		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
+		GcpOverridesObject: convertToObjectStorageGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
 	}
 }
 
@@ -120,7 +141,81 @@ func convertFromObjectStorage(plan ObjectStorage) *resourcespb.ObjectStorageArgs
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
-		Name:       plan.Name.Value,
-		Versioning: plan.Versioning.Value,
+		Name:        plan.Name.Value,
+		Versioning:  plan.Versioning.Value,
+		GcpOverride: convertFromObjectStorageGcpOverrides(plan.GetGcpOverrides()),
 	}
+}
+
+func (v ObjectStorage) UpdatePlan(_ context.Context, config ObjectStorage, p Provider) (ObjectStorage, []*tftypes.AttributePath) {
+	if config.Cloud.Value != commonpb.CloudProvider_GCP {
+		return v, nil
+	}
+	var requiresReplace []*tftypes.AttributePath
+	gcpOverrides := v.GetGcpOverrides()
+	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+		if gcpOverrides == nil {
+			gcpOverrides = &ObjectStorageGcpOverrides{}
+		}
+
+		gcpOverrides.Project = types.String{
+			Unknown: false,
+			Null:    false,
+			Value:   p.Client.Gcp.Project,
+		}
+
+		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
+		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+	}
+	return v, requiresReplace
+}
+
+func (v ObjectStorage) GetGcpOverrides() (o *ObjectStorageGcpOverrides) {
+	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+		return
+	}
+	o = &ObjectStorageGcpOverrides{
+		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+	}
+	return
+}
+
+func (o *ObjectStorageGcpOverrides) GcpOverridesToObj() types.Object {
+	result := types.Object{
+		Unknown: false,
+		Null:    false,
+		AttrTypes: map[string]attr.Type{
+			"project": types.StringType,
+		},
+		Attrs: map[string]attr.Value{
+			"project": types.String{Null: true},
+		},
+	}
+	if o != nil {
+		result.Attrs = map[string]attr.Value{
+			"project": o.Project,
+		}
+	}
+
+	return result
+}
+
+type ObjectStorageGcpOverrides struct {
+	Project types.String
+}
+
+func convertFromObjectStorageGcpOverrides(ref *ObjectStorageGcpOverrides) *resourcespb.ObjectStorageGcpOverride {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.ObjectStorageGcpOverride{Project: ref.Project.Value}
+}
+
+func convertToObjectStorageGcpOverrides(ref *resourcespb.ObjectStorageGcpOverride) *ObjectStorageGcpOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &ObjectStorageGcpOverrides{Project: common.DefaultToNull[types.String](ref.Project)}
 }

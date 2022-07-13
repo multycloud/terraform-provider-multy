@@ -3,9 +3,11 @@ package multy
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/common"
@@ -75,6 +77,21 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Type:        types.StringType,
 				Description: "Subnet associated with this database.",
 				Required:    true,
+			},
+			"gcp_overrides": {
+				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"project": {
+						Type:          types.StringType,
+						Description:   fmt.Sprintf("The project to use for this resource."),
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+					},
+				}),
+				Optional: true,
+				Computed: true,
 			},
 
 			"cloud":    common.CloudsSchema,
@@ -157,6 +174,7 @@ type Database struct {
 	Location           mtypes.EnumValue[commonpb.Location]          `tfsdk:"location"`
 	Hostname           types.String                                 `tfsdk:"hostname"`
 	ConnectionUsername types.String                                 `tfsdk:"connection_username"`
+	GcpOverridesObject types.Object                                 `tfsdk:"gcp_overrides"`
 }
 
 func convertToDatabase(res *resourcespb.DatabaseResource) Database {
@@ -175,6 +193,7 @@ func convertToDatabase(res *resourcespb.DatabaseResource) Database {
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
 		Hostname:           types.String{Value: res.Host},
 		ConnectionUsername: types.String{Value: res.ConnectionUsername},
+		GcpOverridesObject: convertToDatabaseGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
 	}
 }
 
@@ -193,5 +212,79 @@ func convertFromDatabase(plan Database) *resourcespb.DatabaseArgs {
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
+		GcpOverride: convertFromDatabaseGcpOverrides(plan.GetGcpOverrides()),
 	}
+}
+
+func (v Database) UpdatePlan(_ context.Context, config Database, p Provider) (Database, []*tftypes.AttributePath) {
+	if config.Cloud.Value != commonpb.CloudProvider_GCP {
+		return v, nil
+	}
+	var requiresReplace []*tftypes.AttributePath
+	gcpOverrides := v.GetGcpOverrides()
+	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+		if gcpOverrides == nil {
+			gcpOverrides = &DatabaseGcpOverrides{}
+		}
+
+		gcpOverrides.Project = types.String{
+			Unknown: false,
+			Null:    false,
+			Value:   p.Client.Gcp.Project,
+		}
+
+		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
+		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+	}
+	return v, requiresReplace
+}
+
+func (v Database) GetGcpOverrides() (o *DatabaseGcpOverrides) {
+	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+		return
+	}
+	o = &DatabaseGcpOverrides{
+		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+	}
+	return
+}
+
+func (o *DatabaseGcpOverrides) GcpOverridesToObj() types.Object {
+	result := types.Object{
+		Unknown: false,
+		Null:    false,
+		AttrTypes: map[string]attr.Type{
+			"project": types.StringType,
+		},
+		Attrs: map[string]attr.Value{
+			"project": types.String{Null: true},
+		},
+	}
+	if o != nil {
+		result.Attrs = map[string]attr.Value{
+			"project": o.Project,
+		}
+	}
+
+	return result
+}
+
+type DatabaseGcpOverrides struct {
+	Project types.String
+}
+
+func convertFromDatabaseGcpOverrides(ref *DatabaseGcpOverrides) *resourcespb.DatabaseGcpOverride {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.DatabaseGcpOverride{Project: ref.Project.Value}
+}
+
+func convertToDatabaseGcpOverrides(ref *resourcespb.DatabaseGcpOverride) *DatabaseGcpOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &DatabaseGcpOverrides{Project: common.DefaultToNull[types.String](ref.Project)}
 }
