@@ -2,9 +2,12 @@ package multy
 
 import (
 	"context"
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/common"
@@ -51,8 +54,40 @@ func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schem
 				Description: "Default node pool to associate with this cluster.",
 				Required:    true,
 			},
+			"endpoint": {
+				Type:        types.StringType,
+				Description: "Endpoint of the kubernetes cluster.",
+				Computed:    true,
+			},
+			"ca_certificate": {
+				Type:        types.StringType,
+				Description: "Base64 encoded certificate data required to communicate with your cluster.",
+				Computed:    true,
+				Sensitive:   true,
+			},
+			"kube_config_raw": {
+				Type:        types.StringType,
+				Description: "Raw Kubernetes config to be used by kubectl and other compatible tools.",
+				Computed:    true,
+				Sensitive:   true,
+			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
+			"gcp_overrides": {
+				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"project": {
+						Type:          types.StringType,
+						Description:   fmt.Sprintf("The project to use for this resource."),
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+					},
+				}),
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}, nil
 }
@@ -115,18 +150,28 @@ type KubernetesCluster struct {
 	ResourceGroupId  types.String                             `tfsdk:"resource_group_id"`
 
 	DefaultNodePool KubernetesNodePool `tfsdk:"default_node_pool"`
+
+	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
+
+	Endpoint      types.String `tfsdk:"endpoint"`
+	CaCertificate types.String `tfsdk:"ca_certificate"`
+	KubeConfigRaw types.String `tfsdk:"kube_config_raw"`
 }
 
 func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) KubernetesCluster {
 	return KubernetesCluster{
-		Id:               types.String{Value: res.CommonParameters.ResourceId},
-		Name:             types.String{Value: res.Name},
-		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
-		ServiceCidr:      types.String{Value: res.ServiceCidr},
-		Cloud:            mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:         mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		ResourceGroupId:  types.String{Value: res.CommonParameters.ResourceGroupId},
-		DefaultNodePool:  convertToKubernetesNodePool(res.GetDefaultNodePool()),
+		Id:                 types.String{Value: res.CommonParameters.ResourceId},
+		Name:               types.String{Value: res.Name},
+		VirtualNetworkId:   types.String{Value: res.VirtualNetworkId},
+		ServiceCidr:        types.String{Value: res.ServiceCidr},
+		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
+		DefaultNodePool:    convertToKubernetesNodePool(res.GetDefaultNodePool()),
+		GcpOverridesObject: convertToKubernetesClusterGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
+		Endpoint:           types.String{Value: res.Endpoint},
+		CaCertificate:      types.String{Value: res.CaCertificate},
+		KubeConfigRaw:      types.String{Value: res.KubeConfigRaw},
 	}
 }
 
@@ -141,5 +186,79 @@ func convertFromKubernetesCluster(plan KubernetesCluster) *resourcespb.Kubernete
 		VirtualNetworkId: plan.VirtualNetworkId.Value,
 		ServiceCidr:      plan.ServiceCidr.Value,
 		DefaultNodePool:  convertFromKubernetesNodePool(plan.DefaultNodePool),
+		GcpOverride:      convertFromKubernetesClusterGcpOverrides(plan.GetGcpOverrides()),
 	}
+}
+
+func (v KubernetesCluster) UpdatePlan(_ context.Context, config KubernetesCluster, p Provider) (KubernetesCluster, []*tftypes.AttributePath) {
+	if config.Cloud.Value != commonpb.CloudProvider_GCP {
+		return v, nil
+	}
+	var requiresReplace []*tftypes.AttributePath
+	gcpOverrides := v.GetGcpOverrides()
+	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+		if gcpOverrides == nil {
+			gcpOverrides = &KubernetesClusterGcpOverrides{}
+		}
+
+		gcpOverrides.Project = types.String{
+			Unknown: false,
+			Null:    false,
+			Value:   p.Client.Gcp.Project,
+		}
+
+		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
+		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+	}
+	return v, requiresReplace
+}
+
+func (v KubernetesCluster) GetGcpOverrides() (o *KubernetesClusterGcpOverrides) {
+	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+		return
+	}
+	o = &KubernetesClusterGcpOverrides{
+		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+	}
+	return
+}
+
+func (o *KubernetesClusterGcpOverrides) GcpOverridesToObj() types.Object {
+	result := types.Object{
+		Unknown: false,
+		Null:    false,
+		AttrTypes: map[string]attr.Type{
+			"project": types.StringType,
+		},
+		Attrs: map[string]attr.Value{
+			"project": types.String{Null: true},
+		},
+	}
+	if o != nil {
+		result.Attrs = map[string]attr.Value{
+			"project": o.Project,
+		}
+	}
+
+	return result
+}
+
+type KubernetesClusterGcpOverrides struct {
+	Project types.String
+}
+
+func convertFromKubernetesClusterGcpOverrides(ref *KubernetesClusterGcpOverrides) *resourcespb.KubernetesClusterOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.KubernetesClusterOverrides{Project: ref.Project.Value}
+}
+
+func convertToKubernetesClusterGcpOverrides(ref *resourcespb.KubernetesClusterOverrides) *KubernetesClusterGcpOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &KubernetesClusterGcpOverrides{Project: common.DefaultToNull[types.String](ref.Project)}
 }

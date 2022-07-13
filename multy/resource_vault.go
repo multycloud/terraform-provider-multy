@@ -2,6 +2,9 @@ package multy
 
 import (
 	"context"
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/mtypes"
 
@@ -33,6 +36,21 @@ func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				Description:   "Name of vault resource",
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			},
+			"gcp_overrides": {
+				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"project": {
+						Type:          types.StringType,
+						Description:   fmt.Sprintf("The project to use for this resource."),
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+					},
+				}),
+				Optional: true,
+				Computed: true,
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
@@ -94,15 +112,18 @@ type Vault struct {
 	Cloud           mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
 	Location        mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
+
+	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
 }
 
 func convertToVault(res *resourcespb.VaultResource) Vault {
 	return Vault{
-		Id:              types.String{Value: res.CommonParameters.ResourceId},
-		Name:            types.String{Value: res.Name},
-		Cloud:           mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
-		Location:        mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		ResourceGroupId: types.String{Value: res.CommonParameters.ResourceGroupId},
+		Id:                 types.String{Value: res.CommonParameters.ResourceId},
+		Name:               types.String{Value: res.Name},
+		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
+		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
+		GcpOverridesObject: convertToVaultGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
 	}
 }
 
@@ -113,6 +134,80 @@ func convertFromVault(plan Vault) *resourcespb.VaultArgs {
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
-		Name: plan.Name.Value,
+		Name:        plan.Name.Value,
+		GcpOverride: convertFromVaultGcpOverrides(plan.GetGcpOverrides()),
 	}
+}
+
+func (v Vault) UpdatePlan(_ context.Context, config Vault, p Provider) (Vault, []*tftypes.AttributePath) {
+	if config.Cloud.Value != commonpb.CloudProvider_GCP {
+		return v, nil
+	}
+	var requiresReplace []*tftypes.AttributePath
+	gcpOverrides := v.GetGcpOverrides()
+	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+		if gcpOverrides == nil {
+			gcpOverrides = &VaultGcpOverrides{}
+		}
+
+		gcpOverrides.Project = types.String{
+			Unknown: false,
+			Null:    false,
+			Value:   p.Client.Gcp.Project,
+		}
+
+		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
+		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+	}
+	return v, requiresReplace
+}
+
+func (v Vault) GetGcpOverrides() (o *VaultGcpOverrides) {
+	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+		return
+	}
+	o = &VaultGcpOverrides{
+		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+	}
+	return
+}
+
+func (o *VaultGcpOverrides) GcpOverridesToObj() types.Object {
+	result := types.Object{
+		Unknown: false,
+		Null:    false,
+		AttrTypes: map[string]attr.Type{
+			"project": types.StringType,
+		},
+		Attrs: map[string]attr.Value{
+			"project": types.String{Null: true},
+		},
+	}
+	if o != nil {
+		result.Attrs = map[string]attr.Value{
+			"project": o.Project,
+		}
+	}
+
+	return result
+}
+
+type VaultGcpOverrides struct {
+	Project types.String
+}
+
+func convertFromVaultGcpOverrides(ref *VaultGcpOverrides) *resourcespb.VaultGcpOverride {
+	if ref == nil {
+		return nil
+	}
+
+	return &resourcespb.VaultGcpOverride{Project: ref.Project.Value}
+}
+
+func convertToVaultGcpOverrides(ref *resourcespb.VaultGcpOverride) *VaultGcpOverrides {
+	if ref == nil {
+		return nil
+	}
+
+	return &VaultGcpOverrides{Project: common.DefaultToNull[types.String](ref.Project)}
 }

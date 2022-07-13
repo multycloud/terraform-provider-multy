@@ -75,8 +75,6 @@ func (r MultyResource[T]) Read(ctx context.Context, req tfsdk.ReadResourceReques
 	newState, err := r.readFunc(ctx, r.p, *state)
 	if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
 		tflog.Info(ctx, "Resource doesn't exist, deleting")
-		diags = resp.State.Set(ctx, newState)
-		resp.Diagnostics.Append(diags...)
 		// Remove MultyResource from state
 		resp.State.RemoveResource(ctx)
 	} else if err != nil {

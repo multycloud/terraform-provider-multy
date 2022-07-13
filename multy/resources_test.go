@@ -51,23 +51,15 @@ func TestAccResources(t *testing.T) {
 }
 
 var gcpTests = []string{
-	"TestAccResources/virtual_network_gcp",
-	"TestAccResources/network_security_group_gcp",
-	"TestAccResources/route_table_gcp",
-	"TestAccResources/route_table_association_gcp",
-	"TestAccResources/subnet_gcp",
-	"TestAccResources/virtual_machine_gcp",
-	"TestAccResources/virtual_machine_default_gcp",
-	"TestAccResources/virtual_machine_failed_gcp",
-	"TestAccResources/kubernetes_cluster_gcp",
-	"TestAccResources/kubernetes_node_pool_gcp",
-	"TestAccResources/kubernetes_node_pool_overrides_gcp",
+	"TestAccResources/network_interface_gcp",
+	"TestAccResources/network_interface_security_group_association_gcp",
+	"TestAccResources/public_ip_gcp",
 }
 
 func getTestFunc(path string, testString string, testNumber int) func(t *testing.T) {
 	return func(t *testing.T) {
 		if os.Getenv("TF_VAR_cloud") == "gcp" {
-			if !slices.Contains(gcpTests, t.Name()) {
+			if slices.Contains(gcpTests, t.Name()) {
 				t.Skip("GCP not implemented yet for this resource")
 			}
 		}

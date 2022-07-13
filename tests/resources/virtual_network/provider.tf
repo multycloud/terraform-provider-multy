@@ -12,5 +12,5 @@ provider "multy" {
     project = "multy-project"
   }
   api_key         = "aws-123-1"
-  server_endpoint = "localhost:8000"
+  server_endpoint = "dev.api.multy.dev:443"
 }

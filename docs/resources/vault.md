@@ -29,9 +29,20 @@ resource "multy_vault" "v" {
 - `location` (String) Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)
 - `name` (String) Name of vault resource
 
+### Optional
+
+- `gcp_overrides` (Attributes) GCP-specific attributes that will be set if this resource is deployed in GCP (see [below for nested schema](#nestedatt--gcp_overrides))
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
+
+<a id="nestedatt--gcp_overrides"></a>
+### Nested Schema for `gcp_overrides`
+
+Optional:
+
+- `project` (String) The project to use for this resource.
 
 

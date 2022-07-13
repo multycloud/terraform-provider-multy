@@ -5,9 +5,11 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/mitchellh/go-homedir"
+	"google.golang.org/grpc/credentials"
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"terraform-provider-multy/multy/common"
 
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
@@ -17,9 +19,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+type connectionCache struct {
+	sync.Mutex
+	cache map[string]proto.MultyResourceServiceClient
+}
+
+var connCache = connectionCache{cache: map[string]proto.MultyResourceServiceClient{}}
 
 func New() tfsdk.Provider {
 	return &Provider{}
@@ -225,36 +233,12 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 		}
 	}
 
-	endpoint := "api.multy.dev:443"
-	if !config.ServerEndpoint.Null {
-		endpoint = config.ServerEndpoint.Value
-	}
-
-	creds := insecure.NewCredentials()
-	if !strings.HasPrefix(endpoint, "localhost") {
-		cp, err := x509.SystemCertPool()
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Unable to create multy client",
-				"Unable to get system cert pool: "+err.Error(),
-			)
-			return
-		}
-		creds = credentials.NewClientTLSFromCert(cp, "")
-	}
-
-	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(creds))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to create Client",
-			"Unable to create multy Client:\n\n"+err.Error(),
-		)
+	client := p.getConnToServer(config, resp)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	c := common.ProviderConfig{}
-	client := proto.NewMultyResourceServiceClient(conn)
-
 	c.Client = client
 	c.ApiKey = apiKey
 	c.Aws = awsConfig
@@ -272,6 +256,44 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 
 	p.Client = &c
 	p.Configured = true
+}
+
+func (p *Provider) getConnToServer(config providerData, resp *tfsdk.ConfigureProviderResponse) proto.MultyResourceServiceClient {
+	connCache.Lock()
+	defer connCache.Unlock()
+
+	endpoint := "api.multy.dev:443"
+	if !config.ServerEndpoint.Null {
+		endpoint = config.ServerEndpoint.Value
+	}
+	if _, ok := connCache.cache[endpoint]; !ok {
+		creds := insecure.NewCredentials()
+		if !strings.HasPrefix(endpoint, "localhost") {
+			cp, err := x509.SystemCertPool()
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Unable to create multy client",
+					"Unable to get system cert pool: "+err.Error(),
+				)
+				return nil
+			}
+			creds = credentials.NewClientTLSFromCert(cp, "")
+		}
+
+		conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(creds))
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Unable to create Client",
+				"Unable to create multy Client:\n\n"+err.Error(),
+			)
+			return nil
+		}
+
+		connCache.cache[endpoint] = proto.NewMultyResourceServiceClient(conn)
+	}
+
+	client := connCache.cache[endpoint]
+	return client
 }
 
 func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {

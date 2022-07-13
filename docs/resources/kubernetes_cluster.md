@@ -44,11 +44,15 @@ resource "multy_kubernetes_cluster" "cluster1" {
 
 ### Optional
 
+- `gcp_overrides` (Attributes) GCP-specific attributes that will be set if this resource is deployed in GCP (see [below for nested schema](#nestedatt--gcp_overrides))
 - `service_cidr` (String) CIDR block for service nodes.
 
 ### Read-Only
 
+- `ca_certificate` (String, Sensitive) Base64 encoded certificate data required to communicate with your cluster.
+- `endpoint` (String) Endpoint of the kubernetes cluster.
 - `id` (String) The ID of this resource.
+- `kube_config_raw` (String, Sensitive) Raw Kubernetes config to be used by kubectl and other compatible tools.
 - `resource_group_id` (String)
 
 <a id="nestedatt--default_node_pool"></a>
@@ -84,5 +88,14 @@ Required:
 Required:
 
 - `vm_size` (String) The size to use for nodes.
+
+
+
+<a id="nestedatt--gcp_overrides"></a>
+### Nested Schema for `gcp_overrides`
+
+Optional:
+
+- `project` (String) The project to use for this resource.
 
 
