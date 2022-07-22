@@ -51,6 +51,14 @@ resource "multy_route_table_association" "subnet1" {
 
 ### Read-Only
 
+- `aws` (Object) AWS-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--aws))
 - `id` (String) The ID of this resource.
+
+<a id="nestedatt--aws"></a>
+### Nested Schema for `aws`
+
+Read-Only:
+
+- `route_table_association_id_by_availability_zone` (Map of String)
 
 

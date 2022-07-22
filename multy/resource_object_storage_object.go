@@ -2,6 +2,7 @@ package multy
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -12,6 +13,19 @@ import (
 )
 
 type ResourceObjectStorageObjectType struct{}
+
+var objectStorageObjectAwsOutputs = map[string]attr.Type{
+	"s3_bucket_object_id": types.StringType,
+}
+
+var objectStorageObjectAzureOutputs = map[string]attr.Type{
+	"storage_blob_id": types.StringType,
+}
+
+var objectStorageObjectGcpOutputs = map[string]attr.Type{
+	"storage_bucket_object_id":      types.StringType,
+	"storage_object_access_control": types.StringType,
+}
 
 func (r ResourceObjectStorageObjectType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
@@ -57,6 +71,21 @@ func (r ResourceObjectStorageObjectType) GetSchema(_ context.Context) (tfsdk.Sch
 			"url": {
 				Type:        types.StringType,
 				Description: "URL of object",
+				Computed:    true,
+			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: objectStorageObjectAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: objectStorageObjectAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: objectStorageObjectGcpOutputs},
 				Computed:    true,
 			},
 		},
@@ -119,6 +148,9 @@ type ObjectStorageObject struct {
 	ContentBase64   types.String                                         `tfsdk:"content_base64"`
 	ContentType     types.String                                         `tfsdk:"content_type"`
 	Url             types.String                                         `tfsdk:"url"`
+	AwsOutputs      types.Object                                         `tfsdk:"aws"`
+	AzureOutputs    types.Object                                         `tfsdk:"azure"`
+	GcpOutputs      types.Object                                         `tfsdk:"gcp"`
 }
 
 func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) ObjectStorageObject {
@@ -130,6 +162,25 @@ func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) 
 		ContentBase64:   common.DefaultToNull[types.String](res.ContentBase64),
 		ContentType:     common.DefaultToNull[types.String](res.ContentType),
 		Url:             types.String{Value: res.Url},
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"s3_bucket_object_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetS3BucketObjectId()),
+			},
+			AttrTypes: objectStorageObjectAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"storage_blob_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetStorageBlobId()),
+			},
+			AttrTypes: objectStorageObjectAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"storage_bucket_object_id":      common.DefaultToNull[types.String](res.GetGcpOutputs().GetStorageBucketObjectId()),
+				"storage_object_access_control": common.DefaultToNull[types.String](res.GetGcpOutputs().GetStorageObjectAccessControl()),
+			},
+			AttrTypes: objectStorageObjectGcpOutputs,
+		}),
 	}
 }
 

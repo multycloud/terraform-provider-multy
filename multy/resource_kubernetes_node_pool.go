@@ -3,6 +3,7 @@ package multy
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -14,6 +15,19 @@ import (
 )
 
 type ResourceKubernetesNodePoolType struct{}
+
+var kubernetesNodePoolAwsOutputs = map[string]attr.Type{
+	"eks_node_pool_id": types.StringType,
+	"iam_role_arn":     types.StringType,
+}
+
+var kubernetesNodePoolAzureOutputs = map[string]attr.Type{
+	"aks_node_pool_id": types.StringType,
+}
+
+var kubernetesNodePoolGcpOutputs = map[string]attr.Type{
+	"gke_node_pool_id": types.StringType,
+}
 
 func (r ResourceKubernetesNodePoolType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	attrs := getKubernetesNodePoolAttrs()
@@ -126,6 +140,21 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 			Optional: true,
 			//PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
 		},
+		"aws": {
+			Description: "AWS-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: kubernetesNodePoolAwsOutputs},
+			Computed:    true,
+		},
+		"azure": {
+			Description: "Azure-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: kubernetesNodePoolAzureOutputs},
+			Computed:    true,
+		},
+		"gcp": {
+			Description: "GCP-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: kubernetesNodePoolGcpOutputs},
+			Computed:    true,
+		},
 	}
 }
 
@@ -191,6 +220,9 @@ type KubernetesNodePool struct {
 	AvailabilityZones []types.Int64                          `tfsdk:"availability_zones"`
 	AwsOverrides      *KubernetesNodePoolAwsOverrides        `tfsdk:"aws_overrides"`
 	AzureOverrides    *KubernetesNodePoolAzureOverrides      `tfsdk:"azure_overrides"`
+	AwsOutputs        types.Object                           `tfsdk:"aws"`
+	AzureOutputs      types.Object                           `tfsdk:"azure"`
+	GcpOutputs        types.Object                           `tfsdk:"gcp"`
 }
 
 func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) KubernetesNodePool {
@@ -208,6 +240,25 @@ func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) Ku
 		AvailabilityZones: common.GoIntToTfInt(res.AvailabilityZone),
 		AwsOverrides:      convertToKubernetesNodePoolAwsOverrides(res.AwsOverride),
 		AzureOverrides:    convertToKubernetesNodePoolAzureOverrides(res.AzureOverride),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"eks_node_pool_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetEksNodePoolId()),
+				"iam_role_arn":     common.DefaultToNull[types.String](res.GetAwsOutputs().GetIamRoleArn()),
+			},
+			AttrTypes: kubernetesNodePoolAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"aks_node_pool_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetAksNodePoolId()),
+			},
+			AttrTypes: kubernetesNodePoolAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"gke_node_pool_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetGkeNodePoolId()),
+			},
+			AttrTypes: kubernetesNodePoolGcpOutputs,
+		}),
 	}
 }
 

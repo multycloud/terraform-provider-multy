@@ -17,6 +17,20 @@ import (
 
 type ResourceDatabaseType struct{}
 
+var databaseAwsOutputs = map[string]attr.Type{
+	"db_instance_id":                    types.StringType,
+	"default_network_security_group_id": types.StringType,
+	"db_subnet_group_id":                types.StringType,
+}
+
+var databaseAzureOutputs = map[string]attr.Type{
+	"database_server_id": types.StringType,
+}
+
+var databaseGcpOutputs = map[string]attr.Type{
+	"sql_database_instance_id": types.StringType,
+}
+
 func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Provides Multy Database resource",
@@ -107,6 +121,21 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Description: "The username to connect to the database.",
 				Computed:    true,
 			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: databaseAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: databaseAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: databaseGcpOutputs},
+				Computed:    true,
+			},
 		},
 	}, nil
 }
@@ -175,6 +204,9 @@ type Database struct {
 	Hostname           types.String                                 `tfsdk:"hostname"`
 	ConnectionUsername types.String                                 `tfsdk:"connection_username"`
 	GcpOverridesObject types.Object                                 `tfsdk:"gcp_overrides"`
+	AwsOutputs         types.Object                                 `tfsdk:"aws"`
+	AzureOutputs       types.Object                                 `tfsdk:"azure"`
+	GcpOutputs         types.Object                                 `tfsdk:"gcp"`
 }
 
 func convertToDatabase(res *resourcespb.DatabaseResource) Database {
@@ -194,6 +226,26 @@ func convertToDatabase(res *resourcespb.DatabaseResource) Database {
 		Hostname:           types.String{Value: res.Host},
 		ConnectionUsername: types.String{Value: res.ConnectionUsername},
 		GcpOverridesObject: convertToDatabaseGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"db_instance_id":                    common.DefaultToNull[types.String](res.GetAwsOutputs().GetDbInstanceId()),
+				"default_network_security_group_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetDefaultNetworkSecurityGroupId()),
+				"db_subnet_group_id":                common.DefaultToNull[types.String](res.GetAwsOutputs().GetDbSubnetGroupId()),
+			},
+			AttrTypes: databaseAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"database_server_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetDatabaseServerId()),
+			},
+			AttrTypes: databaseAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"sql_database_instance_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetSqlDatabaseInstanceId()),
+			},
+			AttrTypes: databaseGcpOutputs,
+		}),
 	}
 }
 

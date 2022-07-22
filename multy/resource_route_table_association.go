@@ -2,13 +2,19 @@ package multy
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
+	"terraform-provider-multy/multy/common"
 )
 
 type ResourceRouteTableAssociationType struct{}
+
+var routeTableAssociationAwsOutputs = map[string]attr.Type{
+	"route_table_association_id_by_availability_zone": types.MapType{ElemType: types.StringType},
+}
 
 func (r ResourceRouteTableAssociationType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
@@ -30,6 +36,11 @@ func (r ResourceRouteTableAssociationType) GetSchema(_ context.Context) (tfsdk.S
 				Description:   "ID of `route_table` resource",
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: routeTableAssociationAwsOutputs},
+				Computed:    true,
 			},
 		},
 	}, nil
@@ -87,6 +98,7 @@ type RouteTableAssociation struct {
 	Id           types.String `tfsdk:"id"`
 	SubnetId     types.String `tfsdk:"subnet_id"`
 	RouteTableId types.String `tfsdk:"route_table_id"`
+	AwsOutputs   types.Object `tfsdk:"aws"`
 }
 
 func convertToRouteTableAssociation(res *resourcespb.RouteTableAssociationResource) RouteTableAssociation {
@@ -94,6 +106,12 @@ func convertToRouteTableAssociation(res *resourcespb.RouteTableAssociationResour
 		Id:           types.String{Value: res.CommonParameters.ResourceId},
 		SubnetId:     types.String{Value: res.SubnetId},
 		RouteTableId: types.String{Value: res.RouteTableId},
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"route_table_association_id_by_availability_zone": common.GoMapToMapType(res.GetAwsOutputs().GetRouteTableAssociationIdByAvailabilityZone()),
+			},
+			AttrTypes: routeTableAssociationAwsOutputs,
+		}),
 	}
 }
 

@@ -49,8 +49,11 @@ resource "multy_kubernetes_cluster" "cluster1" {
 
 ### Read-Only
 
+- `aws` (Object) AWS-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--aws))
+- `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--azure))
 - `ca_certificate` (String, Sensitive) Base64 encoded certificate data required to communicate with your cluster.
 - `endpoint` (String) Endpoint of the kubernetes cluster.
+- `gcp` (Object) GCP-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--gcp))
 - `id` (String) The ID of this resource.
 - `kube_config_raw` (String, Sensitive) Raw Kubernetes config to be used by kubectl and other compatible tools.
 - `resource_group_id` (String)
@@ -61,10 +64,13 @@ resource "multy_kubernetes_cluster" "cluster1" {
 Required:
 
 - `availability_zones` (List of Number) Zones to place nodes in. If not set, they will be spread across multiple zones selected by the cloud provider.
+- `aws` (Object) AWS-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--default_node_pool--aws))
 - `aws_overrides` (Attributes) AWS-specific attributes that will be set if this resource is deployed in AWS (see [below for nested schema](#nestedatt--default_node_pool--aws_overrides))
+- `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--default_node_pool--azure))
 - `azure_overrides` (Attributes) Azure-specific attributes that will be set if this resource is deployed in Azure (see [below for nested schema](#nestedatt--default_node_pool--azure_overrides))
 - `cluster_id` (String) Id of the multy kubernetes cluster
 - `disk_size_gb` (Number) Disk size used for each node.
+- `gcp` (Object) GCP-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--default_node_pool--gcp))
 - `id` (String) The ID of this resource.
 - `labels` (Map of String) Labels to be applied to each node.
 - `max_node_count` (Number) Maximum number of nodes.
@@ -74,12 +80,29 @@ Required:
 - `subnet_id` (String) Subnet to place the node and pods in. Must have access to the Internet to connect with the control plane.
 - `vm_size` (String) Size of Virtual Machine used for the nodes. Accepted values are `general_micro`, `general_medium`, `general_large`, `general_nano`, `general_small`, `general_xlarge`, `general_2xlarge`, `compute_large`, `compute_xlarge`, `compute_2xlarge`, `compute_4xlarge`, `compute_8xlarge`, `memory_large`, `memory_xlarge`, `memory_2xlarge`, `memory_4xlarge`, `memory_8xlarge`, `memory_12xlarge` or `memory_16xlarge`
 
+<a id="nestedatt--default_node_pool--aws"></a>
+### Nested Schema for `default_node_pool.aws`
+
+Required:
+
+- `eks_node_pool_id` (String)
+- `iam_role_arn` (String)
+
+
 <a id="nestedatt--default_node_pool--aws_overrides"></a>
 ### Nested Schema for `default_node_pool.aws_overrides`
 
 Required:
 
 - `instance_types` (List of String) The instance type to use for nodes.
+
+
+<a id="nestedatt--default_node_pool--azure"></a>
+### Nested Schema for `default_node_pool.azure`
+
+Required:
+
+- `aks_node_pool_id` (String)
 
 
 <a id="nestedatt--default_node_pool--azure_overrides"></a>
@@ -90,6 +113,14 @@ Required:
 - `vm_size` (String) The size to use for nodes.
 
 
+<a id="nestedatt--default_node_pool--gcp"></a>
+### Nested Schema for `default_node_pool.gcp`
+
+Required:
+
+- `gke_node_pool_id` (String)
+
+
 
 <a id="nestedatt--gcp_overrides"></a>
 ### Nested Schema for `gcp_overrides`
@@ -97,5 +128,31 @@ Required:
 Optional:
 
 - `project` (String) The project to use for this resource.
+
+
+<a id="nestedatt--aws"></a>
+### Nested Schema for `aws`
+
+Read-Only:
+
+- `eks_cluster_id` (String)
+- `iam_role_arn` (String)
+
+
+<a id="nestedatt--azure"></a>
+### Nested Schema for `azure`
+
+Read-Only:
+
+- `aks_cluster_id` (String)
+
+
+<a id="nestedatt--gcp"></a>
+### Nested Schema for `gcp`
+
+Read-Only:
+
+- `gke_cluster_id` (String)
+- `service_account_email` (String)
 
 

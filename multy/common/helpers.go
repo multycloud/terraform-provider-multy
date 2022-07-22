@@ -24,6 +24,19 @@ func TypesStringToStringSlice(t []string) []types.String {
 	return s
 }
 
+func TypesStringListToListType(t []string) types.List {
+	s := make([]attr.Value, len(t))
+	for i, v := range t {
+		s[i] = types.String{Value: v}
+	}
+	return types.List{
+		Unknown:  false,
+		Null:     false,
+		Elems:    s,
+		ElemType: types.StringType,
+	}
+}
+
 func TfIntToGoInt(t []types.Int64) []int32 {
 	if t == nil {
 		return nil

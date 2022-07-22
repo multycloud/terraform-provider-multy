@@ -2,6 +2,7 @@ package multy
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -12,6 +13,15 @@ import (
 )
 
 type ResourceNetworkInterfaceType struct{}
+
+var networkInterfaceAwsOutputs = map[string]attr.Type{
+	"network_interface_id": types.StringType,
+	"eip_association_id":   types.StringType,
+}
+
+var networkInterfaceAzureOutputs = map[string]attr.Type{
+	"network_interface_id": types.StringType,
+}
 
 func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
@@ -55,6 +65,16 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: networkInterfaceAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: networkInterfaceAzureOutputs},
+				Computed:    true,
+			},
 		},
 	}, nil
 }
@@ -116,6 +136,8 @@ type NetworkInterface struct {
 	Location         mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
 	ResourceGroupId  types.String                             `tfsdk:"resource_group_id"`
 	AvailabilityZone types.Int64                              `tfsdk:"availability_zone"`
+	AwsOutputs       types.Object                             `tfsdk:"aws"`
+	AzureOutputs     types.Object                             `tfsdk:"azure"`
 }
 
 func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) NetworkInterface {
@@ -128,6 +150,19 @@ func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) Networ
 		AvailabilityZone: types.Int64{Value: int64(res.AvailabilityZone)},
 		Cloud:            mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:         mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"network_interface_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetNetworkInterfaceId()),
+				"eip_association_id":   common.DefaultToNull[types.String](res.GetAwsOutputs().GetEipAssociationId()),
+			},
+			AttrTypes: networkInterfaceAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"network_interface_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetNetworkInterfaceId()),
+			},
+			AttrTypes: networkInterfaceAzureOutputs,
+		}),
 	}
 }
 
