@@ -115,3 +115,10 @@ func DefaultSliceToNull[T attr.Value](t []T) []T {
 	}
 	return t
 }
+
+func OptionallyObj[A any](obj *A, transformed types.Object) types.Object {
+	if obj == nil {
+		return types.Object{Null: true, AttrTypes: transformed.AttrTypes}
+	}
+	return transformed
+}

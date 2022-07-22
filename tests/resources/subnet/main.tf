@@ -1,6 +1,6 @@
 variable "cloud" {
   type    = string
-  default = "aws"
+  default = "gcp"
 }
 
 resource multy_virtual_network vn {
@@ -18,7 +18,7 @@ resource multy_subnet subnet {
 
 
 resource multy_subnet subnet_2 {
-  name               = "test-subnet"
+  name               = "test-subnet2"
   cidr_block         = "10.0.2.0/24"
   virtual_network_id = multy_virtual_network.vn.id
 }

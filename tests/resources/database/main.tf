@@ -16,7 +16,7 @@ resource "multy_database" "example_db" {
   subnet_id      = multy_subnet.subnet1.id
 }
 resource "multy_virtual_network" "example_vn" {
-  name       = "example_vn"
+  name       = "example-vn"
   cidr_block = "10.0.0.0/16"
   cloud      = var.cloud
   location   = "us_east_1"
