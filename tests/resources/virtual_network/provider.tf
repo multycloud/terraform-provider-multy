@@ -11,6 +11,8 @@ provider "multy" {
   gcp = {
     project = "multy-project"
   }
+  aws             = {}
+  azure           = {}
   api_key         = "aws-123-1"
-  server_endpoint = "dev.api.multy.dev:443"
+  server_endpoint = "localhost:8000"
 }

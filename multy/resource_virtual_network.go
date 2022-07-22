@@ -17,7 +17,24 @@ import (
 
 type ResourceVirtualNetworkType struct{}
 
+var virtualNetworkAwsOutputs = map[string]attr.Type{
+	"vpc_id":                    types.StringType,
+	"internet_gateway_id":       types.StringType,
+	"default_security_group_id": types.StringType,
+}
+
+var virtualNetworkAzureOutputs = map[string]attr.Type{
+	"virtual_network_id":   types.StringType,
+	"local_route_table_id": types.StringType,
+}
+
+var virtualNetworkGcpOutputs = map[string]attr.Type{
+	"compute_network_id":          types.StringType,
+	"default_compute_firewall_id": types.StringType,
+}
+
 func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+
 	return tfsdk.Schema{
 		MarkdownDescription: "Provides Multy Virtual Network resource",
 		Attributes: map[string]tfsdk.Attribute{
@@ -58,6 +75,21 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				}),
 				Optional: true,
 				Computed: true,
+			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: virtualNetworkAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: virtualNetworkAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: virtualNetworkGcpOutputs},
+				Computed:    true,
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
@@ -120,8 +152,11 @@ type VirtualNetwork struct {
 	CidrBlock          types.String `tfsdk:"cidr_block"`
 	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
 
-	Cloud    mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	Cloud        mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location     mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	AwsOutputs   types.Object                             `tfsdk:"aws"`
+	AzureOutputs types.Object                             `tfsdk:"azure"`
+	GcpOutputs   types.Object                             `tfsdk:"gcp"`
 }
 
 func (v VirtualNetwork) UpdatePlan(_ context.Context, config VirtualNetwork, p Provider) (VirtualNetwork, []*tftypes.AttributePath) {
@@ -156,6 +191,28 @@ func convertToVirtualNetwork(res *resourcespb.VirtualNetworkResource) VirtualNet
 		GcpOverridesObject: convertToVirtualNetworkGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
 		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"vpc_id":                    common.DefaultToNull[types.String](res.GetAwsOutputs().GetVpcId()),
+				"internet_gateway_id":       common.DefaultToNull[types.String](res.GetAwsOutputs().GetInternetGatewayId()),
+				"default_security_group_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetDefaultSecurityGroupId()),
+			},
+			AttrTypes: virtualNetworkAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"virtual_network_id":   common.DefaultToNull[types.String](res.GetAzureOutputs().GetVirtualNetworkId()),
+				"local_route_table_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetLocalRouteTableId()),
+			},
+			AttrTypes: virtualNetworkAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"compute_network_id":          common.DefaultToNull[types.String](res.GetGcpOutputs().GetComputeNetworkId()),
+				"default_compute_firewall_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetDefaultComputeFirewallId()),
+			},
+			AttrTypes: virtualNetworkGcpOutputs,
+		}),
 	}
 }
 

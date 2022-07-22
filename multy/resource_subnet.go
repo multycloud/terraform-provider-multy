@@ -2,14 +2,28 @@ package multy
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
+	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/validators"
 )
 
 type ResourceSubnetType struct{}
+
+var subnetAwsOutputs = map[string]attr.Type{
+	"subnet_id_by_availability_zone": types.MapType{ElemType: types.StringType},
+}
+
+var subnetAzureOutputs = map[string]attr.Type{
+	"subnet_id": types.StringType,
+}
+
+var subnetGcpOutputs = map[string]attr.Type{
+	"compute_subnetwork_id": types.StringType,
+}
 
 func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
@@ -40,6 +54,21 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				Description:   "ID of `virtual_network` resource",
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: subnetAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: subnetAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: subnetGcpOutputs},
+				Computed:    true,
 			},
 		},
 	}, nil
@@ -98,6 +127,9 @@ type Subnet struct {
 	Name             types.String `tfsdk:"name"`
 	CidrBlock        types.String `tfsdk:"cidr_block"`
 	VirtualNetworkId types.String `tfsdk:"virtual_network_id"`
+	AwsOutputs       types.Object `tfsdk:"aws"`
+	AzureOutputs     types.Object `tfsdk:"azure"`
+	GcpOutputs       types.Object `tfsdk:"gcp"`
 }
 
 func convertToSubnet(res *resourcespb.SubnetResource) Subnet {
@@ -106,6 +138,24 @@ func convertToSubnet(res *resourcespb.SubnetResource) Subnet {
 		Name:             types.String{Value: res.Name},
 		CidrBlock:        types.String{Value: res.CidrBlock},
 		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"subnet_id_by_availability_zone": common.GoMapToMapType(res.GetAwsOutputs().GetSubnetIdByAvailabilityZone()),
+			},
+			AttrTypes: subnetAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"subnet_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetSubnetId()),
+			},
+			AttrTypes: subnetAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"compute_subnetwork_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetComputeSubnetworkId()),
+			},
+			AttrTypes: subnetGcpOutputs,
+		}),
 	}
 
 	return result
