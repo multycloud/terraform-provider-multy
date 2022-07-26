@@ -2,13 +2,28 @@ package multy
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
+	"terraform-provider-multy/multy/common"
 )
 
 type ResourceVaultSecretType struct{}
+
+var vaultSecretAwsOutputs = map[string]attr.Type{
+	"ssm_parameter_arn": types.StringType,
+}
+
+var vaultSecretAzureOutputs = map[string]attr.Type{
+	"key_vault_secret_id": types.StringType,
+}
+
+var vaultSecretGcpOutputs = map[string]attr.Type{
+	"secret_manager_secret_id":         types.StringType,
+	"secret_manager_secret_version_id": types.StringType,
+}
 
 func (r ResourceVaultSecretType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
@@ -35,6 +50,21 @@ func (r ResourceVaultSecretType) GetSchema(_ context.Context) (tfsdk.Schema, dia
 				Description:   "Id of `vault` to store the secret in",
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: vaultSecretAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: vaultSecretAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: vaultSecretGcpOutputs},
+				Computed:    true,
 			},
 		},
 	}, nil
@@ -89,10 +119,13 @@ func deleteVaultSecret(ctx context.Context, p Provider, state VaultSecret) error
 }
 
 type VaultSecret struct {
-	Id      types.String `tfsdk:"id"`
-	VaultId types.String `tfsdk:"vault_id"`
-	Name    types.String `tfsdk:"name"`
-	Value   types.String `tfsdk:"value"`
+	Id           types.String `tfsdk:"id"`
+	VaultId      types.String `tfsdk:"vault_id"`
+	Name         types.String `tfsdk:"name"`
+	Value        types.String `tfsdk:"value"`
+	AwsOutputs   types.Object `tfsdk:"aws"`
+	AzureOutputs types.Object `tfsdk:"azure"`
+	GcpOutputs   types.Object `tfsdk:"gcp"`
 }
 
 func convertToVaultSecret(res *resourcespb.VaultSecretResource) VaultSecret {
@@ -101,6 +134,25 @@ func convertToVaultSecret(res *resourcespb.VaultSecretResource) VaultSecret {
 		VaultId: types.String{Value: res.VaultId},
 		Name:    types.String{Value: res.Name},
 		Value:   types.String{Value: res.Value},
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"ssm_parameter_arn": common.DefaultToNull[types.String](res.GetAwsOutputs().GetSsmParameterArn()),
+			},
+			AttrTypes: vaultSecretAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"key_vault_secret_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetKeyVaultSecretId()),
+			},
+			AttrTypes: vaultSecretAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"secret_manager_secret_id":         common.DefaultToNull[types.String](res.GetGcpOutputs().GetSecretManagerSecretId()),
+				"secret_manager_secret_version_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetSecretManagerSecretVersionId()),
+			},
+			AttrTypes: vaultSecretGcpOutputs,
+		}),
 	}
 }
 

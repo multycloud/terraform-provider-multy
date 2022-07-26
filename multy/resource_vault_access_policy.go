@@ -3,15 +3,29 @@ package multy
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
+	"terraform-provider-multy/multy/common"
 	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
 )
 
 type ResourceVaultAccessPolicyType struct{}
+
+var vaultAccessPolicyAwsOutputs = map[string]attr.Type{
+	"iam_policy_arn": types.StringType,
+}
+
+var vaultAccessPolicyAzureOutputs = map[string]attr.Type{
+	"key_vault_access_policy_id": types.StringType,
+}
+
+var vaultAccessPolicyGcpOutputs = map[string]attr.Type{
+	"secret_manager_secret_iam_membership_ids": types.ListType{ElemType: types.StringType},
+}
 
 func (r ResourceVaultAccessPolicyType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
@@ -39,6 +53,21 @@ func (r ResourceVaultAccessPolicyType) GetSchema(_ context.Context) (tfsdk.Schem
 				Description: fmt.Sprintf("Access control, available values are %v", mtypes.VaultAclType.GetAllValues()),
 				Required:    true,
 				Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.VaultAclType)},
+			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: vaultAccessPolicyAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: vaultAccessPolicyAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: vaultAccessPolicyGcpOutputs},
+				Computed:    true,
 			},
 		},
 	}, nil
@@ -93,10 +122,13 @@ func deleteVaultAccessPolicy(ctx context.Context, p Provider, state VaultAccessP
 }
 
 type VaultAccessPolicy struct {
-	Id       types.String                                   `tfsdk:"id"`
-	VaultId  types.String                                   `tfsdk:"vault_id"`
-	Identity types.String                                   `tfsdk:"identity"`
-	Access   mtypes.EnumValue[resourcespb.VaultAccess_Enum] `tfsdk:"access"`
+	Id           types.String                                   `tfsdk:"id"`
+	VaultId      types.String                                   `tfsdk:"vault_id"`
+	Identity     types.String                                   `tfsdk:"identity"`
+	Access       mtypes.EnumValue[resourcespb.VaultAccess_Enum] `tfsdk:"access"`
+	AwsOutputs   types.Object                                   `tfsdk:"aws"`
+	AzureOutputs types.Object                                   `tfsdk:"azure"`
+	GcpOutputs   types.Object                                   `tfsdk:"gcp"`
 }
 
 func convertToVaultAccessPolicy(res *resourcespb.VaultAccessPolicyResource) VaultAccessPolicy {
@@ -105,6 +137,24 @@ func convertToVaultAccessPolicy(res *resourcespb.VaultAccessPolicyResource) Vaul
 		VaultId:  types.String{Value: res.VaultId},
 		Identity: types.String{Value: res.Identity},
 		Access:   mtypes.VaultAclType.NewVal(res.Access),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"iam_policy_arn": common.DefaultToNull[types.String](res.GetAwsOutputs().GetIamPolicyArn()),
+			},
+			AttrTypes: vaultAccessPolicyAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"key_vault_access_policy_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetKeyVaultAccessPolicyId()),
+			},
+			AttrTypes: vaultAccessPolicyAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"secret_manager_secret_iam_membership_ids": common.TypesStringListToListType(res.GetGcpOutputs().GetSecretManagerSecretIamMembershipId()),
+			},
+			AttrTypes: vaultAccessPolicyGcpOutputs,
+		}),
 	}
 }
 
