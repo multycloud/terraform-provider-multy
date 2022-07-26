@@ -55,7 +55,25 @@ resource "multy_network_interface" "private-nic" {
 
 ### Read-Only
 
+- `aws` (Object) AWS-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--aws))
+- `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--azure))
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
+
+<a id="nestedatt--aws"></a>
+### Nested Schema for `aws`
+
+Read-Only:
+
+- `eip_association_id` (String)
+- `network_interface_id` (String)
+
+
+<a id="nestedatt--azure"></a>
+### Nested Schema for `azure`
+
+Read-Only:
+
+- `network_interface_id` (String)
 
 

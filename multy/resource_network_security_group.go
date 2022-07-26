@@ -22,6 +22,18 @@ var (
 
 type ResourceNetworkSecurityGroupType struct{}
 
+var networkSecurityGroupAwsOutputs = map[string]attr.Type{
+	"security_group_id": types.StringType,
+}
+
+var networkSecurityGroupAzureOutputs = map[string]attr.Type{
+	"network_security_group_id": types.StringType,
+}
+
+var networkSecurityGroupGcpOutputs = map[string]attr.Type{
+	"compute_firewall_ids": types.ListType{ElemType: types.StringType},
+}
+
 func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Provides Multy Network Security Group resource",
@@ -63,6 +75,21 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 				}),
 				Optional: true,
 				Computed: true,
+			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: networkSecurityGroupAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: networkSecurityGroupAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: networkSecurityGroupGcpOutputs},
+				Computed:    true,
 			},
 		},
 		Blocks: map[string]tfsdk.Block{
@@ -170,6 +197,9 @@ type NetworkSecurityGroup struct {
 	ResourceGroupId  types.String                             `tfsdk:"resource_group_id"`
 
 	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
+	AwsOutputs         types.Object `tfsdk:"aws"`
+	AzureOutputs       types.Object `tfsdk:"azure"`
+	GcpOutputs         types.Object `tfsdk:"gcp"`
 }
 
 type Rule struct {
@@ -202,6 +232,24 @@ func convertToNetworkSecurityGroup(res *resourcespb.NetworkSecurityGroupResource
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
 		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
 		GcpOverridesObject: convertToNetworkSecurityGroupGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"security_group_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetSecurityGroupId()),
+			},
+			AttrTypes: networkSecurityGroupAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"network_security_group_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetNetworkSecurityGroupId()),
+			},
+			AttrTypes: networkSecurityGroupAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"compute_firewall_ids": common.TypesStringListToListType(res.GetGcpOutputs().GetComputeFirewallId()),
+			},
+			AttrTypes: networkSecurityGroupGcpOutputs,
+		}),
 	}
 }
 

@@ -48,6 +48,9 @@ resource "multy_kubernetes_node_pool" "node_pool" {
 
 ### Read-Only
 
+- `aws` (Object) AWS-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--aws))
+- `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--azure))
+- `gcp` (Object) GCP-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--gcp))
 - `id` (String) The ID of this resource.
 
 <a id="nestedatt--aws_overrides"></a>
@@ -64,5 +67,30 @@ Optional:
 Optional:
 
 - `vm_size` (String) The size to use for nodes.
+
+
+<a id="nestedatt--aws"></a>
+### Nested Schema for `aws`
+
+Read-Only:
+
+- `eks_node_pool_id` (String)
+- `iam_role_arn` (String)
+
+
+<a id="nestedatt--azure"></a>
+### Nested Schema for `azure`
+
+Read-Only:
+
+- `aks_node_pool_id` (String)
+
+
+<a id="nestedatt--gcp"></a>
+### Nested Schema for `gcp`
+
+Read-Only:
+
+- `gke_node_pool_id` (String)
 
 

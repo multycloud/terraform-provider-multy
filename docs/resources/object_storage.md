@@ -37,6 +37,9 @@ resource "multy_object_storage" "obj_storage" {
 
 ### Read-Only
 
+- `aws` (Object) AWS-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--aws))
+- `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--azure))
+- `gcp` (Object) GCP-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--gcp))
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
 
@@ -46,5 +49,31 @@ resource "multy_object_storage" "obj_storage" {
 Optional:
 
 - `project` (String) The project to use for this resource.
+
+
+<a id="nestedatt--aws"></a>
+### Nested Schema for `aws`
+
+Read-Only:
+
+- `s3_bucket_arn` (String)
+
+
+<a id="nestedatt--azure"></a>
+### Nested Schema for `azure`
+
+Read-Only:
+
+- `private_storage_container_id` (String)
+- `public_storage_container_id` (String)
+- `storage_account_id` (String)
+
+
+<a id="nestedatt--gcp"></a>
+### Nested Schema for `gcp`
+
+Read-Only:
+
+- `storage_bucket_id` (String)
 
 

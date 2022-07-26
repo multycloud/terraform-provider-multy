@@ -45,6 +45,9 @@ resource "multy_route_table" "rt" {
 
 ### Read-Only
 
+- `aws` (Object) AWS-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--aws))
+- `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--azure))
+- `gcp` (Object) GCP-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--gcp))
 - `id` (String) The ID of this resource.
 
 <a id="nestedblock--route"></a>
@@ -54,5 +57,29 @@ Required:
 
 - `cidr_block` (String) CIDR block of network rule
 - `destination` (String) Destination of route. Accepted values are `internet`
+
+
+<a id="nestedatt--aws"></a>
+### Nested Schema for `aws`
+
+Read-Only:
+
+- `route_table_id` (String)
+
+
+<a id="nestedatt--azure"></a>
+### Nested Schema for `azure`
+
+Read-Only:
+
+- `route_table_id` (String)
+
+
+<a id="nestedatt--gcp"></a>
+### Nested Schema for `gcp`
+
+Read-Only:
+
+- `compute_route_ids` (List of String)
 
 

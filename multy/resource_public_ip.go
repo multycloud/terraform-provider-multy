@@ -16,6 +16,18 @@ import (
 
 type ResourcePublicIpType struct{}
 
+var publicIpAwsOutputs = map[string]attr.Type{
+	"public_ip_id": types.StringType,
+}
+
+var publicIpAzureOutputs = map[string]attr.Type{
+	"public_ip_id": types.StringType,
+}
+
+var publicIpGcpOutputs = map[string]attr.Type{
+	"compute_address_id": types.StringType,
+}
+
 func (r ResourcePublicIpType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Provides Multy Public IP resource",
@@ -52,6 +64,21 @@ func (r ResourcePublicIpType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				}),
 				Optional: true,
 				Computed: true,
+			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: publicIpAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: publicIpAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: publicIpGcpOutputs},
+				Computed:    true,
 			},
 		},
 	}, nil
@@ -113,6 +140,9 @@ type PublicIp struct {
 	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
 
 	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
+	AwsOutputs         types.Object `tfsdk:"aws"`
+	AzureOutputs       types.Object `tfsdk:"azure"`
+	GcpOutputs         types.Object `tfsdk:"gcp"`
 }
 
 func convertToPublicIp(res *resourcespb.PublicIpResource) PublicIp {
@@ -123,6 +153,24 @@ func convertToPublicIp(res *resourcespb.PublicIpResource) PublicIp {
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
 		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
 		GcpOverridesObject: convertToPublicIpGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"public_ip_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetPublicIpId()),
+			},
+			AttrTypes: publicIpAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"public_ip_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetPublicIpId()),
+			},
+			AttrTypes: publicIpAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"compute_address_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetComputeAddressId()),
+			},
+			AttrTypes: publicIpGcpOutputs,
+		}),
 	}
 }
 

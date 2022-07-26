@@ -53,7 +53,10 @@ resource "multy_database" "example_db" {
 
 ### Read-Only
 
+- `aws` (Object) AWS-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--aws))
+- `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--azure))
 - `connection_username` (String) The username to connect to the database.
+- `gcp` (Object) GCP-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--gcp))
 - `hostname` (String) The hostname of the RDS instance.
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
@@ -64,5 +67,31 @@ resource "multy_database" "example_db" {
 Optional:
 
 - `project` (String) The project to use for this resource.
+
+
+<a id="nestedatt--aws"></a>
+### Nested Schema for `aws`
+
+Read-Only:
+
+- `db_instance_id` (String)
+- `db_subnet_group_id` (String)
+- `default_network_security_group_id` (String)
+
+
+<a id="nestedatt--azure"></a>
+### Nested Schema for `azure`
+
+Read-Only:
+
+- `database_server_id` (String)
+
+
+<a id="nestedatt--gcp"></a>
+### Nested Schema for `gcp`
+
+Read-Only:
+
+- `sql_database_instance_id` (String)
 
 

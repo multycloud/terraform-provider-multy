@@ -16,6 +16,20 @@ import (
 
 type ResourceKubernetesClusterType struct{}
 
+var kubernetesClusterAwsOutputs = map[string]attr.Type{
+	"eks_cluster_id": types.StringType,
+	"iam_role_arn":   types.StringType,
+}
+
+var kubernetesClusterAzureOutputs = map[string]attr.Type{
+	"aks_cluster_id": types.StringType,
+}
+
+var kubernetesClusterGcpOutputs = map[string]attr.Type{
+	"gke_cluster_id":        types.StringType,
+	"service_account_email": types.StringType,
+}
+
 func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Provides Multy Kubernetes Cluster resource",
@@ -88,6 +102,21 @@ func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schem
 				Optional: true,
 				Computed: true,
 			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: kubernetesClusterAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: kubernetesClusterAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: kubernetesClusterGcpOutputs},
+				Computed:    true,
+			},
 		},
 	}, nil
 }
@@ -156,6 +185,10 @@ type KubernetesCluster struct {
 	Endpoint      types.String `tfsdk:"endpoint"`
 	CaCertificate types.String `tfsdk:"ca_certificate"`
 	KubeConfigRaw types.String `tfsdk:"kube_config_raw"`
+
+	AwsOutputs   types.Object `tfsdk:"aws"`
+	AzureOutputs types.Object `tfsdk:"azure"`
+	GcpOutputs   types.Object `tfsdk:"gcp"`
 }
 
 func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) KubernetesCluster {
@@ -172,6 +205,26 @@ func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) Kube
 		Endpoint:           types.String{Value: res.Endpoint},
 		CaCertificate:      types.String{Value: res.CaCertificate},
 		KubeConfigRaw:      types.String{Value: res.KubeConfigRaw},
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"eks_cluster_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetEksClusterId()),
+				"iam_role_arn":   common.DefaultToNull[types.String](res.GetAwsOutputs().GetIamRoleArn()),
+			},
+			AttrTypes: kubernetesClusterAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"aks_cluster_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetAksClusterId()),
+			},
+			AttrTypes: kubernetesClusterAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"gke_cluster_id":        common.DefaultToNull[types.String](res.GetGcpOutputs().GetGkeClusterId()),
+				"service_account_email": common.DefaultToNull[types.String](res.GetGcpOutputs().GetServiceAccountEmail()),
+			},
+			AttrTypes: kubernetesClusterGcpOutputs,
+		}),
 	}
 }
 

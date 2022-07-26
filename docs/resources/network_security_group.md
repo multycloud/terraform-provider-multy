@@ -61,6 +61,9 @@ resource "multy_network_security_group" "nsg" {
 
 ### Read-Only
 
+- `aws` (Object) AWS-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--aws))
+- `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--azure))
+- `gcp` (Object) GCP-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--gcp))
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
 
@@ -83,5 +86,29 @@ Required:
 - `priority` (Number) Priority of network rule. Value must be in between 0 and 0
 - `protocol` (String) Protocol of network rule. Accepted values are `tcp`
 - `to_port` (Number) To port of network rule port range. Value must be in between 0 and 65535
+
+
+<a id="nestedatt--aws"></a>
+### Nested Schema for `aws`
+
+Read-Only:
+
+- `security_group_id` (String)
+
+
+<a id="nestedatt--azure"></a>
+### Nested Schema for `azure`
+
+Read-Only:
+
+- `network_security_group_id` (String)
+
+
+<a id="nestedatt--gcp"></a>
+### Nested Schema for `gcp`
+
+Read-Only:
+
+- `compute_firewall_ids` (List of String)
 
 

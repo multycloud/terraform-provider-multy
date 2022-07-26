@@ -3,6 +3,7 @@ package multy
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -13,6 +14,18 @@ import (
 )
 
 type ResourceRouteTableType struct{}
+
+var routeTableAwsOutputs = map[string]attr.Type{
+	"route_table_id": types.StringType,
+}
+
+var routeTableAzureOutputs = map[string]attr.Type{
+	"route_table_id": types.StringType,
+}
+
+var routeTableGcpOutputs = map[string]attr.Type{
+	"compute_route_ids": types.ListType{ElemType: types.StringType},
+}
 
 func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
@@ -35,6 +48,21 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 				Description:   "ID of `virtual_network` resource",
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: routeTableAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: routeTableAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: routeTableGcpOutputs},
+				Computed:    true,
 			},
 		},
 		Blocks: map[string]tfsdk.Block{
@@ -113,6 +141,9 @@ type RouteTable struct {
 	Name             types.String      `tfsdk:"name"`
 	VirtualNetworkId types.String      `tfsdk:"virtual_network_id"`
 	Routes           []RouteTableRoute `tfsdk:"route"`
+	AwsOutputs       types.Object      `tfsdk:"aws"`
+	AzureOutputs     types.Object      `tfsdk:"azure"`
+	GcpOutputs       types.Object      `tfsdk:"gcp"`
 }
 
 type RouteTableRoute struct {
@@ -134,6 +165,24 @@ func convertToRouteTable(res *resourcespb.RouteTableResource) RouteTable {
 		Name:             types.String{Value: res.Name},
 		Routes:           routes,
 		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"route_table_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetRouteTableId()),
+			},
+			AttrTypes: routeTableAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"route_table_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetRouteTableId()),
+			},
+			AttrTypes: routeTableAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"compute_route_ids": common.TypesStringListToListType(res.GetGcpOutputs().GetComputeRouteId()),
+			},
+			AttrTypes: routeTableGcpOutputs,
+		}),
 	}
 
 	return result

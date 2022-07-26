@@ -16,6 +16,20 @@ import (
 
 type ResourceObjectStorageType struct{}
 
+var objectStorageAwsOutputs = map[string]attr.Type{
+	"s3_bucket_arn": types.StringType,
+}
+
+var objectStorageAzureOutputs = map[string]attr.Type{
+	"storage_account_id":           types.StringType,
+	"public_storage_container_id":  types.StringType,
+	"private_storage_container_id": types.StringType,
+}
+
+var objectStorageGcpOutputs = map[string]attr.Type{
+	"storage_bucket_id": types.StringType,
+}
+
 func (r ResourceObjectStorageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Provides Multy Object Storage resource",
@@ -58,6 +72,21 @@ func (r ResourceObjectStorageType) GetSchema(_ context.Context) (tfsdk.Schema, d
 				}),
 				Optional: true,
 				Computed: true,
+			},
+			"aws": {
+				Description: "AWS-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: objectStorageAwsOutputs},
+				Computed:    true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: objectStorageAzureOutputs},
+				Computed:    true,
+			},
+			"gcp": {
+				Description: "GCP-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: objectStorageGcpOutputs},
+				Computed:    true,
 			},
 		},
 	}, nil
@@ -120,6 +149,9 @@ type ObjectStorage struct {
 	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
 
 	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
+	AwsOutputs         types.Object `tfsdk:"aws"`
+	AzureOutputs       types.Object `tfsdk:"azure"`
+	GcpOutputs         types.Object `tfsdk:"gcp"`
 }
 
 func convertToObjectStorage(res *resourcespb.ObjectStorageResource) ObjectStorage {
@@ -131,6 +163,26 @@ func convertToObjectStorage(res *resourcespb.ObjectStorageResource) ObjectStorag
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
 		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
 		GcpOverridesObject: convertToObjectStorageGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"s3_bucket_arn": common.DefaultToNull[types.String](res.GetAwsOutputs().GetS3BucketArn()),
+			},
+			AttrTypes: objectStorageAwsOutputs,
+		}),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"storage_account_id":           common.DefaultToNull[types.String](res.GetAzureOutputs().GetStorageAccountId()),
+				"public_storage_container_id":  common.DefaultToNull[types.String](res.GetAzureOutputs().GetPublicStorageContainerId()),
+				"private_storage_container_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetPrivateStorageContainerId()),
+			},
+			AttrTypes: objectStorageAzureOutputs,
+		}),
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"storage_bucket_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetStorageBucketId()),
+			},
+			AttrTypes: objectStorageGcpOutputs,
+		}),
 	}
 }
 
