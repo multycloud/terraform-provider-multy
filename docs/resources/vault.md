@@ -35,6 +35,7 @@ resource "multy_vault" "v" {
 
 ### Read-Only
 
+- `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--azure))
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
 
@@ -44,5 +45,13 @@ resource "multy_vault" "v" {
 Optional:
 
 - `project` (String) The project to use for this resource.
+
+
+<a id="nestedatt--azure"></a>
+### Nested Schema for `azure`
+
+Read-Only:
+
+- `key_vault_id` (String)
 
 

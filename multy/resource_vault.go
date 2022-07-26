@@ -17,6 +17,10 @@ import (
 
 type ResourceVaultType struct{}
 
+var vaultAzureOutputs = map[string]attr.Type{
+	"key_vault_id": types.StringType,
+}
+
 func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Provides Multy Vault resource",
@@ -51,6 +55,11 @@ func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				}),
 				Optional: true,
 				Computed: true,
+			},
+			"azure": {
+				Description: "Azure-specific ids of the underlying generated resources",
+				Type:        types.ObjectType{AttrTypes: vaultAzureOutputs},
+				Computed:    true,
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
@@ -114,6 +123,7 @@ type Vault struct {
 	ResourceGroupId types.String                             `tfsdk:"resource_group_id"`
 
 	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
+	AzureOutputs       types.Object `tfsdk:"azure"`
 }
 
 func convertToVault(res *resourcespb.VaultResource) Vault {
@@ -124,6 +134,12 @@ func convertToVault(res *resourcespb.VaultResource) Vault {
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
 		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
 		GcpOverridesObject: convertToVaultGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
+			Attrs: map[string]attr.Value{
+				"key_vault_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetKeyVaultId()),
+			},
+			AttrTypes: vaultAzureOutputs,
+		}),
 	}
 }
 

@@ -17,7 +17,7 @@ require (
 	google.golang.org/protobuf v1.28.0
 )
 
-//replace github.com/multycloud/multy v0.1.53 => ../multy
+//replace github.com/multycloud/multy v0.1.54 => ../multy
 
 require (
 	github.com/Azure/azure-sdk-for-go v59.2.0+incompatible // indirect
