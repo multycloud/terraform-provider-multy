@@ -237,7 +237,7 @@ type PublicIpGcpOverrides struct {
 }
 
 func (v PublicIp) UpdatePlan(_ context.Context, config PublicIp, p Provider) (PublicIp, []*tftypes.AttributePath) {
-	if config.Cloud.Value != commonpb.CloudProvider_GCP {
+	if config.Cloud.Value != commonpb.CloudProvider_GCP || p.Client.Gcp == nil {
 		return v, nil
 	}
 	var requiresReplace []*tftypes.AttributePath

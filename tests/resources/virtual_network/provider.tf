@@ -13,6 +13,6 @@ provider "multy" {
   }
   aws             = {}
   azure           = {}
-  api_key         = "aws-123-1"
+  api_key         = "goncalo"
   server_endpoint = "localhost:8000"
 }

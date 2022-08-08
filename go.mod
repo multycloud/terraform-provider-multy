@@ -11,13 +11,14 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.3.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/multycloud/multy v0.1.55
+	github.com/multycloud/multy v0.1.56
 	golang.org/x/exp v0.0.0-20220218215828-6cf2b201936e
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0
 )
 
-//replace github.com/multycloud/multy v0.1.55 => ../multy
+//replace github.com/multycloud/multy v0.1.56 => ../multy
 
 require (
 	github.com/Azure/azure-sdk-for-go v59.2.0+incompatible // indirect

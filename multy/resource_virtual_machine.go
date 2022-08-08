@@ -428,7 +428,7 @@ type VirtualMachineGcpOverrides struct {
 }
 
 func (v VirtualMachine) UpdatePlan(_ context.Context, config VirtualMachine, p Provider) (VirtualMachine, []*tftypes.AttributePath) {
-	if config.Cloud.Value != commonpb.CloudProvider_GCP {
+	if config.Cloud.Value != commonpb.CloudProvider_GCP || p.Client.Gcp == nil {
 		return v, nil
 	}
 	var requiresReplace []*tftypes.AttributePath
