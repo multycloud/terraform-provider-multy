@@ -1,6 +1,6 @@
 variable "cloud" {
   type    = string
-  default = "azure"
+  default = "aws"
 }
 
 resource "multy_virtual_network" "vn" {

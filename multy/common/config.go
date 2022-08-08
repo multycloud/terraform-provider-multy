@@ -9,11 +9,12 @@ import (
 )
 
 type ProviderConfig struct {
-	Client mproto.MultyResourceServiceClient
-	ApiKey string
-	Aws    *AwsConfig
-	Azure  *AzureConfig
-	Gcp    *GcpConfig
+	Client       mproto.MultyResourceServiceClient
+	ApiKey       string
+	Aws          *AwsConfig
+	Azure        *AzureConfig
+	Gcp          *GcpConfig
+	RefreshCache *RefreshCache
 }
 
 func (c *ProviderConfig) AddHeaders(ctx context.Context) (context.Context, error) {

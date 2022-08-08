@@ -28,6 +28,7 @@ type connectionCache struct {
 }
 
 var connCache = connectionCache{cache: map[string]proto.MultyResourceServiceClient{}}
+var refreshCache = &common.RefreshCache{}
 
 func New() tfsdk.Provider {
 	return &Provider{}
@@ -244,6 +245,7 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 	c.Aws = awsConfig
 	c.Azure = azureConfig
 	c.Gcp = gcpConfig
+	c.RefreshCache = refreshCache
 
 	ctx, err = c.AddHeaders(ctx)
 	if err != nil {

@@ -11,7 +11,8 @@ provider "multy" {
   server_endpoint = "localhost:8000"
   aws             = {}
   azure           = {}
-  api_key         = "xxx"
+  gcp             = { project = "multy-project" }
+  api_key         = "goncalo"
 }
 
 variable "location" {
@@ -21,12 +22,12 @@ variable "location" {
 
 variable "clouds" {
   type    = set(string)
-  default = ["aws", "azure"]
+  default = ["aws", "gcp"]
 }
 
 variable "vm_clouds" {
   type    = set(string)
-  default = ["azure"]
+  default = ["aws", "gcp"]
 }
 
 variable "db_cloud" {
@@ -36,7 +37,7 @@ variable "db_cloud" {
 
 resource multy_virtual_network vn {
   for_each   = var.clouds
-  name       = "web_app_vn"
+  name       = "web-app-vn"
   cidr_block = "10.0.0.0/16"
   cloud      = each.key
   location   = var.location
@@ -44,21 +45,21 @@ resource multy_virtual_network vn {
 
 resource multy_subnet public_subnet {
   for_each           = var.clouds
-  name               = "web_app_public_subnet"
+  name               = "web-app-public-subnet"
   cidr_block         = "10.0.10.0/24"
   virtual_network_id = multy_virtual_network.vn[each.key].id
 }
 
 resource multy_subnet db_subnet {
   for_each           = var.clouds
-  name               = "web_app_db_subnet"
+  name               = "web-app-db-subnet"
   cidr_block         = "10.0.11.0/24"
   virtual_network_id = multy_virtual_network.vn[each.key].id
 }
 
 resource "multy_route_table" "rt" {
   for_each           = var.clouds
-  name               = "web_app_rt"
+  name               = "web-app-rt"
   virtual_network_id = multy_virtual_network.vn[each.key].id
   route {
     cidr_block  = "0.0.0.0/0"
@@ -79,7 +80,7 @@ resource multy_route_table_association rta2 {
 
 resource "multy_network_security_group" nsg {
   for_each           = var.clouds
-  name               = "web_app_nsg"
+  name               = "web-app-nsg"
   virtual_network_id = multy_virtual_network.vn[each.key].id
   cloud              = each.key
   location           = var.location
@@ -120,7 +121,7 @@ resource "multy_network_security_group" nsg {
 resource multy_virtual_machine vm {
   #  for_each        = var.clouds
   for_each        = var.vm_clouds
-  name            = "web_app_vm"
+  name            = "web-app-vm"
   size            = each.key == "azure" ? "general_large" : "general_micro"
   image_reference = {
     os      = "ubuntu"
@@ -155,7 +156,7 @@ resource "multy_database" "example_db" {
   username       = "multyadmin"
   password       = "multy-Admin123!"
   size           = "micro"
-  subnet_ids     = multy_subnet.db_subnet[var.db_cloud].id
+  subnet_id      = multy_subnet.db_subnet[var.db_cloud].id
   cloud          = var.db_cloud
   location       = var.location
 

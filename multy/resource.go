@@ -72,6 +72,11 @@ func (r MultyResource[T]) Read(ctx context.Context, req tfsdk.ReadResourceReques
 		return
 	}
 
+	err = r.p.Client.RefreshCache.Refresh(ctx, r.p.Client.ApiKey, r.p.Client)
+	if err != nil {
+		resp.Diagnostics.AddError("Error refreshing resource", common.ParseGrpcErrors(err))
+		return
+	}
 	newState, err := r.readFunc(ctx, r.p, *state)
 	if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
 		tflog.Info(ctx, "Resource doesn't exist, deleting")
