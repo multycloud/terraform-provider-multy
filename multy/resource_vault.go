@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"terraform-provider-multy/multy/common"
-	"terraform-provider-multy/multy/mtypes"
-
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
+	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/mtypes"
 )
 
 type ResourceVaultType struct{}
@@ -61,8 +60,9 @@ func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				Type:        types.ObjectType{AttrTypes: vaultAzureOutputs},
 				Computed:    true,
 			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
+			"cloud":           common.CloudsSchema,
+			"location":        common.LocationSchema,
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -124,6 +124,7 @@ type Vault struct {
 
 	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
 	AzureOutputs       types.Object `tfsdk:"azure"`
+	ResourceStatus     types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToVault(res *resourcespb.VaultResource) Vault {
@@ -140,6 +141,7 @@ func convertToVault(res *resourcespb.VaultResource) Vault {
 			},
 			AttrTypes: vaultAzureOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

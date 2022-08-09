@@ -91,6 +91,7 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 				Type:        types.ObjectType{AttrTypes: networkSecurityGroupGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 		Blocks: map[string]tfsdk.Block{
 			"rule": {
@@ -200,6 +201,7 @@ type NetworkSecurityGroup struct {
 	AwsOutputs         types.Object `tfsdk:"aws"`
 	AzureOutputs       types.Object `tfsdk:"azure"`
 	GcpOutputs         types.Object `tfsdk:"gcp"`
+	ResourceStatus     types.Map    `tfsdk:"resource_status"`
 }
 
 type Rule struct {
@@ -250,6 +252,7 @@ func convertToNetworkSecurityGroup(res *resourcespb.NetworkSecurityGroupResource
 			},
 			AttrTypes: networkSecurityGroupGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

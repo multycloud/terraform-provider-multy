@@ -66,6 +66,7 @@ func (r ResourceVaultSecretType) GetSchema(_ context.Context) (tfsdk.Schema, dia
 				Type:        types.ObjectType{AttrTypes: vaultSecretGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -119,13 +120,14 @@ func deleteVaultSecret(ctx context.Context, p Provider, state VaultSecret) error
 }
 
 type VaultSecret struct {
-	Id           types.String `tfsdk:"id"`
-	VaultId      types.String `tfsdk:"vault_id"`
-	Name         types.String `tfsdk:"name"`
-	Value        types.String `tfsdk:"value"`
-	AwsOutputs   types.Object `tfsdk:"aws"`
-	AzureOutputs types.Object `tfsdk:"azure"`
-	GcpOutputs   types.Object `tfsdk:"gcp"`
+	Id             types.String `tfsdk:"id"`
+	VaultId        types.String `tfsdk:"vault_id"`
+	Name           types.String `tfsdk:"name"`
+	Value          types.String `tfsdk:"value"`
+	AwsOutputs     types.Object `tfsdk:"aws"`
+	AzureOutputs   types.Object `tfsdk:"azure"`
+	GcpOutputs     types.Object `tfsdk:"gcp"`
+	ResourceStatus types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToVaultSecret(res *resourcespb.VaultSecretResource) VaultSecret {
@@ -153,6 +155,7 @@ func convertToVaultSecret(res *resourcespb.VaultSecretResource) VaultSecret {
 			},
 			AttrTypes: vaultSecretGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

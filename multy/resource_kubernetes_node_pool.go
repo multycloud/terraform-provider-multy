@@ -155,6 +155,7 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 			Type:        types.ObjectType{AttrTypes: kubernetesNodePoolGcpOutputs},
 			Computed:    true,
 		},
+		"resource_status": common.ResourceStatusSchema,
 	}
 }
 
@@ -223,6 +224,7 @@ type KubernetesNodePool struct {
 	AwsOutputs        types.Object                           `tfsdk:"aws"`
 	AzureOutputs      types.Object                           `tfsdk:"azure"`
 	GcpOutputs        types.Object                           `tfsdk:"gcp"`
+	ResourceStatus    types.Map                              `tfsdk:"resource_status"`
 }
 
 func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) KubernetesNodePool {
@@ -259,6 +261,7 @@ func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) Ku
 			},
 			AttrTypes: kubernetesNodePoolGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

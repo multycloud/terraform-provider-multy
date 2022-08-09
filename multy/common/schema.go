@@ -37,6 +37,13 @@ var LocationSchema = tfsdk.Attribute{
 	PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 }
 
+var ResourceStatusSchema = tfsdk.Attribute{
+	Description:   "Statuses of underlying created resources",
+	Type:          types.MapType{ElemType: types.StringType},
+	Computed:      true,
+	PlanModifiers: []tfsdk.AttributePlanModifier{validators.ResourceStatusModifier{}},
+}
+
 var AwsSchema = tfsdk.Attribute{
 	Type:     types.MapType{},
 	Computed: true,

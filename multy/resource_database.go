@@ -136,6 +136,7 @@ func (r ResourceDatabaseType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Type:        types.ObjectType{AttrTypes: databaseGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -207,6 +208,7 @@ type Database struct {
 	AwsOutputs         types.Object                                 `tfsdk:"aws"`
 	AzureOutputs       types.Object                                 `tfsdk:"azure"`
 	GcpOutputs         types.Object                                 `tfsdk:"gcp"`
+	ResourceStatus     types.Map                                    `tfsdk:"resource_status"`
 }
 
 func convertToDatabase(res *resourcespb.DatabaseResource) Database {
@@ -246,6 +248,7 @@ func convertToDatabase(res *resourcespb.DatabaseResource) Database {
 			},
 			AttrTypes: databaseGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

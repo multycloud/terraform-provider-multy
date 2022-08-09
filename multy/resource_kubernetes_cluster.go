@@ -117,6 +117,7 @@ func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schem
 				Type:        types.ObjectType{AttrTypes: kubernetesClusterGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -186,9 +187,10 @@ type KubernetesCluster struct {
 	CaCertificate types.String `tfsdk:"ca_certificate"`
 	KubeConfigRaw types.String `tfsdk:"kube_config_raw"`
 
-	AwsOutputs   types.Object `tfsdk:"aws"`
-	AzureOutputs types.Object `tfsdk:"azure"`
-	GcpOutputs   types.Object `tfsdk:"gcp"`
+	AwsOutputs     types.Object `tfsdk:"aws"`
+	AzureOutputs   types.Object `tfsdk:"azure"`
+	GcpOutputs     types.Object `tfsdk:"gcp"`
+	ResourceStatus types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) KubernetesCluster {
@@ -225,6 +227,7 @@ func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) Kube
 			},
 			AttrTypes: kubernetesClusterGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

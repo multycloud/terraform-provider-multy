@@ -91,8 +91,9 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Type:        types.ObjectType{AttrTypes: virtualNetworkGcpOutputs},
 				Computed:    true,
 			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
+			"resource_status": common.ResourceStatusSchema,
+			"cloud":           common.CloudsSchema,
+			"location":        common.LocationSchema,
 		},
 	}, nil
 }
@@ -157,6 +158,8 @@ type VirtualNetwork struct {
 	AwsOutputs   types.Object                             `tfsdk:"aws"`
 	AzureOutputs types.Object                             `tfsdk:"azure"`
 	GcpOutputs   types.Object                             `tfsdk:"gcp"`
+
+	ResourceStatus types.Map `tfsdk:"resource_status"`
 }
 
 func (v VirtualNetwork) UpdatePlan(_ context.Context, config VirtualNetwork, p Provider) (VirtualNetwork, []*tftypes.AttributePath) {
@@ -213,6 +216,7 @@ func convertToVirtualNetwork(res *resourcespb.VirtualNetworkResource) VirtualNet
 			},
 			AttrTypes: virtualNetworkGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

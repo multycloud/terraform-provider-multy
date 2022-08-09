@@ -75,6 +75,7 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 				Type:        types.ObjectType{AttrTypes: networkInterfaceAzureOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -138,6 +139,7 @@ type NetworkInterface struct {
 	AvailabilityZone types.Int64                              `tfsdk:"availability_zone"`
 	AwsOutputs       types.Object                             `tfsdk:"aws"`
 	AzureOutputs     types.Object                             `tfsdk:"azure"`
+	ResourceStatus   types.Map                                `tfsdk:"resource_status"`
 }
 
 func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) NetworkInterface {
@@ -163,6 +165,7 @@ func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) Networ
 			},
 			AttrTypes: networkInterfaceAzureOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

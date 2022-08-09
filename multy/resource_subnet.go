@@ -70,6 +70,7 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				Type:        types.ObjectType{AttrTypes: subnetGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -130,6 +131,7 @@ type Subnet struct {
 	AwsOutputs       types.Object `tfsdk:"aws"`
 	AzureOutputs     types.Object `tfsdk:"azure"`
 	GcpOutputs       types.Object `tfsdk:"gcp"`
+	ResourceStatus   types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToSubnet(res *resourcespb.SubnetResource) Subnet {
@@ -156,6 +158,7 @@ func convertToSubnet(res *resourcespb.SubnetResource) Subnet {
 			},
 			AttrTypes: subnetGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 
 	return result

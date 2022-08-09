@@ -88,6 +88,7 @@ func (r ResourceObjectStorageType) GetSchema(_ context.Context) (tfsdk.Schema, d
 				Type:        types.ObjectType{AttrTypes: objectStorageGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -152,6 +153,7 @@ type ObjectStorage struct {
 	AwsOutputs         types.Object `tfsdk:"aws"`
 	AzureOutputs       types.Object `tfsdk:"azure"`
 	GcpOutputs         types.Object `tfsdk:"gcp"`
+	ResourceStatus     types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToObjectStorage(res *resourcespb.ObjectStorageResource) ObjectStorage {
@@ -183,6 +185,7 @@ func convertToObjectStorage(res *resourcespb.ObjectStorageResource) ObjectStorag
 			},
 			AttrTypes: objectStorageGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

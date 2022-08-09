@@ -42,6 +42,7 @@ func (r ResourceRouteTableAssociationType) GetSchema(_ context.Context) (tfsdk.S
 				Type:        types.ObjectType{AttrTypes: routeTableAssociationAwsOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -95,10 +96,11 @@ func deleteRouteTableAssociation(ctx context.Context, p Provider, state RouteTab
 }
 
 type RouteTableAssociation struct {
-	Id           types.String `tfsdk:"id"`
-	SubnetId     types.String `tfsdk:"subnet_id"`
-	RouteTableId types.String `tfsdk:"route_table_id"`
-	AwsOutputs   types.Object `tfsdk:"aws"`
+	Id             types.String `tfsdk:"id"`
+	SubnetId       types.String `tfsdk:"subnet_id"`
+	RouteTableId   types.String `tfsdk:"route_table_id"`
+	AwsOutputs     types.Object `tfsdk:"aws"`
+	ResourceStatus types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToRouteTableAssociation(res *resourcespb.RouteTableAssociationResource) RouteTableAssociation {
@@ -112,6 +114,7 @@ func convertToRouteTableAssociation(res *resourcespb.RouteTableAssociationResour
 			},
 			AttrTypes: routeTableAssociationAwsOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

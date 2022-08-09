@@ -80,6 +80,7 @@ func (r ResourcePublicIpType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 				Type:        types.ObjectType{AttrTypes: publicIpGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -143,6 +144,7 @@ type PublicIp struct {
 	AwsOutputs         types.Object `tfsdk:"aws"`
 	AzureOutputs       types.Object `tfsdk:"azure"`
 	GcpOutputs         types.Object `tfsdk:"gcp"`
+	ResourceStatus     types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToPublicIp(res *resourcespb.PublicIpResource) PublicIp {
@@ -171,6 +173,7 @@ func convertToPublicIp(res *resourcespb.PublicIpResource) PublicIp {
 			},
 			AttrTypes: publicIpGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

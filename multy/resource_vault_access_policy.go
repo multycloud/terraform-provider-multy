@@ -69,6 +69,7 @@ func (r ResourceVaultAccessPolicyType) GetSchema(_ context.Context) (tfsdk.Schem
 				Type:        types.ObjectType{AttrTypes: vaultAccessPolicyGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -122,13 +123,14 @@ func deleteVaultAccessPolicy(ctx context.Context, p Provider, state VaultAccessP
 }
 
 type VaultAccessPolicy struct {
-	Id           types.String                                   `tfsdk:"id"`
-	VaultId      types.String                                   `tfsdk:"vault_id"`
-	Identity     types.String                                   `tfsdk:"identity"`
-	Access       mtypes.EnumValue[resourcespb.VaultAccess_Enum] `tfsdk:"access"`
-	AwsOutputs   types.Object                                   `tfsdk:"aws"`
-	AzureOutputs types.Object                                   `tfsdk:"azure"`
-	GcpOutputs   types.Object                                   `tfsdk:"gcp"`
+	Id             types.String                                   `tfsdk:"id"`
+	VaultId        types.String                                   `tfsdk:"vault_id"`
+	Identity       types.String                                   `tfsdk:"identity"`
+	Access         mtypes.EnumValue[resourcespb.VaultAccess_Enum] `tfsdk:"access"`
+	AwsOutputs     types.Object                                   `tfsdk:"aws"`
+	AzureOutputs   types.Object                                   `tfsdk:"azure"`
+	GcpOutputs     types.Object                                   `tfsdk:"gcp"`
+	ResourceStatus types.Map                                      `tfsdk:"resource_status"`
 }
 
 func convertToVaultAccessPolicy(res *resourcespb.VaultAccessPolicyResource) VaultAccessPolicy {
@@ -155,6 +157,7 @@ func convertToVaultAccessPolicy(res *resourcespb.VaultAccessPolicyResource) Vaul
 			},
 			AttrTypes: vaultAccessPolicyGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

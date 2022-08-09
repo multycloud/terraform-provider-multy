@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
+	"terraform-provider-multy/multy/common"
 )
 
 type ResourceNetworkInterfaceSecurityGroupAssociationType struct{}
@@ -31,6 +32,7 @@ func (r ResourceNetworkInterfaceSecurityGroupAssociationType) GetSchema(_ contex
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -87,6 +89,7 @@ type NetworkInterfaceSecurityGroupAssociation struct {
 	Id                 types.String `tfsdk:"id"`
 	NetworkInterfaceId types.String `tfsdk:"network_interface_id"`
 	SecurityGroupId    types.String `tfsdk:"security_group_id"`
+	ResourceStatus     types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToNetworkInterfaceSecurityGroupAssociation(res *resourcespb.NetworkInterfaceSecurityGroupAssociationResource) NetworkInterfaceSecurityGroupAssociation {
@@ -94,6 +97,7 @@ func convertToNetworkInterfaceSecurityGroupAssociation(res *resourcespb.NetworkI
 		Id:                 types.String{Value: res.CommonParameters.ResourceId},
 		NetworkInterfaceId: types.String{Value: res.NetworkInterfaceId},
 		SecurityGroupId:    types.String{Value: res.SecurityGroupId},
+		ResourceStatus:     common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

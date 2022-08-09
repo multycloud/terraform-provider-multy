@@ -64,6 +64,7 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 				Type:        types.ObjectType{AttrTypes: routeTableGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 		Blocks: map[string]tfsdk.Block{
 			"route": {
@@ -144,6 +145,7 @@ type RouteTable struct {
 	AwsOutputs       types.Object      `tfsdk:"aws"`
 	AzureOutputs     types.Object      `tfsdk:"azure"`
 	GcpOutputs       types.Object      `tfsdk:"gcp"`
+	ResourceStatus   types.Map         `tfsdk:"resource_status"`
 }
 
 type RouteTableRoute struct {
@@ -183,6 +185,7 @@ func convertToRouteTable(res *resourcespb.RouteTableResource) RouteTable {
 			},
 			AttrTypes: routeTableGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 
 	return result

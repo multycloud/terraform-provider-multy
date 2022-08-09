@@ -171,6 +171,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Description: "Identity of Virtual Machine",
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
@@ -268,6 +269,7 @@ func convertToVirtualMachine(res *resourcespb.VirtualMachineResource) VirtualMac
 		GcpOverridesObject: convertToVirtualMachineGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
 		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		ResourceStatus:     common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 
@@ -361,8 +363,9 @@ type VirtualMachine struct {
 	AzureOverrides          *VirtualMachineAzureOverrides          `tfsdk:"azure_overrides"`
 	GcpOverridesObject      types.Object                           `tfsdk:"gcp_overrides"`
 
-	Cloud    mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	Cloud          mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location       mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	ResourceStatus types.Map                                `tfsdk:"resource_status"`
 }
 
 type ImageReference struct {
