@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"golang.org/x/exp/slices"
 	"terraform-provider-multy/multy/mtypes"
 	"terraform-provider-multy/multy/validators"
@@ -26,7 +27,7 @@ var CloudsSchema = tfsdk.Attribute{
 	Description:   fmt.Sprintf("Cloud provider to deploy resource into. Accepted values are %s", StringSliceToDocsMarkdown(mtypes.CloudType.GetAllValues())),
 	Required:      true,
 	Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.CloudType)},
-	PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+	PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 }
 
 var LocationSchema = tfsdk.Attribute{
@@ -34,7 +35,14 @@ var LocationSchema = tfsdk.Attribute{
 	Description:   "Location to deploy resource into. Read more about regions in [documentation](https://docs.multy.dev/regions)",
 	Required:      true,
 	Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.LocationType)},
-	PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+	PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+}
+
+var ResourceStatusSchema = tfsdk.Attribute{
+	Description:   "Statuses of underlying created resources",
+	Type:          types.MapType{ElemType: types.StringType},
+	Computed:      true,
+	PlanModifiers: []tfsdk.AttributePlanModifier{validators.ResourceStatusModifier{}},
 }
 
 var AwsSchema = tfsdk.Attribute{
@@ -55,7 +63,7 @@ func RequiresReplaceIfCloudEq(replaceIfCloud ...string) tfsdk.AttributePlanModif
 
 func requiresReplaceIfCloudEq(plan tfsdk.Plan, replaceIfCloud ...string) (bool, diag.Diagnostics) {
 	cloud := ""
-	diags := plan.GetAttribute(context.Background(), tftypes.NewAttributePath().WithAttributeName("cloud"), &cloud)
+	diags := plan.GetAttribute(context.Background(), path.Root("cloud"), &cloud)
 	if diags.HasError() {
 		return false, diags
 	}

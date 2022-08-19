@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
@@ -25,12 +27,12 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"resource_group_id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"name": {
 				Type:          types.StringType,
@@ -43,13 +45,13 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Description:   fmt.Sprintf("Size of Virtual Machine. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.VmSizeType.GetAllValues())),
 				Required:      true,
 				Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.VmSizeType)},
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"subnet_id": {
 				Type:          types.StringType,
 				Description:   "ID of `subnet` resource",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"network_interface_ids": {
 				Type:        types.ListType{ElemType: types.StringType},
@@ -65,21 +67,21 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Type:          types.StringType,
 				Description:   "User Data script of Virtual Machine that will run on instance launch",
 				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"availability_zone": {
 				Type:          types.Int64Type,
 				Description:   "Availability zone where this machine should be placed",
 				Optional:      true,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 				Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyIntValidator},
 			},
 			"public_ssh_key": {
 				Type:          types.StringType,
 				Description:   "Public SSH Key of Virtual Machine",
 				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"public_ip_id": {
 				Type:        types.StringType,
@@ -102,18 +104,18 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 						Description:   fmt.Sprintf("Operating System of Virtual Machine. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.ImageOsDistroType.GetAllValues())),
 						Required:      true,
 						Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.ImageOsDistroType)},
-						PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace(), tfsdk.UseStateForUnknown()},
+						PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace(), resource.UseStateForUnknown()},
 					},
 					"version": {
 						Type:          types.StringType,
 						Description:   "OS Version",
 						Required:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace(), tfsdk.UseStateForUnknown()},
+						PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace(), resource.UseStateForUnknown()},
 					},
 				}),
 				// make this optional + computed and handle unknown values
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"aws_overrides": {
 				Description: "AWS-specific attributes that will be set if this resource is deployed in AWS",
@@ -122,7 +124,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 						Type:          types.StringType,
 						Description:   fmt.Sprintf("The instance type to use for the instance."),
 						Optional:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws"), tfsdk.UseStateForUnknown()},
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws"), resource.UseStateForUnknown()},
 						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 					},
 				}),
@@ -136,7 +138,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 						Type:          types.StringType,
 						Description:   fmt.Sprintf("The size to use for the instance."),
 						Optional:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure"), tfsdk.UseStateForUnknown()},
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure"), resource.UseStateForUnknown()},
 						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 					},
 				}),
@@ -151,7 +153,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 						Description:   fmt.Sprintf("The project to use for this resource."),
 						Optional:      true,
 						Computed:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
 						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 					},
 				}),
@@ -171,11 +173,12 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Description: "Identity of Virtual Machine",
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
 
-func (r ResourceVirtualMachineType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceVirtualMachineType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[VirtualMachine]{
 		p:          *(p.(*Provider)),
 		createFunc: createVirtualMachine,
@@ -268,6 +271,7 @@ func convertToVirtualMachine(res *resourcespb.VirtualMachineResource) VirtualMac
 		GcpOverridesObject: convertToVirtualMachineGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
 		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
+		ResourceStatus:     common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 
@@ -361,8 +365,9 @@ type VirtualMachine struct {
 	AzureOverrides          *VirtualMachineAzureOverrides          `tfsdk:"azure_overrides"`
 	GcpOverridesObject      types.Object                           `tfsdk:"gcp_overrides"`
 
-	Cloud    mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
-	Location mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	Cloud          mtypes.EnumValue[commonpb.CloudProvider] `tfsdk:"cloud"`
+	Location       mtypes.EnumValue[commonpb.Location]      `tfsdk:"location"`
+	ResourceStatus types.Map                                `tfsdk:"resource_status"`
 }
 
 type ImageReference struct {
@@ -427,11 +432,11 @@ type VirtualMachineGcpOverrides struct {
 	Project types.String
 }
 
-func (v VirtualMachine) UpdatePlan(_ context.Context, config VirtualMachine, p Provider) (VirtualMachine, []*tftypes.AttributePath) {
+func (v VirtualMachine) UpdatePlan(_ context.Context, config VirtualMachine, p Provider) (VirtualMachine, []path.Path) {
 	if config.Cloud.Value != commonpb.CloudProvider_GCP || p.Client.Gcp == nil {
 		return v, nil
 	}
-	var requiresReplace []*tftypes.AttributePath
+	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
 	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
 		if gcpOverrides == nil {
@@ -445,7 +450,7 @@ func (v VirtualMachine) UpdatePlan(_ context.Context, config VirtualMachine, p P
 		}
 
 		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
-		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+		requiresReplace = append(requiresReplace, path.Root("gcp_overrides").AtName("project"))
 	}
 	return v, requiresReplace
 }

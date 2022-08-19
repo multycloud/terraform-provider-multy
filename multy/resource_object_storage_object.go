@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
@@ -34,19 +36,19 @@ func (r ResourceObjectStorageObjectType) GetSchema(_ context.Context) (tfsdk.Sch
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"name": {
 				Type:          types.StringType,
 				Description:   "Name of object storage object",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"object_storage_id": {
 				Type:          types.StringType,
 				Description:   "Id of object storage",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"content_base64": {
 				Type:        types.StringType,
@@ -88,11 +90,12 @@ func (r ResourceObjectStorageObjectType) GetSchema(_ context.Context) (tfsdk.Sch
 				Type:        types.ObjectType{AttrTypes: objectStorageObjectGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
 
-func (r ResourceObjectStorageObjectType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceObjectStorageObjectType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[ObjectStorageObject]{
 		p:          *(p.(*Provider)),
 		createFunc: createObjectStorageObject,
@@ -151,6 +154,7 @@ type ObjectStorageObject struct {
 	AwsOutputs      types.Object                                         `tfsdk:"aws"`
 	AzureOutputs    types.Object                                         `tfsdk:"azure"`
 	GcpOutputs      types.Object                                         `tfsdk:"gcp"`
+	ResourceStatus  types.Map                                            `tfsdk:"resource_status"`
 }
 
 func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) ObjectStorageObject {
@@ -181,6 +185,7 @@ func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) 
 			},
 			AttrTypes: objectStorageObjectGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

@@ -60,6 +60,7 @@ resource "multy_database" "example_db" {
 - `hostname` (String) The hostname of the RDS instance.
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
+- `resource_status` (Map of String) Statuses of underlying created resources
 
 <a id="nestedatt--gcp_overrides"></a>
 ### Nested Schema for `gcp_overrides`

@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
@@ -32,13 +34,13 @@ func (r ResourceVaultSecretType) GetSchema(_ context.Context) (tfsdk.Schema, dia
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"name": {
 				Type:          types.StringType,
 				Description:   "Name of the secret",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"value": {
 				Type:        types.StringType,
@@ -49,7 +51,7 @@ func (r ResourceVaultSecretType) GetSchema(_ context.Context) (tfsdk.Schema, dia
 				Type:          types.StringType,
 				Description:   "Id of `vault` to store the secret in",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"aws": {
 				Description: "AWS-specific ids of the underlying generated resources",
@@ -66,11 +68,12 @@ func (r ResourceVaultSecretType) GetSchema(_ context.Context) (tfsdk.Schema, dia
 				Type:        types.ObjectType{AttrTypes: vaultSecretGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
 
-func (r ResourceVaultSecretType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceVaultSecretType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[VaultSecret]{
 		p:          *(p.(*Provider)),
 		createFunc: createVaultSecret,
@@ -119,13 +122,14 @@ func deleteVaultSecret(ctx context.Context, p Provider, state VaultSecret) error
 }
 
 type VaultSecret struct {
-	Id           types.String `tfsdk:"id"`
-	VaultId      types.String `tfsdk:"vault_id"`
-	Name         types.String `tfsdk:"name"`
-	Value        types.String `tfsdk:"value"`
-	AwsOutputs   types.Object `tfsdk:"aws"`
-	AzureOutputs types.Object `tfsdk:"azure"`
-	GcpOutputs   types.Object `tfsdk:"gcp"`
+	Id             types.String `tfsdk:"id"`
+	VaultId        types.String `tfsdk:"vault_id"`
+	Name           types.String `tfsdk:"name"`
+	Value          types.String `tfsdk:"value"`
+	AwsOutputs     types.Object `tfsdk:"aws"`
+	AzureOutputs   types.Object `tfsdk:"azure"`
+	GcpOutputs     types.Object `tfsdk:"gcp"`
+	ResourceStatus types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToVaultSecret(res *resourcespb.VaultSecretResource) VaultSecret {
@@ -153,6 +157,7 @@ func convertToVaultSecret(res *resourcespb.VaultSecretResource) VaultSecret {
 			},
 			AttrTypes: vaultSecretGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

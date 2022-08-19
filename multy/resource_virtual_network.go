@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/common"
@@ -41,12 +43,12 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"resource_group_id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"name": {
 				Type:          types.StringType,
@@ -69,7 +71,7 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 						Description:   fmt.Sprintf("The project to use for this resource."),
 						Optional:      true,
 						Computed:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
 						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 					},
 				}),
@@ -91,13 +93,14 @@ func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Type:        types.ObjectType{AttrTypes: virtualNetworkGcpOutputs},
 				Computed:    true,
 			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
+			"resource_status": common.ResourceStatusSchema,
+			"cloud":           common.CloudsSchema,
+			"location":        common.LocationSchema,
 		},
 	}, nil
 }
 
-func (r ResourceVirtualNetworkType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceVirtualNetworkType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[VirtualNetwork]{
 		p:          *(p.(*Provider)),
 		createFunc: createVirtualNetwork,
@@ -157,13 +160,15 @@ type VirtualNetwork struct {
 	AwsOutputs   types.Object                             `tfsdk:"aws"`
 	AzureOutputs types.Object                             `tfsdk:"azure"`
 	GcpOutputs   types.Object                             `tfsdk:"gcp"`
+
+	ResourceStatus types.Map `tfsdk:"resource_status"`
 }
 
-func (v VirtualNetwork) UpdatePlan(_ context.Context, config VirtualNetwork, p Provider) (VirtualNetwork, []*tftypes.AttributePath) {
+func (v VirtualNetwork) UpdatePlan(_ context.Context, config VirtualNetwork, p Provider) (VirtualNetwork, []path.Path) {
 	if config.Cloud.Value != commonpb.CloudProvider_GCP || p.Client.Gcp == nil {
 		return v, nil
 	}
-	var requiresReplace []*tftypes.AttributePath
+	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
 	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
 		if gcpOverrides == nil {
@@ -177,7 +182,7 @@ func (v VirtualNetwork) UpdatePlan(_ context.Context, config VirtualNetwork, p P
 		}
 
 		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
-		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+		requiresReplace = append(requiresReplace, path.Root("gcp_overrides").AtName("project"))
 	}
 	return v, requiresReplace
 }
@@ -213,6 +218,7 @@ func convertToVirtualNetwork(res *resourcespb.VirtualNetworkResource) VirtualNet
 			},
 			AttrTypes: virtualNetworkGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

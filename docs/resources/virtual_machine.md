@@ -73,6 +73,7 @@ resource "multy_virtual_machine" "vm" {
 - `identity` (String) Identity of Virtual Machine
 - `public_ip` (String) Public IP of Virtual Machine
 - `resource_group_id` (String)
+- `resource_status` (Map of String) Statuses of underlying created resources
 
 <a id="nestedatt--image_reference"></a>
 ### Nested Schema for `image_reference`

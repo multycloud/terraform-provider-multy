@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
@@ -23,30 +25,31 @@ func (r ResourceRouteTableAssociationType) GetSchema(_ context.Context) (tfsdk.S
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"subnet_id": {
 				Type:          types.StringType,
 				Description:   "ID of `subnet` resource",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"route_table_id": {
 				Type:          types.StringType,
 				Description:   "ID of `route_table` resource",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"aws": {
 				Description: "AWS-specific ids of the underlying generated resources",
 				Type:        types.ObjectType{AttrTypes: routeTableAssociationAwsOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
 
-func (r ResourceRouteTableAssociationType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceRouteTableAssociationType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[RouteTableAssociation]{
 		p:          *(p.(*Provider)),
 		createFunc: createRouteTableAssociation,
@@ -95,10 +98,11 @@ func deleteRouteTableAssociation(ctx context.Context, p Provider, state RouteTab
 }
 
 type RouteTableAssociation struct {
-	Id           types.String `tfsdk:"id"`
-	SubnetId     types.String `tfsdk:"subnet_id"`
-	RouteTableId types.String `tfsdk:"route_table_id"`
-	AwsOutputs   types.Object `tfsdk:"aws"`
+	Id             types.String `tfsdk:"id"`
+	SubnetId       types.String `tfsdk:"subnet_id"`
+	RouteTableId   types.String `tfsdk:"route_table_id"`
+	AwsOutputs     types.Object `tfsdk:"aws"`
+	ResourceStatus types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToRouteTableAssociation(res *resourcespb.RouteTableAssociationResource) RouteTableAssociation {
@@ -112,6 +116,7 @@ func convertToRouteTableAssociation(res *resourcespb.RouteTableAssociationResour
 			},
 			AttrTypes: routeTableAssociationAwsOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 

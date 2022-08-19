@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
@@ -34,20 +36,20 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"name": {
 				Type:        types.StringType,
 				Description: "Name of Route Table",
 				Required:    true,
 				// todo: if not aws
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"virtual_network_id": {
 				Type:          types.StringType,
 				Description:   "ID of `virtual_network` resource",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"aws": {
 				Description: "AWS-specific ids of the underlying generated resources",
@@ -64,6 +66,7 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 				Type:        types.ObjectType{AttrTypes: routeTableGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 		Blocks: map[string]tfsdk.Block{
 			"route": {
@@ -88,7 +91,7 @@ func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag
 	}, nil
 }
 
-func (r ResourceRouteTableType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceRouteTableType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[RouteTable]{
 		p:          *(p.(*Provider)),
 		createFunc: createRouteTable,
@@ -144,6 +147,7 @@ type RouteTable struct {
 	AwsOutputs       types.Object      `tfsdk:"aws"`
 	AzureOutputs     types.Object      `tfsdk:"azure"`
 	GcpOutputs       types.Object      `tfsdk:"gcp"`
+	ResourceStatus   types.Map         `tfsdk:"resource_status"`
 }
 
 type RouteTableRoute struct {
@@ -183,6 +187,7 @@ func convertToRouteTable(res *resourcespb.RouteTableResource) RouteTable {
 			},
 			AttrTypes: routeTableGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 
 	return result

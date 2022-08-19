@@ -2,7 +2,7 @@ package multy
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -66,9 +66,7 @@ func getTestFunc(path string, testString string, testNumber int) func(t *testing
 		isError := strings.HasSuffix(filepath.Base(filepath.Dir(path)), "_failed")
 		resource.ParallelTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-				"multy": func() (tfprotov6.ProviderServer, error) {
-					return tfsdk.NewProtocol6Server(&Provider{}), nil
-				},
+				"multy": providerserver.NewProtocol6WithError(&Provider{}),
 			},
 			Steps: []resource.TestStep{getStep(testString, isError, testNumber)},
 		})

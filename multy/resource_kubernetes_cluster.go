@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/common"
@@ -37,31 +39,31 @@ func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schem
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"resource_group_id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"name": {
 				Type:          types.StringType,
 				Description:   "Name of the cluster",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"virtual_network_id": {
 				Type:          types.StringType,
 				Description:   "Virtual network where cluster and associated node pools should be in.",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"service_cidr": {
 				Type:          types.StringType,
 				Description:   "CIDR block for service nodes.",
 				Computed:      true,
 				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"default_node_pool": {
 				Attributes:  tfsdk.SingleNestedAttributes(getKubernetesNodePoolAttrs()),
@@ -95,7 +97,7 @@ func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schem
 						Description:   fmt.Sprintf("The project to use for this resource."),
 						Optional:      true,
 						Computed:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
 						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 					},
 				}),
@@ -117,11 +119,12 @@ func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schem
 				Type:        types.ObjectType{AttrTypes: kubernetesClusterGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
 
-func (r ResourceKubernetesClusterType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceKubernetesClusterType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[KubernetesCluster]{
 		p:          *(p.(*Provider)),
 		createFunc: createKubernetesCluster,
@@ -186,9 +189,10 @@ type KubernetesCluster struct {
 	CaCertificate types.String `tfsdk:"ca_certificate"`
 	KubeConfigRaw types.String `tfsdk:"kube_config_raw"`
 
-	AwsOutputs   types.Object `tfsdk:"aws"`
-	AzureOutputs types.Object `tfsdk:"azure"`
-	GcpOutputs   types.Object `tfsdk:"gcp"`
+	AwsOutputs     types.Object `tfsdk:"aws"`
+	AzureOutputs   types.Object `tfsdk:"azure"`
+	GcpOutputs     types.Object `tfsdk:"gcp"`
+	ResourceStatus types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) KubernetesCluster {
@@ -225,6 +229,7 @@ func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) Kube
 			},
 			AttrTypes: kubernetesClusterGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 
@@ -243,11 +248,11 @@ func convertFromKubernetesCluster(plan KubernetesCluster) *resourcespb.Kubernete
 	}
 }
 
-func (v KubernetesCluster) UpdatePlan(_ context.Context, config KubernetesCluster, p Provider) (KubernetesCluster, []*tftypes.AttributePath) {
+func (v KubernetesCluster) UpdatePlan(_ context.Context, config KubernetesCluster, p Provider) (KubernetesCluster, []path.Path) {
 	if config.Cloud.Value != commonpb.CloudProvider_GCP {
 		return v, nil
 	}
-	var requiresReplace []*tftypes.AttributePath
+	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
 	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
 		if gcpOverrides == nil {
@@ -261,7 +266,7 @@ func (v KubernetesCluster) UpdatePlan(_ context.Context, config KubernetesCluste
 		}
 
 		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
-		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+		requiresReplace = append(requiresReplace, path.Root("gcp_overrides").AtName("project"))
 	}
 	return v, requiresReplace
 }

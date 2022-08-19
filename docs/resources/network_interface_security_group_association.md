@@ -50,5 +50,6 @@ resource "multy_network_interface_security_group_association" "nic-association" 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `resource_status` (Map of String) Statuses of underlying created resources
 
 

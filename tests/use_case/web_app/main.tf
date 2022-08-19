@@ -22,12 +22,12 @@ variable "location" {
 
 variable "clouds" {
   type    = set(string)
-  default = ["aws", "gcp"]
+  default = ["aws", "azure", "gcp"]
 }
 
 variable "vm_clouds" {
   type    = set(string)
-  default = ["aws", "gcp"]
+  default = ["aws", "azure", "gcp"]
 }
 
 variable "db_cloud" {

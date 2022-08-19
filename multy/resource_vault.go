@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"terraform-provider-multy/multy/common"
-	"terraform-provider-multy/multy/mtypes"
-
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
+	"terraform-provider-multy/multy/common"
+	"terraform-provider-multy/multy/mtypes"
 )
 
 type ResourceVaultType struct{}
@@ -28,18 +29,18 @@ func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"resource_group_id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"name": {
 				Type:          types.StringType,
 				Description:   "Name of vault resource",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"gcp_overrides": {
 				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
@@ -49,7 +50,7 @@ func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 						Description:   fmt.Sprintf("The project to use for this resource."),
 						Optional:      true,
 						Computed:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
 						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 					},
 				}),
@@ -61,13 +62,14 @@ func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				Type:        types.ObjectType{AttrTypes: vaultAzureOutputs},
 				Computed:    true,
 			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
+			"cloud":           common.CloudsSchema,
+			"location":        common.LocationSchema,
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
 
-func (r ResourceVaultType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceVaultType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[Vault]{
 		p:          *(p.(*Provider)),
 		createFunc: createVault,
@@ -124,6 +126,7 @@ type Vault struct {
 
 	GcpOverridesObject types.Object `tfsdk:"gcp_overrides"`
 	AzureOutputs       types.Object `tfsdk:"azure"`
+	ResourceStatus     types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToVault(res *resourcespb.VaultResource) Vault {
@@ -140,6 +143,7 @@ func convertToVault(res *resourcespb.VaultResource) Vault {
 			},
 			AttrTypes: vaultAzureOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 }
 
@@ -155,11 +159,11 @@ func convertFromVault(plan Vault) *resourcespb.VaultArgs {
 	}
 }
 
-func (v Vault) UpdatePlan(_ context.Context, config Vault, p Provider) (Vault, []*tftypes.AttributePath) {
+func (v Vault) UpdatePlan(_ context.Context, config Vault, p Provider) (Vault, []path.Path) {
 	if config.Cloud.Value != commonpb.CloudProvider_GCP || p.Client.Gcp == nil {
 		return v, nil
 	}
-	var requiresReplace []*tftypes.AttributePath
+	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
 	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
 		if gcpOverrides == nil {
@@ -173,7 +177,7 @@ func (v Vault) UpdatePlan(_ context.Context, config Vault, p Provider) (Vault, [
 		}
 
 		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
-		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+		requiresReplace = append(requiresReplace, path.Root("gcp_overrides").AtName("project"))
 	}
 	return v, requiresReplace
 }

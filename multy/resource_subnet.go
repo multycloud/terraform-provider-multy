@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
@@ -32,14 +34,14 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"name": {
 				Type:        types.StringType,
 				Description: "Name of Subnet",
 				Required:    true,
 				//PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"cidr_block": {
 				Type:        types.StringType,
@@ -47,13 +49,13 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				Required:    true,
 				Validators:  []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
 				//PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"virtual_network_id": {
 				Type:          types.StringType,
 				Description:   "ID of `virtual_network` resource",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"aws": {
 				Description: "AWS-specific ids of the underlying generated resources",
@@ -70,11 +72,12 @@ func (r ResourceSubnetType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Dia
 				Type:        types.ObjectType{AttrTypes: subnetGcpOutputs},
 				Computed:    true,
 			},
+			"resource_status": common.ResourceStatusSchema,
 		},
 	}, nil
 }
 
-func (r ResourceSubnetType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceSubnetType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[Subnet]{
 		p:          *(p.(*Provider)),
 		createFunc: createSubnet,
@@ -130,6 +133,7 @@ type Subnet struct {
 	AwsOutputs       types.Object `tfsdk:"aws"`
 	AzureOutputs     types.Object `tfsdk:"azure"`
 	GcpOutputs       types.Object `tfsdk:"gcp"`
+	ResourceStatus   types.Map    `tfsdk:"resource_status"`
 }
 
 func convertToSubnet(res *resourcespb.SubnetResource) Subnet {
@@ -156,6 +160,7 @@ func convertToSubnet(res *resourcespb.SubnetResource) Subnet {
 			},
 			AttrTypes: subnetGcpOutputs,
 		}),
+		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
 
 	return result
