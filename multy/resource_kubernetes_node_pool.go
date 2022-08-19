@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/commonpb"
@@ -36,7 +38,7 @@ func (r ResourceKubernetesNodePoolType) GetSchema(_ context.Context) (tfsdk.Sche
 			Type:          types.StringType,
 			Description:   "Id of the multy kubernetes cluster",
 			Required:      true,
-			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 		}
 	return tfsdk.Schema{
 		MarkdownDescription: "Provides Multy Object Storage Object resource",
@@ -49,26 +51,26 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 		"id": {
 			Type:          types.StringType,
 			Computed:      true,
-			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
 		"name": {
 			Type:          types.StringType,
 			Description:   "Name of kubernetes node pool",
 			Required:      true,
-			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 		},
 		"subnet_id": {
 			Type:          types.StringType,
 			Description:   "Subnet to place the node and pods in. Must have access to the Internet to connect with the control plane.",
 			Required:      true,
-			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 		},
 		"starting_node_count": {
 			Type:          types.Int64Type,
 			Description:   "Number of initial nodes. Defaults to the minimum number of nodes.",
 			Computed:      true,
 			Optional:      true,
-			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
 		"min_node_count": {
 			Type:        types.Int64Type,
@@ -85,13 +87,13 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 			Description:   fmt.Sprintf("Size of Virtual Machine used for the nodes. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.VmSizeType.GetAllValues())),
 			Required:      true,
 			Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.VmSizeType)},
-			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 		},
 		"disk_size_gb": {
 			Type:          types.Int64Type,
 			Description:   "Disk size used for each node.",
 			Required:      true,
-			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 		},
 		"labels": {
 			Type:        types.MapType{ElemType: types.StringType},
@@ -104,14 +106,14 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 			Type:          types.ListType{ElemType: types.Int64Type},
 			Description:   "Zones to place nodes in. If not set, they will be spread across multiple zones selected by the cloud provider.",
 			Optional:      true,
-			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 		},
 
 		"cluster_id": {
 			Type:          types.StringType,
 			Description:   "Id of the multy kubernetes cluster",
 			Computed:      true,
-			PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 		},
 		"aws_overrides": {
 			Description: "AWS-specific attributes that will be set if this resource is deployed in AWS",
@@ -120,7 +122,7 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 					Type:          types.ListType{ElemType: types.StringType},
 					Description:   fmt.Sprintf("The instance type to use for nodes."),
 					Optional:      true,
-					PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+					PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 				},
 			}),
 			Optional: true,
@@ -133,7 +135,7 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 					Type:          types.StringType,
 					Description:   fmt.Sprintf("The size to use for nodes."),
 					Optional:      true,
-					PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+					PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 					Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 				},
 			}),
@@ -159,7 +161,7 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 	}
 }
 
-func (r ResourceKubernetesNodePoolType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceKubernetesNodePoolType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[KubernetesNodePool]{
 		p:          *(p.(*Provider)),
 		createFunc: createKubernetesNodePool,

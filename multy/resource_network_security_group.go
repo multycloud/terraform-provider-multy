@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
 	"terraform-provider-multy/multy/common"
@@ -17,7 +19,7 @@ import (
 
 var (
 	ruleDirections = []string{"ingress", "egress", "both"}
-	ruleProtocols  = []string{"tcp"}
+	ruleProtocols  = []string{"tcp", "udp", "icmp"}
 )
 
 type ResourceNetworkSecurityGroupType struct{}
@@ -41,12 +43,12 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"resource_group_id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"name": {
 				Type:        types.StringType,
@@ -57,7 +59,7 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 				Type:          types.StringType,
 				Description:   "ID of `virtual_network` resource",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"cloud":    common.CloudsSchema,
 			"location": common.LocationSchema,
@@ -69,7 +71,7 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 						Description:   fmt.Sprintf("The project to use for this resource."),
 						Optional:      true,
 						Computed:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), tfsdk.UseStateForUnknown()},
+						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
 						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
 					},
 				}),
@@ -140,7 +142,7 @@ func (r ResourceNetworkSecurityGroupType) GetSchema(_ context.Context) (tfsdk.Sc
 	}, nil
 }
 
-func (r ResourceNetworkSecurityGroupType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceNetworkSecurityGroupType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[NetworkSecurityGroup]{
 		p:          *(p.(*Provider)),
 		createFunc: createNetworkSecurityGroup,
@@ -334,11 +336,11 @@ type NetworkSecurityGroupGcpOverrides struct {
 	Project types.String
 }
 
-func (v NetworkSecurityGroup) UpdatePlan(_ context.Context, config NetworkSecurityGroup, p Provider) (NetworkSecurityGroup, []*tftypes.AttributePath) {
+func (v NetworkSecurityGroup) UpdatePlan(_ context.Context, config NetworkSecurityGroup, p Provider) (NetworkSecurityGroup, []path.Path) {
 	if config.Cloud.Value != commonpb.CloudProvider_GCP || p.Client.Gcp == nil {
 		return v, nil
 	}
-	var requiresReplace []*tftypes.AttributePath
+	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
 	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
 		if gcpOverrides == nil {
@@ -352,7 +354,7 @@ func (v NetworkSecurityGroup) UpdatePlan(_ context.Context, config NetworkSecuri
 		}
 
 		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
-		requiresReplace = append(requiresReplace, tftypes.NewAttributePath().WithAttributeName("gcp_overrides").WithAttributeName("project"))
+		requiresReplace = append(requiresReplace, path.Root("gcp_overrides").AtName("project"))
 	}
 	return v, requiresReplace
 }

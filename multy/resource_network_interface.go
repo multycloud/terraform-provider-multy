@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/commonpb"
@@ -30,12 +32,12 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"resource_group_id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"name": {
 				Type:          types.StringType,
@@ -47,20 +49,20 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 				Type:          types.StringType,
 				Description:   "ID of `subnet` resource",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"public_ip_id": {
 				Type:          types.StringType,
 				Description:   "ID of `public_ip` resource",
 				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"availability_zone": {
 				Type:          types.Int64Type,
 				Description:   "Availability zone where this machine should be placed",
 				Optional:      true,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 				Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyIntValidator},
 			},
 			"cloud":    common.CloudsSchema,
@@ -80,7 +82,7 @@ func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema
 	}, nil
 }
 
-func (r ResourceNetworkInterfaceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceNetworkInterfaceType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[NetworkInterface]{
 		p:          *(p.(*Provider)),
 		createFunc: createNetworkInterface,

@@ -39,6 +39,6 @@ func (v StringInSliceValidator) Validate(ctx context.Context, req tfsdk.Validate
 	resp.Diagnostics.AddAttributeError(
 		req.AttributePath,
 		"Invalid value",
-		fmt.Sprintf("expected %s to be one of %v", v.Values, str.Value),
+		fmt.Sprintf("expected %s to be one of %v", str.Value, v.Values),
 	)
 }

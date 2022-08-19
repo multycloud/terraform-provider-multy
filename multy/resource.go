@@ -2,8 +2,8 @@ package multy
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,7 +18,7 @@ type MultyResource[T any] struct {
 	deleteFunc func(ctx context.Context, p Provider, state T) error
 }
 
-func (r MultyResource[T]) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r MultyResource[T]) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	if !r.p.Configured {
 		resp.Diagnostics.AddError(
 			"Provider not configured",
@@ -56,7 +56,7 @@ func (r MultyResource[T]) Create(ctx context.Context, req tfsdk.CreateResourceRe
 	}
 }
 
-func (r MultyResource[T]) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r MultyResource[T]) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	c := r.p.Client
 	ctx, err := c.AddHeaders(ctx)
 	if err != nil {
@@ -91,7 +91,7 @@ func (r MultyResource[T]) Read(ctx context.Context, req tfsdk.ReadResourceReques
 	}
 }
 
-func (r MultyResource[T]) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r MultyResource[T]) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	plan := new(T)
 	// Get plan values
 	resp.Diagnostics.Append(req.Plan.Get(ctx, plan)...)
@@ -119,7 +119,7 @@ func (r MultyResource[T]) Update(ctx context.Context, req tfsdk.UpdateResourceRe
 	}
 }
 
-func (r MultyResource[T]) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r MultyResource[T]) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	state := new(T)
 	resp.Diagnostics.Append(req.State.Get(ctx, state)...)
 	if resp.Diagnostics.HasError() {
@@ -148,10 +148,10 @@ func (r MultyResource[T]) Delete(ctx context.Context, req tfsdk.DeleteResourceRe
 }
 
 type planUpdater[T any] interface {
-	UpdatePlan(ctx context.Context, config T, p Provider) (T, []*tftypes.AttributePath)
+	UpdatePlan(ctx context.Context, config T, p Provider) (T, []path.Path)
 }
 
-func (r MultyResource[T]) ModifyPlan(ctx context.Context, req tfsdk.ModifyResourcePlanRequest, resp *tfsdk.ModifyResourcePlanResponse) {
+func (r MultyResource[T]) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	plan := new(T)
 	diags := req.Plan.Get(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -179,7 +179,7 @@ func (r MultyResource[T]) ModifyPlan(ctx context.Context, req tfsdk.ModifyResour
 
 }
 
-func (r MultyResource[T]) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r MultyResource[T]) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// Save the import identifier in the id attribute
-	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
+	//resource.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }

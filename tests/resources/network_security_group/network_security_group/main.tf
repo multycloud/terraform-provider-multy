@@ -5,7 +5,7 @@ variable "location" {
 
 variable "cloud" {
   type    = string
-  default = "aws"
+  default = "gcp"
 }
 
 resource multy_virtual_network vn {
@@ -27,6 +27,22 @@ resource "multy_network_security_group" nsg {
     to_port    = 22
     cidr_block = "0.0.0.0/0"
     direction  = "both"
+  }
+  rule {
+    protocol   = "udp"
+    priority   = 121
+    from_port  = 80
+    to_port    = 81
+    cidr_block = "0.0.0.0/0"
+    direction  = "egress"
+  }
+  rule {
+    protocol   = "tcp"
+    priority   = 122
+    from_port  = 90
+    to_port    = 100
+    cidr_block = "0.0.0.0/0"
+    direction  = "ingress"
   }
   rule {
     protocol   = "tcp"

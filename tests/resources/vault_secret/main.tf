@@ -1,6 +1,6 @@
 variable cloud {
   type    = string
-  default = "gcp"
+  default = "azure"
 }
 
 resource multy_vault v {

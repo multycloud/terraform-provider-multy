@@ -12,4 +12,5 @@ provider "multy" {
   server_endpoint = "localhost:8000"
   aws             = {}
   azure           = {}
+  gcp             = { project = "multy-project" }
 }

@@ -94,6 +94,21 @@ func (s EnumValue[T]) ToTerraformValue(_ context.Context) (tftypes.Value, error)
 	return tftypes.NewValue(tftypes.String, strings.ToLower(s.Value.String())), nil
 }
 
+func (s EnumValue[T]) IsNull() bool {
+	return s.Null
+}
+
+func (s EnumValue[T]) IsUnknown() bool {
+	return s.Unknown
+}
+
+func (s EnumValue[T]) String() string {
+	if s.strValue == nil {
+		return ""
+	}
+	return *s.strValue
+}
+
 func (s EnumValue[T]) Equal(other attr.Value) bool {
 	o, ok := other.(EnumValue[T])
 	if !ok {
@@ -201,13 +216,11 @@ var NonEmptyStringValidator = nonEmptyValueValidator[string]{}
 var NonEmptyIntValidator = nonEmptyValueValidator[int]{}
 
 func (n nonEmptyValueValidator[T]) Description(_ context.Context) string {
-	//TODO implement me
-	panic("implement me")
+	return ""
 }
 
 func (n nonEmptyValueValidator[T]) MarkdownDescription(_ context.Context) string {
-	//TODO implement me
-	panic("implement me")
+	return ""
 }
 
 func (n nonEmptyValueValidator[T]) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {

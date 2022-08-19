@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/mitchellh/go-homedir"
 	"google.golang.org/grpc/credentials"
 	"io/ioutil"
@@ -30,7 +31,7 @@ type connectionCache struct {
 var connCache = connectionCache{cache: map[string]proto.MultyResourceServiceClient{}}
 var refreshCache = &common.RefreshCache{}
 
-func New() tfsdk.Provider {
+func New() provider.Provider {
 	return &Provider{}
 }
 
@@ -162,7 +163,7 @@ type providerGcpConfig struct {
 	Project     types.String `tfsdk:"project"`
 }
 
-func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
+func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	var config providerData
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -172,7 +173,7 @@ func (p *Provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	p.ConfigureProvider(ctx, config, resp)
 }
 
-func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, resp *tfsdk.ConfigureProviderResponse) {
+func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, resp *provider.ConfigureResponse) {
 	var apiKey string
 	var err error
 	if config.ApiKey.Unknown {
@@ -260,7 +261,7 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 	p.Configured = true
 }
 
-func (p *Provider) getConnToServer(config providerData, resp *tfsdk.ConfigureProviderResponse) proto.MultyResourceServiceClient {
+func (p *Provider) getConnToServer(config providerData, resp *provider.ConfigureResponse) proto.MultyResourceServiceClient {
 	connCache.Lock()
 	defer connCache.Unlock()
 
@@ -298,8 +299,8 @@ func (p *Provider) getConnToServer(config providerData, resp *tfsdk.ConfigurePro
 	return client
 }
 
-func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
-	return map[string]tfsdk.ResourceType{
+func (p *Provider) GetResources(_ context.Context) (map[string]provider.ResourceType, diag.Diagnostics) {
+	return map[string]provider.ResourceType{
 		"multy_virtual_network":                              ResourceVirtualNetworkType{},
 		"multy_subnet":                                       ResourceSubnetType{},
 		"multy_virtual_machine":                              ResourceVirtualMachineType{},
@@ -321,8 +322,8 @@ func (p *Provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 }
 
 // GetDataSources - Defines Provider data sources
-func (p *Provider) GetDataSources(_ context.Context) (map[string]tfsdk.DataSourceType, diag.Diagnostics) {
-	return map[string]tfsdk.DataSourceType{
+func (p *Provider) GetDataSources(_ context.Context) (map[string]provider.DataSourceType, diag.Diagnostics) {
+	return map[string]provider.DataSourceType{
 		//"multy_virtual_network": data.DataVirtualNetwork(),
 	}, nil
 }

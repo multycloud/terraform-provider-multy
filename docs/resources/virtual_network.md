@@ -44,6 +44,7 @@ resource multy_virtual_network vn {
 - `gcp` (Object) GCP-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--gcp))
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
+- `resource_status` (Map of String) Statuses of underlying created resources
 
 <a id="nestedatt--gcp_overrides"></a>
 ### Nested Schema for `gcp_overrides`

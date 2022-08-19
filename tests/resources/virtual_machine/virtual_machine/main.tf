@@ -1,6 +1,6 @@
 variable "cloud" {
   type    = string
-  default = "azure"
+  default = "gcp"
 }
 
 variable "location" {
@@ -72,6 +72,6 @@ resource multy_virtual_machine vm {
   cloud                      = var.cloud
   location                   = var.location
   network_security_group_ids = [multy_network_security_group.nsg.id]
-
+  public_ssh_key             = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDQJRMv5ix5QPfs3+t6mLcXvtBuMdxHc5aitbWE4myzVf33UttLI4td1Q2WZ+kfn5SwiF7b9YowqWlM0kiIFGoJhcBwN0Mq4TOcGmn5Hidl94Rf8xzk88+W0LJEd+JEKY4czZNNgdWhhsxuZgt9P4NdzONqFC2XL5AggLau7SdDVV9JCHHI+dw1C0FLq1Y/5Ga7rJN2Zm7vmT4I/tCPEheEDYN2MH2ClKgQf4Ni2KoiHLxvrbBmcXOuknn+/yjN+dpiAncQFnMjykV5lKMnXFm6u43KlMLpr/XKKmdaLDZWBVaNRdPeqt2FiWisGFowAuUsXWUhSBcwXArZbWRbc0rp+ASh9is2fC9BvkOcCdMZTqJmoXFib23KaSKi1wZhGOPB93YJvZ/Gnr6n0GHWryqPJ6QvijmN20zYJq1j4ZUrNsxLgIMkGNMtCId+pbJ1amn1DM7X2fT99k+rcycTIuI83OEASs49hJfty0AM1ChSxvkm0ZAZQcFsdUnuAAyhXgU= root@Joaos-MacBook-Pro.local"
   depends_on = [multy_route_table_association.rta1]
 }

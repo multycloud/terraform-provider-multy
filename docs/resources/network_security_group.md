@@ -66,6 +66,7 @@ resource "multy_network_security_group" "nsg" {
 - `gcp` (Object) GCP-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--gcp))
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
+- `resource_status` (Map of String) Statuses of underlying created resources
 
 <a id="nestedatt--gcp_overrides"></a>
 ### Nested Schema for `gcp_overrides`
@@ -84,7 +85,7 @@ Required:
 - `direction` (String) Direction of network rule. Accepted values are `ingress`, `egress` or `both`
 - `from_port` (Number) From port of network rule port range. Value must be in between 0 and 65535
 - `priority` (Number) Priority of network rule. Value must be in between 0 and 0
-- `protocol` (String) Protocol of network rule. Accepted values are `tcp`
+- `protocol` (String) Protocol of network rule. Accepted values are `tcp`, `udp` or `icmp`
 - `to_port` (Number) To port of network rule port range. Value must be in between 0 and 65535
 
 

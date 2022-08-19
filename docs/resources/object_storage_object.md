@@ -47,6 +47,7 @@ resource "multy_object_storage_object" "obj_storage" {
 - `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--azure))
 - `gcp` (Object) GCP-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--gcp))
 - `id` (String) The ID of this resource.
+- `resource_status` (Map of String) Statuses of underlying created resources
 - `url` (String) URL of object
 
 <a id="nestedatt--aws"></a>

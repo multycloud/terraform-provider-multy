@@ -53,6 +53,7 @@ resource "multy_route_table_association" "subnet1" {
 
 - `aws` (Object) AWS-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--aws))
 - `id` (String) The ID of this resource.
+- `resource_status` (Map of String) Statuses of underlying created resources
 
 <a id="nestedatt--aws"></a>
 ### Nested Schema for `aws`

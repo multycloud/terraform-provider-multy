@@ -8,9 +8,11 @@ terraform {
 }
 
 provider "multy" {
-  api_key         = "aws-123-1"
-  server_endpoint = "localhost:8000"
+ # gcp = {
+  #  project = "multy-project"
+ # }
   aws             = {}
-  azure           = {}
-  gcp             = {project="multy-project"}
+#  azure           = {}
+  api_key         = "goncalo"
+  server_endpoint = "localhost:"
 }

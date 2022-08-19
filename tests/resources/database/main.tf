@@ -1,6 +1,6 @@
 variable cloud {
   type    = string
-  default = "aws"
+  default = "gcp"
 }
 
 resource "multy_database" "example_db" {

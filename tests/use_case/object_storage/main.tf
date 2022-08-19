@@ -1,6 +1,6 @@
 variable "clouds" {
   type    = set(string)
-  default = ["aws", "azure"]
+  default = ["aws", "azure", "gcp"]
 }
 
 resource "random_string" "obj_suffix" {
@@ -11,7 +11,7 @@ resource "random_string" "obj_suffix" {
 
 resource "multy_object_storage" "obj_storage" {
   for_each   = var.clouds
-  name       = "multy-test-${random_string.obj_suffix.result}"
+  name       = "multytest${random_string.obj_suffix.result}"
   cloud      = each.key
   location   = "us_east_1"
   versioning = true

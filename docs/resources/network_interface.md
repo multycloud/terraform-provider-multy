@@ -59,6 +59,7 @@ resource "multy_network_interface" "private-nic" {
 - `azure` (Object) Azure-specific ids of the underlying generated resources (see [below for nested schema](#nestedatt--azure))
 - `id` (String) The ID of this resource.
 - `resource_group_id` (String)
+- `resource_status` (Map of String) Statuses of underlying created resources
 
 <a id="nestedatt--aws"></a>
 ### Nested Schema for `aws`

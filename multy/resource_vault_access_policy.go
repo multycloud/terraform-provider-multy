@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/resourcespb"
@@ -34,19 +36,19 @@ func (r ResourceVaultAccessPolicyType) GetSchema(_ context.Context) (tfsdk.Schem
 			"id": {
 				Type:          types.StringType,
 				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.UseStateForUnknown()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 			},
 			"vault_id": {
 				Type:          types.StringType,
 				Description:   "Id of the associated vault",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"identity": {
 				Type:          types.StringType,
 				Description:   "Identity of the resource that is being granted access to the `vault`",
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"access": {
 				Type:        mtypes.VaultAclType,
@@ -74,7 +76,7 @@ func (r ResourceVaultAccessPolicyType) GetSchema(_ context.Context) (tfsdk.Schem
 	}, nil
 }
 
-func (r ResourceVaultAccessPolicyType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r ResourceVaultAccessPolicyType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return MultyResource[VaultAccessPolicy]{
 		p:          *(p.(*Provider)),
 		createFunc: createVaultAccessPolicy,
