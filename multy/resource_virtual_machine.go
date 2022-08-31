@@ -81,7 +81,7 @@ func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Type:          types.StringType,
 				Description:   "Public SSH Key of Virtual Machine",
 				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace(), validators.IgnoringWhitespace},
 			},
 			"public_ip_id": {
 				Type:        types.StringType,
