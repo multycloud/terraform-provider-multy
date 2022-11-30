@@ -117,7 +117,7 @@ func createObjectStorageObject(ctx context.Context, p Provider, plan ObjectStora
 
 func updateObjectStorageObject(ctx context.Context, p Provider, plan ObjectStorageObject) (ObjectStorageObject, error) {
 	vn, err := p.Client.Client.UpdateObjectStorageObject(ctx, &resourcespb.UpdateObjectStorageObjectRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromObjectStorageObject(plan),
 	})
 	if err != nil {
@@ -128,7 +128,7 @@ func updateObjectStorageObject(ctx context.Context, p Provider, plan ObjectStora
 
 func readObjectStorageObject(ctx context.Context, p Provider, state ObjectStorageObject) (ObjectStorageObject, error) {
 	vn, err := p.Client.Client.ReadObjectStorageObject(ctx, &resourcespb.ReadObjectStorageObjectRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return ObjectStorageObject{}, err
@@ -138,7 +138,7 @@ func readObjectStorageObject(ctx context.Context, p Provider, state ObjectStorag
 
 func deleteObjectStorageObject(ctx context.Context, p Provider, state ObjectStorageObject) error {
 	_, err := p.Client.Client.DeleteObjectStorageObject(ctx, &resourcespb.DeleteObjectStorageObjectRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -195,6 +195,6 @@ func convertFromObjectStorageObject(plan ObjectStorageObject) *resourcespb.Objec
 		Acl:             plan.Acl.Value,
 		ObjectStorageId: plan.ObjectStorageId.Value,
 		ContentBase64:   plan.ContentBase64.Value,
-		ContentType:     common.NullToDefault[string](plan.ContentType),
+		ContentType:     common.IsNull()ToDefault[string](plan.ContentType),
 	}
 }

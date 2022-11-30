@@ -61,7 +61,7 @@ func createNetworkInterfaceSecurityGroupAssociation(ctx context.Context, p Provi
 
 func updateNetworkInterfaceSecurityGroupAssociation(ctx context.Context, p Provider, plan NetworkInterfaceSecurityGroupAssociation) (NetworkInterfaceSecurityGroupAssociation, error) {
 	vn, err := p.Client.Client.UpdateNetworkInterfaceSecurityGroupAssociation(ctx, &resourcespb.UpdateNetworkInterfaceSecurityGroupAssociationRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromNetworkInterfaceSecurityGroupAssociation(plan),
 	})
 	if err != nil {
@@ -72,7 +72,7 @@ func updateNetworkInterfaceSecurityGroupAssociation(ctx context.Context, p Provi
 
 func readNetworkInterfaceSecurityGroupAssociation(ctx context.Context, p Provider, state NetworkInterfaceSecurityGroupAssociation) (NetworkInterfaceSecurityGroupAssociation, error) {
 	vn, err := p.Client.Client.ReadNetworkInterfaceSecurityGroupAssociation(ctx, &resourcespb.ReadNetworkInterfaceSecurityGroupAssociationRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return NetworkInterfaceSecurityGroupAssociation{}, err
@@ -82,7 +82,7 @@ func readNetworkInterfaceSecurityGroupAssociation(ctx context.Context, p Provide
 
 func deleteNetworkInterfaceSecurityGroupAssociation(ctx context.Context, p Provider, state NetworkInterfaceSecurityGroupAssociation) error {
 	_, err := p.Client.Client.DeleteNetworkInterfaceSecurityGroupAssociation(ctx, &resourcespb.DeleteNetworkInterfaceSecurityGroupAssociationRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }

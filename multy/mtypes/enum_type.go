@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
@@ -76,16 +77,25 @@ func (n EnumType[T]) ZeroVal() EnumValue[T] {
 	return EnumValue[T]{Typ: n}
 }
 
+// ValueType should return the attr.Value type returned by
+// ValueFromTerraform. The returned attr.Value can be any null, unknown,
+// or known value for the type, as this is intended for type detection
+// and improving error diagnostics.
+func (n EnumType[T]) ValueType(context.Context) attr.Value {
+	return types.String{}
+}
+
 func (s EnumValue[T]) Type(_ context.Context) attr.Type {
 	return s.Typ
 }
 
 func (s EnumValue[T]) ToTerraformValue(_ context.Context) (tftypes.Value, error) {
-	if s.Null {
+	if s.IsNull() {
 		return tftypes.NewValue(tftypes.String, nil), nil
 	}
-	if s.Unknown {
-		return tftypes.NewValue(tftypes.String, tftypes.UnknownValue), nil
+	if s.IsUnknown() {
+		return tftypes.NewValue(tftypes.String, tftypes.IsUnknown()
+		Value), nil
 	}
 	if s.strValue != nil {
 		return tftypes.NewValue(tftypes.String, s.strValue), nil
@@ -95,11 +105,11 @@ func (s EnumValue[T]) ToTerraformValue(_ context.Context) (tftypes.Value, error)
 }
 
 func (s EnumValue[T]) IsNull() bool {
-	return s.Null
+	return s.IsNull()
 }
 
 func (s EnumValue[T]) IsUnknown() bool {
-	return s.Unknown
+	return s.IsUnknown()
 }
 
 func (s EnumValue[T]) String() string {
@@ -114,17 +124,17 @@ func (s EnumValue[T]) Equal(other attr.Value) bool {
 	if !ok {
 		return false
 	}
-	if s.Null != o.Null {
+	if s.IsNull() != o.IsNull() {
 		return false
 	}
-	if s.Unknown != o.Unknown {
+	if s.IsUnknown() != o.IsUnknown() {
 		return false
 	}
 	return s.Typ.Equal(o.Typ) && s.Value.String() == o.Value.String()
 }
 
 func (s EnumValue[T]) Validate() error {
-	if s.Unknown || s.Null {
+	if s.IsUnknown() || s.IsNull() {
 		return nil
 	}
 

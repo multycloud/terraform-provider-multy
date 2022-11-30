@@ -113,7 +113,7 @@ func createRouteTable(ctx context.Context, p Provider, plan RouteTable) (RouteTa
 
 func updateRouteTable(ctx context.Context, p Provider, plan RouteTable) (RouteTable, error) {
 	vn, err := p.Client.Client.UpdateRouteTable(ctx, &resourcespb.UpdateRouteTableRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromRouteTable(plan),
 	})
 	if err != nil {
@@ -124,7 +124,7 @@ func updateRouteTable(ctx context.Context, p Provider, plan RouteTable) (RouteTa
 
 func readRouteTable(ctx context.Context, p Provider, state RouteTable) (RouteTable, error) {
 	vn, err := p.Client.Client.ReadRouteTable(ctx, &resourcespb.ReadRouteTableRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return RouteTable{}, err
@@ -134,7 +134,7 @@ func readRouteTable(ctx context.Context, p Provider, state RouteTable) (RouteTab
 
 func deleteRouteTable(ctx context.Context, p Provider, state RouteTable) error {
 	_, err := p.Client.Client.DeleteRouteTable(ctx, &resourcespb.DeleteRouteTableRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }

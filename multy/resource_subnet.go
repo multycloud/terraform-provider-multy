@@ -99,7 +99,7 @@ func createSubnet(ctx context.Context, p Provider, plan Subnet) (Subnet, error) 
 
 func updateSubnet(ctx context.Context, p Provider, plan Subnet) (Subnet, error) {
 	vn, err := p.Client.Client.UpdateSubnet(ctx, &resourcespb.UpdateSubnetRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromSubnet(plan),
 	})
 	if err != nil {
@@ -110,7 +110,7 @@ func updateSubnet(ctx context.Context, p Provider, plan Subnet) (Subnet, error) 
 
 func readSubnet(ctx context.Context, p Provider, state Subnet) (Subnet, error) {
 	vn, err := p.Client.Client.ReadSubnet(ctx, &resourcespb.ReadSubnetRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return Subnet{}, err
@@ -120,7 +120,7 @@ func readSubnet(ctx context.Context, p Provider, state Subnet) (Subnet, error) {
 
 func deleteSubnet(ctx context.Context, p Provider, state Subnet) error {
 	_, err := p.Client.Client.DeleteSubnet(ctx, &resourcespb.DeleteSubnetRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }

@@ -98,7 +98,7 @@ func createVaultAccessPolicy(ctx context.Context, p Provider, plan VaultAccessPo
 
 func updateVaultAccessPolicy(ctx context.Context, p Provider, plan VaultAccessPolicy) (VaultAccessPolicy, error) {
 	vn, err := p.Client.Client.UpdateVaultAccessPolicy(ctx, &resourcespb.UpdateVaultAccessPolicyRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromVaultAccessPolicy(plan),
 	})
 	if err != nil {
@@ -109,7 +109,7 @@ func updateVaultAccessPolicy(ctx context.Context, p Provider, plan VaultAccessPo
 
 func readVaultAccessPolicy(ctx context.Context, p Provider, state VaultAccessPolicy) (VaultAccessPolicy, error) {
 	vn, err := p.Client.Client.ReadVaultAccessPolicy(ctx, &resourcespb.ReadVaultAccessPolicyRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return VaultAccessPolicy{}, err
@@ -119,7 +119,7 @@ func readVaultAccessPolicy(ctx context.Context, p Provider, state VaultAccessPol
 
 func deleteVaultAccessPolicy(ctx context.Context, p Provider, state VaultAccessPolicy) error {
 	_, err := p.Client.Client.DeleteVaultAccessPolicy(ctx, &resourcespb.DeleteVaultAccessPolicyRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }

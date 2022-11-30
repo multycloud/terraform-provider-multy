@@ -26,12 +26,12 @@ func (v StringInSliceValidator) Validate(ctx context.Context, req tfsdk.Validate
 		return
 	}
 
-	if str.Unknown || str.Null {
+	if str.IsUnknown() || str.IsNull() {
 		return
 	}
 
 	for _, v := range v.Values {
-		if v == str.Value {
+		if v == str.ValueString() {
 			return
 		}
 	}
@@ -39,6 +39,6 @@ func (v StringInSliceValidator) Validate(ctx context.Context, req tfsdk.Validate
 	resp.Diagnostics.AddAttributeError(
 		req.AttributePath,
 		"Invalid value",
-		fmt.Sprintf("expected %s to be one of %v", str.Value, v.Values),
+		fmt.Sprintf("expected %s to be one of %v", str.ValueString(), v.Values),
 	)
 }

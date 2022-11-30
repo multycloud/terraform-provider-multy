@@ -121,7 +121,7 @@ func createVirtualNetwork(ctx context.Context, p Provider, plan VirtualNetwork) 
 
 func updateVirtualNetwork(ctx context.Context, p Provider, plan VirtualNetwork) (VirtualNetwork, error) {
 	vn, err := p.Client.Client.UpdateVirtualNetwork(ctx, &resourcespb.UpdateVirtualNetworkRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromVirtualNetwork(plan),
 	})
 	if err != nil {
@@ -132,7 +132,7 @@ func updateVirtualNetwork(ctx context.Context, p Provider, plan VirtualNetwork) 
 
 func readVirtualNetwork(ctx context.Context, p Provider, state VirtualNetwork) (VirtualNetwork, error) {
 	vn, err := p.Client.Client.ReadVirtualNetwork(ctx, &resourcespb.ReadVirtualNetworkRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return VirtualNetwork{}, err
@@ -142,7 +142,7 @@ func readVirtualNetwork(ctx context.Context, p Provider, state VirtualNetwork) (
 
 func deleteVirtualNetwork(ctx context.Context, p Provider, state VirtualNetwork) error {
 	_, err := p.Client.Client.DeleteVirtualNetwork(ctx, &resourcespb.DeleteVirtualNetworkRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -169,7 +169,7 @@ func (v VirtualNetwork) UpdatePlan(_ context.Context, config VirtualNetwork, p P
 	}
 	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
-	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+	if o := config.GetGcpOverrides(); o == nil || o.Project.IsUnknown() {
 		if gcpOverrides == nil {
 			gcpOverrides = &VirtualNetworkGcpOverrides{}
 		}
@@ -251,7 +251,7 @@ func convertToVirtualNetworkGcpOverrides(ref *resourcespb.VirtualNetworkGcpOverr
 }
 
 func (v VirtualNetwork) GetGcpOverrides() (o *VirtualNetworkGcpOverrides) {
-	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+	if v.GcpOverridesObject.IsNull() || v.GcpOverridesObject.IsUnknown() {
 		return
 	}
 	o = &VirtualNetworkGcpOverrides{

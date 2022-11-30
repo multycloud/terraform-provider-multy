@@ -164,7 +164,7 @@ func createNetworkSecurityGroup(ctx context.Context, p Provider, plan NetworkSec
 
 func updateNetworkSecurityGroup(ctx context.Context, p Provider, plan NetworkSecurityGroup) (NetworkSecurityGroup, error) {
 	vn, err := p.Client.Client.UpdateNetworkSecurityGroup(ctx, &resourcespb.UpdateNetworkSecurityGroupRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromNetworkSecurityGroup(plan),
 	})
 	if err != nil {
@@ -175,7 +175,7 @@ func updateNetworkSecurityGroup(ctx context.Context, p Provider, plan NetworkSec
 
 func readNetworkSecurityGroup(ctx context.Context, p Provider, state NetworkSecurityGroup) (NetworkSecurityGroup, error) {
 	vn, err := p.Client.Client.ReadNetworkSecurityGroup(ctx, &resourcespb.ReadNetworkSecurityGroupRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return NetworkSecurityGroup{}, err
@@ -185,7 +185,7 @@ func readNetworkSecurityGroup(ctx context.Context, p Provider, state NetworkSecu
 
 func deleteNetworkSecurityGroup(ctx context.Context, p Provider, state NetworkSecurityGroup) error {
 	_, err := p.Client.Client.DeleteNetworkSecurityGroup(ctx, &resourcespb.DeleteNetworkSecurityGroupRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -303,7 +303,7 @@ func convertToNetworkSecurityGroupGcpOverrides(ref *resourcespb.NetworkSecurityG
 }
 
 func (v NetworkSecurityGroup) GetGcpOverrides() (o *NetworkSecurityGroupGcpOverrides) {
-	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+	if v.GcpOverridesObject.IsNull() || v.GcpOverridesObject.IsUnknown() {
 		return
 	}
 	o = &NetworkSecurityGroupGcpOverrides{
@@ -342,7 +342,7 @@ func (v NetworkSecurityGroup) UpdatePlan(_ context.Context, config NetworkSecuri
 	}
 	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
-	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+	if o := config.GetGcpOverrides(); o == nil || o.Project.IsUnknown() {
 		if gcpOverrides == nil {
 			gcpOverrides = &NetworkSecurityGroupGcpOverrides{}
 		}

@@ -146,7 +146,7 @@ func createKubernetesCluster(ctx context.Context, p Provider, plan KubernetesClu
 
 func updateKubernetesCluster(ctx context.Context, p Provider, plan KubernetesCluster) (KubernetesCluster, error) {
 	vn, err := p.Client.Client.UpdateKubernetesCluster(ctx, &resourcespb.UpdateKubernetesClusterRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromKubernetesCluster(plan),
 	})
 	if err != nil {
@@ -157,7 +157,7 @@ func updateKubernetesCluster(ctx context.Context, p Provider, plan KubernetesClu
 
 func readKubernetesCluster(ctx context.Context, p Provider, state KubernetesCluster) (KubernetesCluster, error) {
 	vn, err := p.Client.Client.ReadKubernetesCluster(ctx, &resourcespb.ReadKubernetesClusterRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return KubernetesCluster{}, err
@@ -167,7 +167,7 @@ func readKubernetesCluster(ctx context.Context, p Provider, state KubernetesClus
 
 func deleteKubernetesCluster(ctx context.Context, p Provider, state KubernetesCluster) error {
 	_, err := p.Client.Client.DeleteKubernetesCluster(ctx, &resourcespb.DeleteKubernetesClusterRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -254,7 +254,7 @@ func (v KubernetesCluster) UpdatePlan(_ context.Context, config KubernetesCluste
 	}
 	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
-	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+	if o := config.GetGcpOverrides(); o == nil || o.Project.IsUnknown() {
 		if gcpOverrides == nil {
 			gcpOverrides = &KubernetesClusterGcpOverrides{}
 		}
@@ -272,7 +272,7 @@ func (v KubernetesCluster) UpdatePlan(_ context.Context, config KubernetesCluste
 }
 
 func (v KubernetesCluster) GetGcpOverrides() (o *KubernetesClusterGcpOverrides) {
-	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+	if v.GcpOverridesObject.IsNull() || v.GcpOverridesObject.IsUnknown() {
 		return
 	}
 	o = &KubernetesClusterGcpOverrides{

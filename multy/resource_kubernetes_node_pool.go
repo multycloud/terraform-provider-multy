@@ -183,7 +183,7 @@ func createKubernetesNodePool(ctx context.Context, p Provider, plan KubernetesNo
 
 func updateKubernetesNodePool(ctx context.Context, p Provider, plan KubernetesNodePool) (KubernetesNodePool, error) {
 	vn, err := p.Client.Client.UpdateKubernetesNodePool(ctx, &resourcespb.UpdateKubernetesNodePoolRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromKubernetesNodePool(plan),
 	})
 	if err != nil {
@@ -194,7 +194,7 @@ func updateKubernetesNodePool(ctx context.Context, p Provider, plan KubernetesNo
 
 func readKubernetesNodePool(ctx context.Context, p Provider, state KubernetesNodePool) (KubernetesNodePool, error) {
 	vn, err := p.Client.Client.ReadKubernetesNodePool(ctx, &resourcespb.ReadKubernetesNodePoolRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return KubernetesNodePool{}, err
@@ -204,7 +204,7 @@ func readKubernetesNodePool(ctx context.Context, p Provider, state KubernetesNod
 
 func deleteKubernetesNodePool(ctx context.Context, p Provider, state KubernetesNodePool) error {
 	_, err := p.Client.Client.DeleteKubernetesNodePool(ctx, &resourcespb.DeleteKubernetesNodePoolRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -269,7 +269,7 @@ func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) Ku
 
 func convertFromKubernetesNodePool(plan KubernetesNodePool) *resourcespb.KubernetesNodePoolArgs {
 	var clusterId string
-	if !plan.ClusterId.Unknown {
+	if !plan.ClusterId.IsUnknown() {
 		clusterId = plan.ClusterId.Value
 	}
 	return &resourcespb.KubernetesNodePoolArgs{

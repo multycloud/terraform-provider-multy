@@ -165,7 +165,7 @@ func createDatabase(ctx context.Context, p Provider, plan Database) (Database, e
 
 func updateDatabase(ctx context.Context, p Provider, plan Database) (Database, error) {
 	vn, err := p.Client.Client.UpdateDatabase(ctx, &resourcespb.UpdateDatabaseRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromDatabase(plan),
 	})
 	if err != nil {
@@ -176,7 +176,7 @@ func updateDatabase(ctx context.Context, p Provider, plan Database) (Database, e
 
 func readDatabase(ctx context.Context, p Provider, state Database) (Database, error) {
 	vn, err := p.Client.Client.ReadDatabase(ctx, &resourcespb.ReadDatabaseRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return Database{}, err
@@ -186,7 +186,7 @@ func readDatabase(ctx context.Context, p Provider, state Database) (Database, er
 
 func deleteDatabase(ctx context.Context, p Provider, state Database) error {
 	_, err := p.Client.Client.DeleteDatabase(ctx, &resourcespb.DeleteDatabaseRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -279,7 +279,7 @@ func (v Database) UpdatePlan(_ context.Context, config Database, p Provider) (Da
 	}
 	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
-	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+	if o := config.GetGcpOverrides(); o == nil || o.Project.IsUnknown() {
 		if gcpOverrides == nil {
 			gcpOverrides = &DatabaseGcpOverrides{}
 		}
@@ -297,7 +297,7 @@ func (v Database) UpdatePlan(_ context.Context, config Database, p Provider) (Da
 }
 
 func (v Database) GetGcpOverrides() (o *DatabaseGcpOverrides) {
-	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+	if v.GcpOverridesObject.IsNull() || v.GcpOverridesObject.IsUnknown() {
 		return
 	}
 	o = &DatabaseGcpOverrides{

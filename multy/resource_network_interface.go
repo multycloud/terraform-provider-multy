@@ -104,7 +104,7 @@ func createNetworkInterface(ctx context.Context, p Provider, plan NetworkInterfa
 
 func updateNetworkInterface(ctx context.Context, p Provider, plan NetworkInterface) (NetworkInterface, error) {
 	vn, err := p.Client.Client.UpdateNetworkInterface(ctx, &resourcespb.UpdateNetworkInterfaceRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromNetworkInterface(plan),
 	})
 	if err != nil {
@@ -115,7 +115,7 @@ func updateNetworkInterface(ctx context.Context, p Provider, plan NetworkInterfa
 
 func readNetworkInterface(ctx context.Context, p Provider, state NetworkInterface) (NetworkInterface, error) {
 	vn, err := p.Client.Client.ReadNetworkInterface(ctx, &resourcespb.ReadNetworkInterfaceRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return NetworkInterface{}, err
@@ -125,7 +125,7 @@ func readNetworkInterface(ctx context.Context, p Provider, state NetworkInterfac
 
 func deleteNetworkInterface(ctx context.Context, p Provider, state NetworkInterface) error {
 	_, err := p.Client.Client.DeleteNetworkInterface(ctx, &resourcespb.DeleteNetworkInterfaceRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }

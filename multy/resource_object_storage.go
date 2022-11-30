@@ -117,7 +117,7 @@ func createObjectStorage(ctx context.Context, p Provider, plan ObjectStorage) (O
 
 func updateObjectStorage(ctx context.Context, p Provider, plan ObjectStorage) (ObjectStorage, error) {
 	vn, err := p.Client.Client.UpdateObjectStorage(ctx, &resourcespb.UpdateObjectStorageRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromObjectStorage(plan),
 	})
 	if err != nil {
@@ -128,7 +128,7 @@ func updateObjectStorage(ctx context.Context, p Provider, plan ObjectStorage) (O
 
 func readObjectStorage(ctx context.Context, p Provider, state ObjectStorage) (ObjectStorage, error) {
 	vn, err := p.Client.Client.ReadObjectStorage(ctx, &resourcespb.ReadObjectStorageRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return ObjectStorage{}, err
@@ -138,7 +138,7 @@ func readObjectStorage(ctx context.Context, p Provider, state ObjectStorage) (Ob
 
 func deleteObjectStorage(ctx context.Context, p Provider, state ObjectStorage) error {
 	_, err := p.Client.Client.DeleteObjectStorage(ctx, &resourcespb.DeleteObjectStorageRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -210,7 +210,7 @@ func (v ObjectStorage) UpdatePlan(_ context.Context, config ObjectStorage, p Pro
 	}
 	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
-	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+	if o := config.GetGcpOverrides(); o == nil || o.Project.IsUnknown() {
 		if gcpOverrides == nil {
 			gcpOverrides = &ObjectStorageGcpOverrides{}
 		}
@@ -228,7 +228,7 @@ func (v ObjectStorage) UpdatePlan(_ context.Context, config ObjectStorage, p Pro
 }
 
 func (v ObjectStorage) GetGcpOverrides() (o *ObjectStorageGcpOverrides) {
-	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+	if v.GcpOverridesObject.IsNull() || v.GcpOverridesObject.IsUnknown() {
 		return
 	}
 	o = &ObjectStorageGcpOverrides{

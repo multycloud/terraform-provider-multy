@@ -95,7 +95,7 @@ func createVaultSecret(ctx context.Context, p Provider, plan VaultSecret) (Vault
 
 func updateVaultSecret(ctx context.Context, p Provider, plan VaultSecret) (VaultSecret, error) {
 	vn, err := p.Client.Client.UpdateVaultSecret(ctx, &resourcespb.UpdateVaultSecretRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromVaultSecret(plan),
 	})
 	if err != nil {
@@ -106,7 +106,7 @@ func updateVaultSecret(ctx context.Context, p Provider, plan VaultSecret) (Vault
 
 func readVaultSecret(ctx context.Context, p Provider, state VaultSecret) (VaultSecret, error) {
 	vn, err := p.Client.Client.ReadVaultSecret(ctx, &resourcespb.ReadVaultSecretRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return VaultSecret{}, err
@@ -116,7 +116,7 @@ func readVaultSecret(ctx context.Context, p Provider, state VaultSecret) (VaultS
 
 func deleteVaultSecret(ctx context.Context, p Provider, state VaultSecret) error {
 	_, err := p.Client.Client.DeleteVaultSecret(ctx, &resourcespb.DeleteVaultSecretRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }

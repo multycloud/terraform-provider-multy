@@ -71,7 +71,7 @@ func createRouteTableAssociation(ctx context.Context, p Provider, plan RouteTabl
 
 func updateRouteTableAssociation(ctx context.Context, p Provider, plan RouteTableAssociation) (RouteTableAssociation, error) {
 	vn, err := p.Client.Client.UpdateRouteTableAssociation(ctx, &resourcespb.UpdateRouteTableAssociationRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromRouteTableAssociation(plan),
 	})
 	if err != nil {
@@ -82,7 +82,7 @@ func updateRouteTableAssociation(ctx context.Context, p Provider, plan RouteTabl
 
 func readRouteTableAssociation(ctx context.Context, p Provider, state RouteTableAssociation) (RouteTableAssociation, error) {
 	vn, err := p.Client.Client.ReadRouteTableAssociation(ctx, &resourcespb.ReadRouteTableAssociationRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return RouteTableAssociation{}, err
@@ -92,7 +92,7 @@ func readRouteTableAssociation(ctx context.Context, p Provider, state RouteTable
 
 func deleteRouteTableAssociation(ctx context.Context, p Provider, state RouteTableAssociation) error {
 	_, err := p.Client.Client.DeleteRouteTableAssociation(ctx, &resourcespb.DeleteRouteTableAssociationRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }

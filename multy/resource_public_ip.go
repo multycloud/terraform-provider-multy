@@ -109,7 +109,7 @@ func createPublicIp(ctx context.Context, p Provider, plan PublicIp) (PublicIp, e
 
 func updatePublicIp(ctx context.Context, p Provider, plan PublicIp) (PublicIp, error) {
 	vn, err := p.Client.Client.UpdatePublicIp(ctx, &resourcespb.UpdatePublicIpRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromPublicIp(plan),
 	})
 	if err != nil {
@@ -120,7 +120,7 @@ func updatePublicIp(ctx context.Context, p Provider, plan PublicIp) (PublicIp, e
 
 func readPublicIp(ctx context.Context, p Provider, state PublicIp) (PublicIp, error) {
 	vn, err := p.Client.Client.ReadPublicIp(ctx, &resourcespb.ReadPublicIpRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return PublicIp{}, err
@@ -130,7 +130,7 @@ func readPublicIp(ctx context.Context, p Provider, state PublicIp) (PublicIp, er
 
 func deletePublicIp(ctx context.Context, p Provider, state PublicIp) error {
 	_, err := p.Client.Client.DeletePublicIp(ctx, &resourcespb.DeletePublicIpRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -208,7 +208,7 @@ func convertToPublicIpGcpOverrides(ref *resourcespb.PublicIpGcpOverride) *Public
 }
 
 func (v PublicIp) GetGcpOverrides() (o *PublicIpGcpOverrides) {
-	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+	if v.GcpOverridesObject.IsNull() || v.GcpOverridesObject.IsUnknown() {
 		return
 	}
 	o = &PublicIpGcpOverrides{
@@ -247,7 +247,7 @@ func (v PublicIp) UpdatePlan(_ context.Context, config PublicIp, p Provider) (Pu
 	}
 	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
-	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+	if o := config.GetGcpOverrides(); o == nil || o.Project.IsUnknown() {
 		if gcpOverrides == nil {
 			gcpOverrides = &PublicIpGcpOverrides{}
 		}

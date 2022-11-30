@@ -189,8 +189,8 @@ func (r ResourceVirtualMachineType) NewResource(_ context.Context, p provider.Pr
 }
 
 func createVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) (VirtualMachine, error) {
-	pIpId := !plan.PublicIpId.Null && !plan.PublicIpId.Unknown && plan.PublicIpId.Value != ""
-	pIp := !plan.GeneratePublicIp.Null && !plan.GeneratePublicIp.Unknown && plan.GeneratePublicIp.Value
+	pIpId := !plan.PublicIpId.IsNull() && !plan.PublicIpId.IsUnknown() && plan.PublicIpId.Value != ""
+	pIp := !plan.GeneratePublicIp.IsNull() && !plan.GeneratePublicIp.IsUnknown() && plan.GeneratePublicIp.Value
 	// fixme check isnt working
 	if pIpId && pIp {
 		return VirtualMachine{}, fmt.Errorf("cannot set both public_ip and public_ip_id")
@@ -210,8 +210,8 @@ func createVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) 
 }
 
 func updateVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) (VirtualMachine, error) {
-	pIpId := !plan.PublicIpId.Null && !plan.PublicIpId.Unknown && plan.PublicIpId.Value != ""
-	pIp := !plan.GeneratePublicIp.Null && !plan.GeneratePublicIp.Unknown && plan.GeneratePublicIp.Value
+	pIpId := !plan.PublicIpId.IsNull() && !plan.PublicIpId.IsUnknown() && plan.PublicIpId.Value != ""
+	pIp := !plan.GeneratePublicIp.IsNull() && !plan.GeneratePublicIp.IsUnknown() && plan.GeneratePublicIp.Value
 	// fixme check isnt working
 	if pIpId && pIp {
 		return VirtualMachine{}, fmt.Errorf("cannot set both public_ip and public_ip_id")
@@ -219,7 +219,7 @@ func updateVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) 
 
 	// Create new order from plan values
 	vm, err := p.Client.Client.UpdateVirtualMachine(ctx, &resourcespb.UpdateVirtualMachineRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromVirtualMachine(plan),
 	})
 	if err != nil {
@@ -232,7 +232,7 @@ func updateVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) 
 }
 
 func readVirtualMachine(ctx context.Context, p Provider, state VirtualMachine) (VirtualMachine, error) {
-	vm, err := p.Client.Client.ReadVirtualMachine(ctx, &resourcespb.ReadVirtualMachineRequest{ResourceId: state.Id.Value})
+	vm, err := p.Client.Client.ReadVirtualMachine(ctx, &resourcespb.ReadVirtualMachineRequest{ResourceId: state.Id.ValueString()})
 	if err != nil {
 		return VirtualMachine{}, err
 	}
@@ -242,7 +242,7 @@ func readVirtualMachine(ctx context.Context, p Provider, state VirtualMachine) (
 }
 
 func deleteVirtualMachine(ctx context.Context, p Provider, state VirtualMachine) error {
-	_, err := p.Client.Client.DeleteVirtualMachine(ctx, &resourcespb.DeleteVirtualMachineRequest{ResourceId: state.Id.Value})
+	_, err := p.Client.Client.DeleteVirtualMachine(ctx, &resourcespb.DeleteVirtualMachineRequest{ResourceId: state.Id.ValueString()})
 	return err
 }
 
@@ -399,7 +399,7 @@ func convertToVirtualMachineGcpOverrides(ref *resourcespb.VirtualMachineGcpOverr
 }
 
 func (v VirtualMachine) GetGcpOverrides() (o *VirtualMachineGcpOverrides) {
-	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+	if v.GcpOverridesObject.IsNull() || v.GcpOverridesObject.IsUnknown() {
 		return
 	}
 	o = &VirtualMachineGcpOverrides{
@@ -438,7 +438,7 @@ func (v VirtualMachine) UpdatePlan(_ context.Context, config VirtualMachine, p P
 	}
 	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
-	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+	if o := config.GetGcpOverrides(); o == nil || o.Project.IsUnknown() {
 		if gcpOverrides == nil {
 			gcpOverrides = &VirtualMachineGcpOverrides{}
 		}

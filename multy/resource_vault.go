@@ -91,7 +91,7 @@ func createVault(ctx context.Context, p Provider, plan Vault) (Vault, error) {
 
 func updateVault(ctx context.Context, p Provider, plan Vault) (Vault, error) {
 	vn, err := p.Client.Client.UpdateVault(ctx, &resourcespb.UpdateVaultRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromVault(plan),
 	})
 	if err != nil {
@@ -102,7 +102,7 @@ func updateVault(ctx context.Context, p Provider, plan Vault) (Vault, error) {
 
 func readVault(ctx context.Context, p Provider, state Vault) (Vault, error) {
 	vn, err := p.Client.Client.ReadVault(ctx, &resourcespb.ReadVaultRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return Vault{}, err
@@ -112,7 +112,7 @@ func readVault(ctx context.Context, p Provider, state Vault) (Vault, error) {
 
 func deleteVault(ctx context.Context, p Provider, state Vault) error {
 	_, err := p.Client.Client.DeleteVault(ctx, &resourcespb.DeleteVaultRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -165,7 +165,7 @@ func (v Vault) UpdatePlan(_ context.Context, config Vault, p Provider) (Vault, [
 	}
 	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
-	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+	if o := config.GetGcpOverrides(); o == nil || o.Project.IsUnknown() {
 		if gcpOverrides == nil {
 			gcpOverrides = &VaultGcpOverrides{}
 		}
@@ -183,7 +183,7 @@ func (v Vault) UpdatePlan(_ context.Context, config Vault, p Provider) (Vault, [
 }
 
 func (v Vault) GetGcpOverrides() (o *VaultGcpOverrides) {
-	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+	if v.GcpOverridesObject.IsNull() || v.GcpOverridesObject.IsUnknown() {
 		return
 	}
 	o = &VaultGcpOverrides{
