@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -20,177 +19,177 @@ import (
 
 type ResourceVirtualMachineType struct{}
 
-func (r ResourceVirtualMachineType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Virtual Machine resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"resource_group_id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"name": {
-				Type:          types.StringType,
-				Description:   "Name of Virtual Machine",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
-			},
-			"size": {
-				Type:          mtypes.VmSizeType,
-				Description:   fmt.Sprintf("Size of Virtual Machine. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.VmSizeType.GetAllValues())),
-				Required:      true,
-				Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.VmSizeType)},
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"subnet_id": {
-				Type:          types.StringType,
-				Description:   "ID of `subnet` resource",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"network_interface_ids": {
-				Type:        types.ListType{ElemType: types.StringType},
-				Description: "IDs of `network_interface` resource",
-				Optional:    true,
-			},
-			"network_security_group_ids": {
-				Type:        types.ListType{ElemType: types.StringType},
-				Description: "IDs of `network_security_group` resource",
-				Optional:    true,
-			},
-			"user_data_base64": {
-				Type:          types.StringType,
-				Description:   "User Data script of Virtual Machine that will run on instance launch",
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"availability_zone": {
-				Type:          types.Int64Type,
-				Description:   "Availability zone where this machine should be placed",
-				Optional:      true,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-				Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyIntValidator},
-			},
-			"public_ssh_key": {
-				Type:          types.StringType,
-				Description:   "Public SSH Key of Virtual Machine",
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace(), validators.IgnoringWhitespace},
-			},
-			"public_ip_id": {
-				Type:        types.StringType,
-				Description: "ID of `public_ip` resource. Cannot be used with `generate_public_ip`",
-				Optional:    true,
-				Validators:  []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
-			},
-			"generate_public_ip": {
-				Type:          types.BoolType,
-				Description:   "If true, a public IP will be automatically generated. Cannot be used with `public_ip_id`",
-				Optional:      true,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
-			},
-			"image_reference": {
-				Description: "Virtual Machine image definition",
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"os": {
-						Type:          mtypes.ImageOsDistroType,
-						Description:   fmt.Sprintf("Operating System of Virtual Machine. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.ImageOsDistroType.GetAllValues())),
-						Required:      true,
-						Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.ImageOsDistroType)},
-						PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace(), resource.UseStateForUnknown()},
-					},
-					"version": {
-						Type:          types.StringType,
-						Description:   "OS Version",
-						Required:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace(), resource.UseStateForUnknown()},
-					},
-				}),
-				// make this optional + computed and handle unknown values
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"aws_overrides": {
-				Description: "AWS-specific attributes that will be set if this resource is deployed in AWS",
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"instance_type": {
-						Type:          types.StringType,
-						Description:   fmt.Sprintf("The instance type to use for the instance."),
-						Optional:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws"), resource.UseStateForUnknown()},
-						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
-					},
-				}),
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
-			},
-			"azure_overrides": {
-				Description: "Azure-specific attributes that will be set if this resource is deployed in Azure",
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"size": {
-						Type:          types.StringType,
-						Description:   fmt.Sprintf("The size to use for the instance."),
-						Optional:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure"), resource.UseStateForUnknown()},
-						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
-					},
-				}),
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
-			},
-			"gcp_overrides": {
-				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"project": {
-						Type:          types.StringType,
-						Description:   fmt.Sprintf("The project to use for this resource."),
-						Optional:      true,
-						Computed:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
-						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
-					},
-				}),
-				Optional: true,
-				Computed: true,
-			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
-
-			"public_ip": {
-				Type:        types.StringType,
-				Description: "Public IP of Virtual Machine",
-				Computed:    true,
-			},
-			"identity": {
-				Type:        types.StringType,
-				Description: "Identity of Virtual Machine",
-				Computed:    true,
-			},
-			"resource_status": common.ResourceStatusSchema,
+var virtualMachineSchema = tfsdk.Schema{
+	MarkdownDescription: "Provides Multy Virtual Machine resource",
+	Attributes: map[string]tfsdk.Attribute{
+		"id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
-	}, nil
+		"resource_group_id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
+		},
+		"name": {
+			Type:          types.StringType,
+			Description:   "Name of Virtual Machine",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
+		},
+		"size": {
+			Type:          mtypes.VmSizeType,
+			Description:   fmt.Sprintf("Size of Virtual Machine. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.VmSizeType.GetAllValues())),
+			Required:      true,
+			Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.VmSizeType)},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"subnet_id": {
+			Type:          types.StringType,
+			Description:   "ID of `subnet` resource",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"network_interface_ids": {
+			Type:        types.ListType{ElemType: types.StringType},
+			Description: "IDs of `network_interface` resource",
+			Optional:    true,
+		},
+		"network_security_group_ids": {
+			Type:        types.ListType{ElemType: types.StringType},
+			Description: "IDs of `network_security_group` resource",
+			Optional:    true,
+		},
+		"user_data_base64": {
+			Type:          types.StringType,
+			Description:   "User Data script of Virtual Machine that will run on instance launch",
+			Optional:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"availability_zone": {
+			Type:          types.Int64Type,
+			Description:   "Availability zone where this machine should be placed",
+			Optional:      true,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+			Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyIntValidator},
+		},
+		"public_ssh_key": {
+			Type:          types.StringType,
+			Description:   "Public SSH Key of Virtual Machine",
+			Optional:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace(), validators.IgnoringWhitespace},
+		},
+		"public_ip_id": {
+			Type:        types.StringType,
+			Description: "ID of `public_ip` resource. Cannot be used with `generate_public_ip`",
+			Optional:    true,
+			Validators:  []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+		},
+		"generate_public_ip": {
+			Type:          types.BoolType,
+			Description:   "If true, a public IP will be automatically generated. Cannot be used with `public_ip_id`",
+			Optional:      true,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
+		},
+		"image_reference": {
+			Description: "Virtual Machine image definition",
+			Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+				"os": {
+					Type:          mtypes.ImageOsDistroType,
+					Description:   fmt.Sprintf("Operating System of Virtual Machine. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.ImageOsDistroType.GetAllValues())),
+					Required:      true,
+					Validators:    []tfsdk.AttributeValidator{validators.NewValidator(mtypes.ImageOsDistroType)},
+					PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace(), resource.UseStateForUnknown()},
+				},
+				"version": {
+					Type:          types.StringType,
+					Description:   "OS Version",
+					Required:      true,
+					PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace(), resource.UseStateForUnknown()},
+				},
+			}),
+			// make this optional + computed and handle unknown values
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
+		},
+		"aws_overrides": {
+			Description: "AWS-specific attributes that will be set if this resource is deployed in AWS",
+			Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+				"instance_type": {
+					Type:          types.StringType,
+					Description:   fmt.Sprintf("The instance type to use for the instance."),
+					Optional:      true,
+					PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws"), resource.UseStateForUnknown()},
+					Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+				},
+			}),
+			Optional:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
+		},
+		"azure_overrides": {
+			Description: "Azure-specific attributes that will be set if this resource is deployed in Azure",
+			Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+				"size": {
+					Type:          types.StringType,
+					Description:   fmt.Sprintf("The size to use for the instance."),
+					Optional:      true,
+					PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure"), resource.UseStateForUnknown()},
+					Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+				},
+			}),
+			Optional:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
+		},
+		"gcp_overrides": {
+			Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+			Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+				"project": {
+					Type:          types.StringType,
+					Description:   fmt.Sprintf("The project to use for this resource."),
+					Optional:      true,
+					Computed:      true,
+					PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
+					Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+				},
+			}),
+			Optional: true,
+			Computed: true,
+		},
+		"cloud":    common.CloudsSchema,
+		"location": common.LocationSchema,
+
+		"public_ip": {
+			Type:        types.StringType,
+			Description: "Public IP of Virtual Machine",
+			Computed:    true,
+		},
+		"identity": {
+			Type:        types.StringType,
+			Description: "Identity of Virtual Machine",
+			Computed:    true,
+		},
+		"resource_status": common.ResourceStatusSchema,
+	},
 }
 
-func (r ResourceVirtualMachineType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceVirtualMachineType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
 	return MultyResource[VirtualMachine]{
 		p:          *(p.(*Provider)),
 		createFunc: createVirtualMachine,
 		updateFunc: updateVirtualMachine,
 		readFunc:   readVirtualMachine,
 		deleteFunc: deleteVirtualMachine,
-	}, nil
+		name:       "multy_virtual_machine",
+		schema:     virtualMachineSchema,
+	}
 }
 
 func createVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) (VirtualMachine, error) {
-	pIpId := !plan.PublicIpId.IsNull() && !plan.PublicIpId.IsUnknown() && plan.PublicIpId.Value != ""
-	pIp := !plan.GeneratePublicIp.IsNull() && !plan.GeneratePublicIp.IsUnknown() && plan.GeneratePublicIp.Value
+	pIpId := !plan.PublicIpId.IsNull() && !plan.PublicIpId.IsUnknown() && plan.PublicIpId.ValueString() != ""
+	pIp := !plan.GeneratePublicIp.IsNull() && !plan.GeneratePublicIp.IsUnknown() && plan.GeneratePublicIp.ValueBool()
 	// fixme check isnt working
 	if pIpId && pIp {
 		return VirtualMachine{}, fmt.Errorf("cannot set both public_ip and public_ip_id")
@@ -210,8 +209,8 @@ func createVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) 
 }
 
 func updateVirtualMachine(ctx context.Context, p Provider, plan VirtualMachine) (VirtualMachine, error) {
-	pIpId := !plan.PublicIpId.IsNull() && !plan.PublicIpId.IsUnknown() && plan.PublicIpId.Value != ""
-	pIp := !plan.GeneratePublicIp.IsNull() && !plan.GeneratePublicIp.IsUnknown() && plan.GeneratePublicIp.Value
+	pIpId := !plan.PublicIpId.IsNull() && !plan.PublicIpId.IsUnknown() && plan.PublicIpId.ValueString() != ""
+	pIp := !plan.GeneratePublicIp.IsNull() && !plan.GeneratePublicIp.IsUnknown() && plan.GeneratePublicIp.ValueBool()
 	// fixme check isnt working
 	if pIpId && pIp {
 		return VirtualMachine{}, fmt.Errorf("cannot set both public_ip and public_ip_id")
@@ -248,24 +247,24 @@ func deleteVirtualMachine(ctx context.Context, p Provider, state VirtualMachine)
 
 func convertToVirtualMachine(res *resourcespb.VirtualMachineResource) VirtualMachine {
 	return VirtualMachine{
-		Id:                      types.String{Value: res.CommonParameters.ResourceId},
-		ResourceGroupId:         types.String{Value: res.CommonParameters.ResourceGroupId},
-		Name:                    types.String{Value: res.Name},
+		Id:                      types.StringValue(res.CommonParameters.ResourceId),
+		ResourceGroupId:         types.StringValue(res.CommonParameters.ResourceGroupId),
+		Name:                    types.StringValue(res.Name),
 		Size:                    mtypes.VmSizeType.NewVal(res.VmSize),
-		SubnetId:                types.String{Value: res.SubnetId},
+		SubnetId:                types.StringValue(res.SubnetId),
 		NetworkInterfaceIds:     common.DefaultSliceToNull(common.TypesStringToStringSlice(res.NetworkInterfaceIds)),
 		NetworkSecurityGroupIds: common.DefaultSliceToNull(common.TypesStringToStringSlice(res.NetworkSecurityGroupIds)),
 		UserDataBase64:          common.DefaultToNull[types.String](res.UserDataBase64),
 		PublicSshKey:            common.DefaultToNull[types.String](res.PublicSshKey),
 		PublicIpId:              common.DefaultToNull[types.String](res.PublicIpId),
-		GeneratePublicIp:        types.Bool{Value: res.GeneratePublicIp},
-		PublicIp:                types.String{Value: res.PublicIp},
-		Identity:                types.String{Value: res.IdentityId},
+		GeneratePublicIp:        types.BoolValue(res.GeneratePublicIp),
+		PublicIp:                types.StringValue(res.PublicIp),
+		Identity:                types.StringValue(res.IdentityId),
 		ImageReference: &ImageReference{
 			OS:      mtypes.ImageOsDistroType.NewVal(res.ImageReference.Os),
-			Version: types.String{Value: res.ImageReference.Version},
+			Version: types.StringValue(res.ImageReference.Version),
 		},
-		AvailabilityZone:   types.Int64{Value: int64(res.AvailabilityZone)},
+		AvailabilityZone:   types.Int64Value(int64(res.AvailabilityZone)),
 		AwsOverrides:       convertToVirtualMachineAwsOverrides(res.AwsOverride),
 		AzureOverrides:     convertToVirtualMachineAzureOverrides(res.AzureOverride),
 		GcpOverridesObject: convertToVirtualMachineGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
@@ -280,18 +279,18 @@ func convertFromVirtualMachine(plan VirtualMachine) *resourcespb.VirtualMachineA
 		CommonParameters: &commonpb.ResourceCommonArgs{
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
-			ResourceGroupId: plan.ResourceGroupId.Value,
+			ResourceGroupId: plan.ResourceGroupId.ValueString(),
 		},
-		Name:                    plan.Name.Value,
+		Name:                    plan.Name.ValueString(),
 		NetworkInterfaceIds:     common.StringSliceToTypesString(plan.NetworkInterfaceIds),
 		NetworkSecurityGroupIds: common.StringSliceToTypesString(plan.NetworkSecurityGroupIds),
 		VmSize:                  plan.Size.Value,
-		UserDataBase64:          plan.UserDataBase64.Value,
-		SubnetId:                plan.SubnetId.Value,
-		PublicSshKey:            plan.PublicSshKey.Value,
-		PublicIpId:              plan.PublicIpId.Value,
-		GeneratePublicIp:        plan.GeneratePublicIp.Value,
-		AvailabilityZone:        int32(plan.AvailabilityZone.Value),
+		UserDataBase64:          plan.UserDataBase64.ValueString(),
+		SubnetId:                plan.SubnetId.ValueString(),
+		PublicSshKey:            plan.PublicSshKey.ValueString(),
+		PublicIpId:              plan.PublicIpId.ValueString(),
+		GeneratePublicIp:        plan.GeneratePublicIp.ValueBool(),
+		AvailabilityZone:        int32(plan.AvailabilityZone.ValueInt64()),
 		ImageReference:          convertFromImageRef(plan.ImageReference),
 		AwsOverride:             convertFromVirtualMachineAwsOverrides(plan.AwsOverrides),
 		AzureOverride:           convertFromVirtualMachineAzureOverrides(plan.AzureOverrides),
@@ -306,7 +305,7 @@ func convertFromImageRef(ref *ImageReference) *resourcespb.ImageReference {
 
 	return &resourcespb.ImageReference{
 		Os:      ref.OS.Value,
-		Version: ref.Version.Value,
+		Version: ref.Version.ValueString(),
 	}
 }
 
@@ -316,7 +315,7 @@ func convertFromVirtualMachineAwsOverrides(ref *VirtualMachineAwsOverrides) *res
 	}
 
 	return &resourcespb.VirtualMachineAwsOverride{
-		InstanceType: ref.InstanceType.Value,
+		InstanceType: ref.InstanceType.ValueString(),
 	}
 }
 
@@ -333,7 +332,7 @@ func convertFromVirtualMachineAzureOverrides(ref *VirtualMachineAzureOverrides) 
 	}
 
 	return &resourcespb.VirtualMachineAzureOverride{
-		Size: ref.Size.Value,
+		Size: ref.Size.ValueString(),
 	}
 }
 
@@ -387,7 +386,7 @@ func convertFromVirtualMachineGcpOverrides(ref *VirtualMachineGcpOverrides) *res
 		return nil
 	}
 
-	return &resourcespb.VirtualMachineGcpOverride{Project: ref.Project.Value}
+	return &resourcespb.VirtualMachineGcpOverride{Project: ref.Project.ValueString()}
 }
 
 func convertToVirtualMachineGcpOverrides(ref *resourcespb.VirtualMachineGcpOverride) *VirtualMachineGcpOverrides {
@@ -403,28 +402,19 @@ func (v VirtualMachine) GetGcpOverrides() (o *VirtualMachineGcpOverrides) {
 		return
 	}
 	o = &VirtualMachineGcpOverrides{
-		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+		Project: v.GcpOverridesObject.Attributes()["project"].(types.String),
 	}
 	return
 }
 
 func (o *VirtualMachineGcpOverrides) GcpOverridesToObj() types.Object {
-	result := types.Object{
-		Unknown: false,
-		Null:    false,
-		AttrTypes: map[string]attr.Type{
-			"project": types.StringType,
-		},
-		Attrs: map[string]attr.Value{
-			"project": types.String{Null: true},
-		},
+	attrTypes := map[string]attr.Type{
+		"project": types.StringType,
 	}
-	if o != nil {
-		result.Attrs = map[string]attr.Value{
-			"project": o.Project,
-		}
+	if o == nil {
+		return types.ObjectNull(attrTypes)
 	}
-
+	result, _ := types.ObjectValue(attrTypes, map[string]attr.Value{"project": o.Project})
 	return result
 }
 
@@ -443,11 +433,7 @@ func (v VirtualMachine) UpdatePlan(_ context.Context, config VirtualMachine, p P
 			gcpOverrides = &VirtualMachineGcpOverrides{}
 		}
 
-		gcpOverrides.Project = types.String{
-			Unknown: false,
-			Null:    false,
-			Value:   p.Client.Gcp.Project,
-		}
+		gcpOverrides.Project = types.StringValue(p.Client.Gcp.Project)
 
 		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
 		requiresReplace = append(requiresReplace, path.Root("gcp_overrides").AtName("project"))

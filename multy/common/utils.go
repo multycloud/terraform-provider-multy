@@ -1,7 +1,7 @@
 package common
 
 import (
-	"context"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/errorspb"
@@ -120,9 +120,15 @@ func DefaultSliceToNull[T attr.Value](t []T) []T {
 	return t
 }
 
-func OptionallyObj[A any](obj *A, transformed types.Object) types.Object {
+func OptionallyObj[A any](obj *A, attributeTypes map[string]attr.Type, attributes map[string]attr.Value) types.Object {
 	if obj == nil {
-		return types.ObjectNull(transformed.AttributeTypes(context.Background()))
+		return types.ObjectNull(attributeTypes)
 	}
-	return transformed
+
+	o, diags := types.ObjectValue(attributeTypes, attributes)
+	if diags.HasError() {
+		panic(fmt.Sprintf("unexpected error found, %+v", diags.Errors()))
+	}
+
+	return o
 }

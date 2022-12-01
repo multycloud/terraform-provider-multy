@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -29,21 +28,6 @@ var kubernetesNodePoolAzureOutputs = map[string]attr.Type{
 
 var kubernetesNodePoolGcpOutputs = map[string]attr.Type{
 	"gke_node_pool_id": types.StringType,
-}
-
-func (r ResourceKubernetesNodePoolType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	attrs := getKubernetesNodePoolAttrs()
-	attrs["cluster_id"] =
-		tfsdk.Attribute{
-			Type:          types.StringType,
-			Description:   "Id of the multy kubernetes cluster",
-			Required:      true,
-			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-		}
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Object Storage Object resource",
-		Attributes:          attrs,
-	}, nil
 }
 
 func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
@@ -161,14 +145,28 @@ func getKubernetesNodePoolAttrs() map[string]tfsdk.Attribute {
 	}
 }
 
-func (r ResourceKubernetesNodePoolType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceKubernetesNodePoolType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
+	attrs := getKubernetesNodePoolAttrs()
+	attrs["cluster_id"] =
+		tfsdk.Attribute{
+			Type:          types.StringType,
+			Description:   "Id of the multy kubernetes cluster",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		}
+
 	return MultyResource[KubernetesNodePool]{
 		p:          *(p.(*Provider)),
 		createFunc: createKubernetesNodePool,
 		updateFunc: updateKubernetesNodePool,
 		readFunc:   readKubernetesNodePool,
 		deleteFunc: deleteKubernetesNodePool,
-	}, nil
+		name:       "multy_kubernetes_node_pool",
+		schema: tfsdk.Schema{
+			MarkdownDescription: "Provides Multy Object Storage Object resource",
+			Attributes:          attrs,
+		},
+	}
 }
 
 func createKubernetesNodePool(ctx context.Context, p Provider, plan KubernetesNodePool) (KubernetesNodePool, error) {
@@ -231,37 +229,28 @@ type KubernetesNodePool struct {
 
 func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) KubernetesNodePool {
 	return KubernetesNodePool{
-		Id:                types.String{Value: res.CommonParameters.ResourceId},
-		ClusterId:         types.String{Value: res.ClusterId},
-		Name:              types.String{Value: res.Name},
+		Id:                types.StringValue(res.CommonParameters.ResourceId),
+		ClusterId:         types.StringValue(res.ClusterId),
+		Name:              types.StringValue(res.Name),
 		VmSize:            mtypes.VmSizeType.NewVal(res.VmSize),
-		SubnetId:          types.String{Value: res.SubnetId},
+		SubnetId:          types.StringValue(res.SubnetId),
 		StartingNodeCount: common.DefaultToNull[types.Int64](int64(res.StartingNodeCount)),
-		MinNodeCount:      types.Int64{Value: int64(res.MinNodeCount)},
-		MaxNodeCount:      types.Int64{Value: int64(res.MaxNodeCount)},
-		DiskSizeGb:        types.Int64{Value: res.DiskSizeGb},
+		MinNodeCount:      types.Int64Value(int64(res.MinNodeCount)),
+		MaxNodeCount:      types.Int64Value(int64(res.MaxNodeCount)),
+		DiskSizeGb:        types.Int64Value(res.DiskSizeGb),
 		Labels:            common.GoMapToMapType(res.Labels),
 		AvailabilityZones: common.GoIntToTfInt(res.AvailabilityZone),
 		AwsOverrides:      convertToKubernetesNodePoolAwsOverrides(res.AwsOverride),
 		AzureOverrides:    convertToKubernetesNodePoolAzureOverrides(res.AzureOverride),
-		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"eks_node_pool_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetEksNodePoolId()),
-				"iam_role_arn":     common.DefaultToNull[types.String](res.GetAwsOutputs().GetIamRoleArn()),
-			},
-			AttrTypes: kubernetesNodePoolAwsOutputs,
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, kubernetesNodePoolAwsOutputs, map[string]attr.Value{
+			"eks_node_pool_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetEksNodePoolId()),
+			"iam_role_arn":     common.DefaultToNull[types.String](res.GetAwsOutputs().GetIamRoleArn()),
 		}),
-		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"aks_node_pool_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetAksNodePoolId()),
-			},
-			AttrTypes: kubernetesNodePoolAzureOutputs,
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, kubernetesNodePoolAzureOutputs, map[string]attr.Value{
+			"aks_node_pool_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetAksNodePoolId()),
 		}),
-		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"gke_node_pool_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetGkeNodePoolId()),
-			},
-			AttrTypes: kubernetesNodePoolGcpOutputs,
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, kubernetesNodePoolGcpOutputs, map[string]attr.Value{
+			"gke_node_pool_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetGkeNodePoolId()),
 		}),
 		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
@@ -270,17 +259,17 @@ func convertToKubernetesNodePool(res *resourcespb.KubernetesNodePoolResource) Ku
 func convertFromKubernetesNodePool(plan KubernetesNodePool) *resourcespb.KubernetesNodePoolArgs {
 	var clusterId string
 	if !plan.ClusterId.IsUnknown() {
-		clusterId = plan.ClusterId.Value
+		clusterId = plan.ClusterId.ValueString()
 	}
 	return &resourcespb.KubernetesNodePoolArgs{
-		Name:              plan.Name.Value,
-		SubnetId:          plan.SubnetId.Value,
+		Name:              plan.Name.ValueString(),
+		SubnetId:          plan.SubnetId.ValueString(),
 		ClusterId:         clusterId,
-		StartingNodeCount: int32(plan.StartingNodeCount.Value),
-		MinNodeCount:      int32(plan.MinNodeCount.Value),
-		MaxNodeCount:      int32(plan.MaxNodeCount.Value),
+		StartingNodeCount: int32(plan.StartingNodeCount.ValueInt64()),
+		MinNodeCount:      int32(plan.MinNodeCount.ValueInt64()),
+		MaxNodeCount:      int32(plan.MaxNodeCount.ValueInt64()),
 		VmSize:            plan.VmSize.Value,
-		DiskSizeGb:        plan.DiskSizeGb.Value,
+		DiskSizeGb:        plan.DiskSizeGb.ValueInt64(),
 		AwsOverride:       convertFromKubernetesNodePoolAwsOverrides(plan.AwsOverrides),
 		AzureOverride:     convertFromKubernetesNodePoolAzureOverrides(plan.AzureOverrides),
 		Labels:            common.MapTypeToGoMap(plan.Labels),
@@ -318,7 +307,7 @@ func convertFromKubernetesNodePoolAzureOverrides(ref *KubernetesNodePoolAzureOve
 	}
 
 	return &resourcespb.KubernetesNodePoolAzureOverride{
-		VmSize: ref.VmSize.Value,
+		VmSize: ref.VmSize.ValueString(),
 	}
 }
 

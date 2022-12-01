@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -32,106 +31,106 @@ var kubernetesClusterGcpOutputs = map[string]attr.Type{
 	"service_account_email": types.StringType,
 }
 
-func (r ResourceKubernetesClusterType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Kubernetes Cluster resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"resource_group_id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"name": {
-				Type:          types.StringType,
-				Description:   "Name of the cluster",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"virtual_network_id": {
-				Type:          types.StringType,
-				Description:   "Virtual network where cluster and associated node pools should be in.",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"service_cidr": {
-				Type:          types.StringType,
-				Description:   "CIDR block for service nodes.",
-				Computed:      true,
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"default_node_pool": {
-				Attributes:  tfsdk.SingleNestedAttributes(getKubernetesNodePoolAttrs()),
-				Description: "Default node pool to associate with this cluster.",
-				Required:    true,
-			},
-			"endpoint": {
-				Type:        types.StringType,
-				Description: "Endpoint of the kubernetes cluster.",
-				Computed:    true,
-			},
-			"ca_certificate": {
-				Type:        types.StringType,
-				Description: "Base64 encoded certificate data required to communicate with your cluster.",
-				Computed:    true,
-				Sensitive:   true,
-			},
-			"kube_config_raw": {
-				Type:        types.StringType,
-				Description: "Raw Kubernetes config to be used by kubectl and other compatible tools.",
-				Computed:    true,
-				Sensitive:   true,
-			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
-			"gcp_overrides": {
-				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"project": {
-						Type:          types.StringType,
-						Description:   fmt.Sprintf("The project to use for this resource."),
-						Optional:      true,
-						Computed:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
-						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
-					},
-				}),
-				Optional: true,
-				Computed: true,
-			},
-			"aws": {
-				Description: "AWS-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: kubernetesClusterAwsOutputs},
-				Computed:    true,
-			},
-			"azure": {
-				Description: "Azure-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: kubernetesClusterAzureOutputs},
-				Computed:    true,
-			},
-			"gcp": {
-				Description: "GCP-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: kubernetesClusterGcpOutputs},
-				Computed:    true,
-			},
-			"resource_status": common.ResourceStatusSchema,
+var kubernetesClusterSchema = tfsdk.Schema{
+	MarkdownDescription: "Provides Multy Kubernetes Cluster resource",
+	Attributes: map[string]tfsdk.Attribute{
+		"id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
-	}, nil
+		"resource_group_id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
+		},
+		"name": {
+			Type:          types.StringType,
+			Description:   "Name of the cluster",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"virtual_network_id": {
+			Type:          types.StringType,
+			Description:   "Virtual network where cluster and associated node pools should be in.",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"service_cidr": {
+			Type:          types.StringType,
+			Description:   "CIDR block for service nodes.",
+			Computed:      true,
+			Optional:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"default_node_pool": {
+			Attributes:  tfsdk.SingleNestedAttributes(getKubernetesNodePoolAttrs()),
+			Description: "Default node pool to associate with this cluster.",
+			Required:    true,
+		},
+		"endpoint": {
+			Type:        types.StringType,
+			Description: "Endpoint of the kubernetes cluster.",
+			Computed:    true,
+		},
+		"ca_certificate": {
+			Type:        types.StringType,
+			Description: "Base64 encoded certificate data required to communicate with your cluster.",
+			Computed:    true,
+			Sensitive:   true,
+		},
+		"kube_config_raw": {
+			Type:        types.StringType,
+			Description: "Raw Kubernetes config to be used by kubectl and other compatible tools.",
+			Computed:    true,
+			Sensitive:   true,
+		},
+		"cloud":    common.CloudsSchema,
+		"location": common.LocationSchema,
+		"gcp_overrides": {
+			Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+			Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+				"project": {
+					Type:          types.StringType,
+					Description:   fmt.Sprintf("The project to use for this resource."),
+					Optional:      true,
+					Computed:      true,
+					PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
+					Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+				},
+			}),
+			Optional: true,
+			Computed: true,
+		},
+		"aws": {
+			Description: "AWS-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: kubernetesClusterAwsOutputs},
+			Computed:    true,
+		},
+		"azure": {
+			Description: "Azure-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: kubernetesClusterAzureOutputs},
+			Computed:    true,
+		},
+		"gcp": {
+			Description: "GCP-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: kubernetesClusterGcpOutputs},
+			Computed:    true,
+		},
+		"resource_status": common.ResourceStatusSchema,
+	},
 }
 
-func (r ResourceKubernetesClusterType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceKubernetesClusterType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
 	return MultyResource[KubernetesCluster]{
 		p:          *(p.(*Provider)),
 		createFunc: createKubernetesCluster,
 		updateFunc: updateKubernetesCluster,
 		readFunc:   readKubernetesCluster,
 		deleteFunc: deleteKubernetesCluster,
-	}, nil
+		name:       "multy_kubernetes_cluster",
+		schema:     kubernetesClusterSchema,
+	}
 }
 
 func createKubernetesCluster(ctx context.Context, p Provider, plan KubernetesCluster) (KubernetesCluster, error) {
@@ -197,37 +196,28 @@ type KubernetesCluster struct {
 
 func convertToKubernetesCluster(res *resourcespb.KubernetesClusterResource) KubernetesCluster {
 	return KubernetesCluster{
-		Id:                 types.String{Value: res.CommonParameters.ResourceId},
-		Name:               types.String{Value: res.Name},
-		VirtualNetworkId:   types.String{Value: res.VirtualNetworkId},
-		ServiceCidr:        types.String{Value: res.ServiceCidr},
+		Id:                 types.StringValue(res.CommonParameters.ResourceId),
+		Name:               types.StringValue(res.Name),
+		VirtualNetworkId:   types.StringValue(res.VirtualNetworkId),
+		ServiceCidr:        types.StringValue(res.ServiceCidr),
 		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
+		ResourceGroupId:    types.StringValue(res.CommonParameters.ResourceGroupId),
 		DefaultNodePool:    convertToKubernetesNodePool(res.GetDefaultNodePool()),
 		GcpOverridesObject: convertToKubernetesClusterGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
-		Endpoint:           types.String{Value: res.Endpoint},
-		CaCertificate:      types.String{Value: res.CaCertificate},
-		KubeConfigRaw:      types.String{Value: res.KubeConfigRaw},
-		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"eks_cluster_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetEksClusterId()),
-				"iam_role_arn":   common.DefaultToNull[types.String](res.GetAwsOutputs().GetIamRoleArn()),
-			},
-			AttrTypes: kubernetesClusterAwsOutputs,
+		Endpoint:           types.StringValue(res.Endpoint),
+		CaCertificate:      types.StringValue(res.CaCertificate),
+		KubeConfigRaw:      types.StringValue(res.KubeConfigRaw),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, kubernetesClusterAwsOutputs, map[string]attr.Value{
+			"eks_cluster_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetEksClusterId()),
+			"iam_role_arn":   common.DefaultToNull[types.String](res.GetAwsOutputs().GetIamRoleArn()),
 		}),
-		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"aks_cluster_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetAksClusterId()),
-			},
-			AttrTypes: kubernetesClusterAzureOutputs,
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, kubernetesClusterAzureOutputs, map[string]attr.Value{
+			"aks_cluster_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetAksClusterId()),
 		}),
-		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"gke_cluster_id":        common.DefaultToNull[types.String](res.GetGcpOutputs().GetGkeClusterId()),
-				"service_account_email": common.DefaultToNull[types.String](res.GetGcpOutputs().GetServiceAccountEmail()),
-			},
-			AttrTypes: kubernetesClusterGcpOutputs,
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, kubernetesClusterGcpOutputs, map[string]attr.Value{
+			"gke_cluster_id":        common.DefaultToNull[types.String](res.GetGcpOutputs().GetGkeClusterId()),
+			"service_account_email": common.DefaultToNull[types.String](res.GetGcpOutputs().GetServiceAccountEmail()),
 		}),
 		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
@@ -238,11 +228,11 @@ func convertFromKubernetesCluster(plan KubernetesCluster) *resourcespb.Kubernete
 		CommonParameters: &commonpb.ResourceCommonArgs{
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
-			ResourceGroupId: plan.ResourceGroupId.Value,
+			ResourceGroupId: plan.ResourceGroupId.ValueString(),
 		},
-		Name:             plan.Name.Value,
-		VirtualNetworkId: plan.VirtualNetworkId.Value,
-		ServiceCidr:      plan.ServiceCidr.Value,
+		Name:             plan.Name.ValueString(),
+		VirtualNetworkId: plan.VirtualNetworkId.ValueString(),
+		ServiceCidr:      plan.ServiceCidr.ValueString(),
 		DefaultNodePool:  convertFromKubernetesNodePool(plan.DefaultNodePool),
 		GcpOverride:      convertFromKubernetesClusterGcpOverrides(plan.GetGcpOverrides()),
 	}
@@ -259,11 +249,7 @@ func (v KubernetesCluster) UpdatePlan(_ context.Context, config KubernetesCluste
 			gcpOverrides = &KubernetesClusterGcpOverrides{}
 		}
 
-		gcpOverrides.Project = types.String{
-			Unknown: false,
-			Null:    false,
-			Value:   p.Client.Gcp.Project,
-		}
+		gcpOverrides.Project = types.StringValue(p.Client.Gcp.Project)
 
 		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
 		requiresReplace = append(requiresReplace, path.Root("gcp_overrides").AtName("project"))
@@ -276,28 +262,19 @@ func (v KubernetesCluster) GetGcpOverrides() (o *KubernetesClusterGcpOverrides) 
 		return
 	}
 	o = &KubernetesClusterGcpOverrides{
-		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+		Project: v.GcpOverridesObject.Attributes()["project"].(types.String),
 	}
 	return
 }
 
 func (o *KubernetesClusterGcpOverrides) GcpOverridesToObj() types.Object {
-	result := types.Object{
-		Unknown: false,
-		Null:    false,
-		AttrTypes: map[string]attr.Type{
-			"project": types.StringType,
-		},
-		Attrs: map[string]attr.Value{
-			"project": types.String{Null: true},
-		},
+	attrTypes := map[string]attr.Type{
+		"project": types.StringType,
 	}
-	if o != nil {
-		result.Attrs = map[string]attr.Value{
-			"project": o.Project,
-		}
+	if o == nil {
+		return types.ObjectNull(attrTypes)
 	}
-
+	result, _ := types.ObjectValue(attrTypes, map[string]attr.Value{"project": o.Project})
 	return result
 }
 
@@ -310,7 +287,7 @@ func convertFromKubernetesClusterGcpOverrides(ref *KubernetesClusterGcpOverrides
 		return nil
 	}
 
-	return &resourcespb.KubernetesClusterOverrides{Project: ref.Project.Value}
+	return &resourcespb.KubernetesClusterOverrides{Project: ref.Project.ValueString()}
 }
 
 func convertToKubernetesClusterGcpOverrides(ref *resourcespb.KubernetesClusterOverrides) *KubernetesClusterGcpOverrides {

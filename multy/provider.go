@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/mitchellh/go-homedir"
 	"google.golang.org/grpc/credentials"
 	"io/ioutil"
@@ -299,33 +301,33 @@ func (p *Provider) getConnToServer(config providerData, resp *provider.Configure
 	return client
 }
 
-func (p *Provider) GetResources(_ context.Context) (map[string]provider.ResourceType, diag.Diagnostics) {
-	return map[string]provider.ResourceType{
-		"multy_virtual_network":                              ResourceVirtualNetworkType{},
-		"multy_subnet":                                       ResourceSubnetType{},
-		"multy_virtual_machine":                              ResourceVirtualMachineType{},
-		"multy_network_security_group":                       ResourceNetworkSecurityGroupType{},
-		"multy_network_interface":                            ResourceNetworkInterfaceType{},
-		"multy_network_interface_security_group_association": ResourceNetworkInterfaceSecurityGroupAssociationType{},
-		"multy_public_ip":                                    ResourcePublicIpType{},
-		"multy_route_table":                                  ResourceRouteTableType{},
-		"multy_route_table_association":                      ResourceRouteTableAssociationType{},
-		"multy_object_storage_object":                        ResourceObjectStorageObjectType{},
-		"multy_object_storage":                               ResourceObjectStorageType{},
-		"multy_database":                                     ResourceDatabaseType{},
-		"multy_vault":                                        ResourceVaultType{},
-		"multy_vault_secret":                                 ResourceVaultSecretType{},
-		"multy_vault_access_policy":                          ResourceVaultAccessPolicyType{},
-		"multy_kubernetes_cluster":                           ResourceKubernetesClusterType{},
-		"multy_kubernetes_node_pool":                         ResourceKubernetesNodePoolType{},
-	}, nil
+func (p *Provider) Resources(ctx context.Context) []func() resource.Resource {
+	return []func() resource.Resource{
+		func() resource.Resource { return ResourceDatabaseType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceKubernetesClusterType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceKubernetesNodePoolType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceNetworkInterfaceType{}.NewResource(ctx, p) },
+		func() resource.Resource {
+			return ResourceNetworkInterfaceSecurityGroupAssociationType{}.NewResource(ctx, p)
+		},
+		func() resource.Resource { return ResourceNetworkSecurityGroupType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceObjectStorageType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceObjectStorageObjectType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourcePublicIpType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceRouteTableType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceRouteTableAssociationType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceSubnetType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceVaultType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceVaultAccessPolicyType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceVaultSecretType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceVirtualMachineType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceVirtualNetworkType{}.NewResource(ctx, p) },
+	}
 }
 
 // GetDataSources - Defines Provider data sources
-func (p *Provider) GetDataSources(_ context.Context) (map[string]provider.DataSourceType, diag.Diagnostics) {
-	return map[string]provider.DataSourceType{
-		//"multy_virtual_network": data.DataVirtualNetwork(),
-	}, nil
+func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource {
+	return nil
 }
 
 func (p *Provider) validateAwsConfig(ctx context.Context, config *providerAwsConfig) (*common.AwsConfig, error) {

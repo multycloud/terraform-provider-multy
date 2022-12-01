@@ -3,7 +3,6 @@ package multy
 import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -29,80 +28,80 @@ var objectStorageObjectGcpOutputs = map[string]attr.Type{
 	"storage_object_access_control": types.StringType,
 }
 
-func (r ResourceObjectStorageObjectType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Object Storage Object resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"name": {
-				Type:          types.StringType,
-				Description:   "Name of object storage object",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"object_storage_id": {
-				Type:          types.StringType,
-				Description:   "Id of object storage",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"content_base64": {
-				Type:        types.StringType,
-				Description: "Content of the object",
-				Required:    true,
-				Validators:  []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
-			},
-			"content_type": {
-				Type:        types.StringType,
-				Description: "Standard MIME type describing the format of the object data",
-				Optional:    true,
-				Validators:  []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
-			},
-			"acl": {
-				Type:        mtypes.ObjectAclType,
-				Description: "Access control for the given object. Can be public_read or private. Defaults to private.",
-				Optional:    true,
-				Computed:    true,
-				Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.ObjectAclType)},
-			},
-			// outputs
-			"url": {
-				Type:        types.StringType,
-				Description: "URL of object",
-				Computed:    true,
-			},
-			"aws": {
-				Description: "AWS-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: objectStorageObjectAwsOutputs},
-				Computed:    true,
-			},
-			"azure": {
-				Description: "Azure-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: objectStorageObjectAzureOutputs},
-				Computed:    true,
-			},
-			"gcp": {
-				Description: "GCP-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: objectStorageObjectGcpOutputs},
-				Computed:    true,
-			},
-			"resource_status": common.ResourceStatusSchema,
+var objectStorageObjectSchema = tfsdk.Schema{
+	MarkdownDescription: "Provides Multy Object Storage Object resource",
+	Attributes: map[string]tfsdk.Attribute{
+		"id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
-	}, nil
+		"name": {
+			Type:          types.StringType,
+			Description:   "Name of object storage object",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"object_storage_id": {
+			Type:          types.StringType,
+			Description:   "Id of object storage",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"content_base64": {
+			Type:        types.StringType,
+			Description: "Content of the object",
+			Required:    true,
+			Validators:  []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+		},
+		"content_type": {
+			Type:        types.StringType,
+			Description: "Standard MIME type describing the format of the object data",
+			Optional:    true,
+			Validators:  []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+		},
+		"acl": {
+			Type:        mtypes.ObjectAclType,
+			Description: "Access control for the given object. Can be public_read or private. Defaults to private.",
+			Optional:    true,
+			Computed:    true,
+			Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.ObjectAclType)},
+		},
+		// outputs
+		"url": {
+			Type:        types.StringType,
+			Description: "URL of object",
+			Computed:    true,
+		},
+		"aws": {
+			Description: "AWS-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: objectStorageObjectAwsOutputs},
+			Computed:    true,
+		},
+		"azure": {
+			Description: "Azure-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: objectStorageObjectAzureOutputs},
+			Computed:    true,
+		},
+		"gcp": {
+			Description: "GCP-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: objectStorageObjectGcpOutputs},
+			Computed:    true,
+		},
+		"resource_status": common.ResourceStatusSchema,
+	},
 }
 
-func (r ResourceObjectStorageObjectType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceObjectStorageObjectType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
 	return MultyResource[ObjectStorageObject]{
 		p:          *(p.(*Provider)),
 		createFunc: createObjectStorageObject,
 		updateFunc: updateObjectStorageObject,
 		readFunc:   readObjectStorageObject,
 		deleteFunc: deleteObjectStorageObject,
-	}, nil
+		name:       "multy_object_storage_object",
+		schema:     objectStorageObjectSchema,
+	}
 }
 
 func createObjectStorageObject(ctx context.Context, p Provider, plan ObjectStorageObject) (ObjectStorageObject, error) {
@@ -159,31 +158,22 @@ type ObjectStorageObject struct {
 
 func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) ObjectStorageObject {
 	return ObjectStorageObject{
-		Id:              types.String{Value: res.CommonParameters.ResourceId},
-		Name:            types.String{Value: res.Name},
+		Id:              types.StringValue(res.CommonParameters.ResourceId),
+		Name:            types.StringValue(res.Name),
 		Acl:             mtypes.ObjectAclType.NewVal(res.Acl),
-		ObjectStorageId: types.String{Value: res.ObjectStorageId},
+		ObjectStorageId: types.StringValue(res.ObjectStorageId),
 		ContentBase64:   common.DefaultToNull[types.String](res.ContentBase64),
 		ContentType:     common.DefaultToNull[types.String](res.ContentType),
-		Url:             types.String{Value: res.Url},
-		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"s3_bucket_object_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetS3BucketObjectId()),
-			},
-			AttrTypes: objectStorageObjectAwsOutputs,
+		Url:             types.StringValue(res.Url),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, objectStorageObjectAwsOutputs, map[string]attr.Value{
+			"s3_bucket_object_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetS3BucketObjectId()),
 		}),
-		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"storage_blob_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetStorageBlobId()),
-			},
-			AttrTypes: objectStorageObjectAzureOutputs,
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, objectStorageObjectAzureOutputs, map[string]attr.Value{
+			"storage_blob_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetStorageBlobId()),
 		}),
-		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"storage_bucket_object_id":      common.DefaultToNull[types.String](res.GetGcpOutputs().GetStorageBucketObjectId()),
-				"storage_object_access_control": common.DefaultToNull[types.String](res.GetGcpOutputs().GetStorageObjectAccessControl()),
-			},
-			AttrTypes: objectStorageObjectGcpOutputs,
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, objectStorageObjectGcpOutputs, map[string]attr.Value{
+			"storage_bucket_object_id":      common.DefaultToNull[types.String](res.GetGcpOutputs().GetStorageBucketObjectId()),
+			"storage_object_access_control": common.DefaultToNull[types.String](res.GetGcpOutputs().GetStorageObjectAccessControl()),
 		}),
 		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
@@ -191,10 +181,10 @@ func convertToObjectStorageObject(res *resourcespb.ObjectStorageObjectResource) 
 
 func convertFromObjectStorageObject(plan ObjectStorageObject) *resourcespb.ObjectStorageObjectArgs {
 	return &resourcespb.ObjectStorageObjectArgs{
-		Name:            plan.Name.Value,
+		Name:            plan.Name.ValueString(),
 		Acl:             plan.Acl.Value,
-		ObjectStorageId: plan.ObjectStorageId.Value,
-		ContentBase64:   plan.ContentBase64.Value,
-		ContentType:     common.IsNull()ToDefault[string](plan.ContentType),
+		ObjectStorageId: plan.ObjectStorageId.ValueString(),
+		ContentBase64:   plan.ContentBase64.ValueString(),
+		ContentType:     common.NullToDefault[string](plan.ContentType),
 	}
 }

@@ -94,8 +94,7 @@ func (s EnumValue[T]) ToTerraformValue(_ context.Context) (tftypes.Value, error)
 		return tftypes.NewValue(tftypes.String, nil), nil
 	}
 	if s.IsUnknown() {
-		return tftypes.NewValue(tftypes.String, tftypes.IsUnknown()
-		Value), nil
+		return tftypes.NewValue(tftypes.String, tftypes.UnknownValue), nil
 	}
 	if s.strValue != nil {
 		return tftypes.NewValue(tftypes.String, s.strValue), nil
@@ -105,11 +104,11 @@ func (s EnumValue[T]) ToTerraformValue(_ context.Context) (tftypes.Value, error)
 }
 
 func (s EnumValue[T]) IsNull() bool {
-	return s.IsNull()
+	return s.Null
 }
 
 func (s EnumValue[T]) IsUnknown() bool {
-	return s.IsUnknown()
+	return s.Unknown
 }
 
 func (s EnumValue[T]) String() string {
@@ -204,15 +203,19 @@ func (n EnumType[T]) ValueFromTerraform(_ context.Context, in tftypes.Value) (at
 }
 
 func (n EnumType[T]) Equal(t attr.Type) bool {
-	o, ok := t.(EnumType[T])
+	// TODO: fix this
+	_, ok := t.(EnumType[T])
 	if !ok {
 		return false
 	}
-	return maps.Equal(n.ValueMap, o.ValueMap)
+	//return maps.Equal(n.ValueMap, o.ValueMap)
+
+	return true
 }
 
 func (n EnumType[T]) String() string {
-	return "types.EnumType"
+
+	return fmt.Sprintf("types.EnumType[%v]", maps.Keys(n.ValueMap))
 }
 
 func (n EnumType[T]) ApplyTerraform5AttributePathStep(_ tftypes.AttributePathStep) (interface{}, error) {

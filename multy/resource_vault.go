@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -22,61 +21,61 @@ var vaultAzureOutputs = map[string]attr.Type{
 	"key_vault_id": types.StringType,
 }
 
-func (r ResourceVaultType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Vault resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"resource_group_id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"name": {
-				Type:          types.StringType,
-				Description:   "Name of vault resource",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"gcp_overrides": {
-				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"project": {
-						Type:          types.StringType,
-						Description:   fmt.Sprintf("The project to use for this resource."),
-						Optional:      true,
-						Computed:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
-						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
-					},
-				}),
-				Optional: true,
-				Computed: true,
-			},
-			"azure": {
-				Description: "Azure-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: vaultAzureOutputs},
-				Computed:    true,
-			},
-			"cloud":           common.CloudsSchema,
-			"location":        common.LocationSchema,
-			"resource_status": common.ResourceStatusSchema,
+var vaultSchema = tfsdk.Schema{
+	MarkdownDescription: "Provides Multy Vault resource",
+	Attributes: map[string]tfsdk.Attribute{
+		"id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
-	}, nil
+		"resource_group_id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
+		},
+		"name": {
+			Type:          types.StringType,
+			Description:   "Name of vault resource",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"gcp_overrides": {
+			Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+			Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+				"project": {
+					Type:          types.StringType,
+					Description:   fmt.Sprintf("The project to use for this resource."),
+					Optional:      true,
+					Computed:      true,
+					PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
+					Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+				},
+			}),
+			Optional: true,
+			Computed: true,
+		},
+		"azure": {
+			Description: "Azure-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: vaultAzureOutputs},
+			Computed:    true,
+		},
+		"cloud":           common.CloudsSchema,
+		"location":        common.LocationSchema,
+		"resource_status": common.ResourceStatusSchema,
+	},
 }
 
-func (r ResourceVaultType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceVaultType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
 	return MultyResource[Vault]{
 		p:          *(p.(*Provider)),
 		createFunc: createVault,
 		updateFunc: updateVault,
 		readFunc:   readVault,
 		deleteFunc: deleteVault,
-	}, nil
+		name:       "multy_vault",
+		schema:     vaultSchema,
+	}
 }
 
 func createVault(ctx context.Context, p Provider, plan Vault) (Vault, error) {
@@ -131,17 +130,14 @@ type Vault struct {
 
 func convertToVault(res *resourcespb.VaultResource) Vault {
 	return Vault{
-		Id:                 types.String{Value: res.CommonParameters.ResourceId},
-		Name:               types.String{Value: res.Name},
+		Id:                 types.StringValue(res.CommonParameters.ResourceId),
+		Name:               types.StringValue(res.Name),
 		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
+		ResourceGroupId:    types.StringValue(res.CommonParameters.ResourceGroupId),
 		GcpOverridesObject: convertToVaultGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
-		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"key_vault_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetKeyVaultId()),
-			},
-			AttrTypes: vaultAzureOutputs,
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, vaultAzureOutputs, map[string]attr.Value{
+			"key_vault_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetKeyVaultId()),
 		}),
 		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
@@ -150,11 +146,11 @@ func convertToVault(res *resourcespb.VaultResource) Vault {
 func convertFromVault(plan Vault) *resourcespb.VaultArgs {
 	return &resourcespb.VaultArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			ResourceGroupId: plan.ResourceGroupId.Value,
+			ResourceGroupId: plan.ResourceGroupId.ValueString(),
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
-		Name:        plan.Name.Value,
+		Name:        plan.Name.ValueString(),
 		GcpOverride: convertFromVaultGcpOverrides(plan.GetGcpOverrides()),
 	}
 }
@@ -170,11 +166,7 @@ func (v Vault) UpdatePlan(_ context.Context, config Vault, p Provider) (Vault, [
 			gcpOverrides = &VaultGcpOverrides{}
 		}
 
-		gcpOverrides.Project = types.String{
-			Unknown: false,
-			Null:    false,
-			Value:   p.Client.Gcp.Project,
-		}
+		gcpOverrides.Project = types.StringValue(p.Client.Gcp.Project)
 
 		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
 		requiresReplace = append(requiresReplace, path.Root("gcp_overrides").AtName("project"))
@@ -187,28 +179,19 @@ func (v Vault) GetGcpOverrides() (o *VaultGcpOverrides) {
 		return
 	}
 	o = &VaultGcpOverrides{
-		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+		Project: v.GcpOverridesObject.Attributes()["project"].(types.String),
 	}
 	return
 }
 
 func (o *VaultGcpOverrides) GcpOverridesToObj() types.Object {
-	result := types.Object{
-		Unknown: false,
-		Null:    false,
-		AttrTypes: map[string]attr.Type{
-			"project": types.StringType,
-		},
-		Attrs: map[string]attr.Value{
-			"project": types.String{Null: true},
-		},
+	attrTypes := map[string]attr.Type{
+		"project": types.StringType,
 	}
-	if o != nil {
-		result.Attrs = map[string]attr.Value{
-			"project": o.Project,
-		}
+	if o == nil {
+		return types.ObjectNull(attrTypes)
 	}
-
+	result, _ := types.ObjectValue(attrTypes, map[string]attr.Value{"project": o.Project})
 	return result
 }
 
@@ -221,7 +204,7 @@ func convertFromVaultGcpOverrides(ref *VaultGcpOverrides) *resourcespb.VaultGcpO
 		return nil
 	}
 
-	return &resourcespb.VaultGcpOverride{Project: ref.Project.Value}
+	return &resourcespb.VaultGcpOverride{Project: ref.Project.ValueString()}
 }
 
 func convertToVaultGcpOverrides(ref *resourcespb.VaultGcpOverride) *VaultGcpOverrides {

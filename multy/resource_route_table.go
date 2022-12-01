@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -29,76 +28,76 @@ var routeTableGcpOutputs = map[string]attr.Type{
 	"compute_route_ids": types.ListType{ElemType: types.StringType},
 }
 
-func (r ResourceRouteTableType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Route Table resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"name": {
-				Type:        types.StringType,
-				Description: "Name of Route Table",
-				Required:    true,
-				// todo: if not aws
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"virtual_network_id": {
-				Type:          types.StringType,
-				Description:   "ID of `virtual_network` resource",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"aws": {
-				Description: "AWS-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: routeTableAwsOutputs},
-				Computed:    true,
-			},
-			"azure": {
-				Description: "Azure-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: routeTableAzureOutputs},
-				Computed:    true,
-			},
-			"gcp": {
-				Description: "GCP-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: routeTableGcpOutputs},
-				Computed:    true,
-			},
-			"resource_status": common.ResourceStatusSchema,
+var routeTableSchema = tfsdk.Schema{
+	MarkdownDescription: "Provides Multy Route Table resource",
+	Attributes: map[string]tfsdk.Attribute{
+		"id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
-		Blocks: map[string]tfsdk.Block{
-			"route": {
-				Description: "Route block definition",
-				Attributes: map[string]tfsdk.Attribute{
-					"cidr_block": {
-						Type:        types.StringType,
-						Description: "CIDR block of network rule",
-						Required:    true,
-						Validators:  []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
-					},
-					"destination": {
-						Type:        mtypes.RouteDestinationType,
-						Description: fmt.Sprintf("Destination of route. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.RouteDestinationType.GetAllValues())),
-						Required:    true,
-						Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.RouteDestinationType)},
-					},
+		"name": {
+			Type:        types.StringType,
+			Description: "Name of Route Table",
+			Required:    true,
+			// todo: if not aws
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"virtual_network_id": {
+			Type:          types.StringType,
+			Description:   "ID of `virtual_network` resource",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"aws": {
+			Description: "AWS-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: routeTableAwsOutputs},
+			Computed:    true,
+		},
+		"azure": {
+			Description: "Azure-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: routeTableAzureOutputs},
+			Computed:    true,
+		},
+		"gcp": {
+			Description: "GCP-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: routeTableGcpOutputs},
+			Computed:    true,
+		},
+		"resource_status": common.ResourceStatusSchema,
+	},
+	Blocks: map[string]tfsdk.Block{
+		"route": {
+			Description: "Route block definition",
+			Attributes: map[string]tfsdk.Attribute{
+				"cidr_block": {
+					Type:        types.StringType,
+					Description: "CIDR block of network rule",
+					Required:    true,
+					Validators:  []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
 				},
-				NestingMode: tfsdk.BlockNestingModeSet,
+				"destination": {
+					Type:        mtypes.RouteDestinationType,
+					Description: fmt.Sprintf("Destination of route. Accepted values are %s", common.StringSliceToDocsMarkdown(mtypes.RouteDestinationType.GetAllValues())),
+					Required:    true,
+					Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.RouteDestinationType)},
+				},
 			},
+			NestingMode: tfsdk.BlockNestingModeSet,
 		},
-	}, nil
+	},
 }
 
-func (r ResourceRouteTableType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceRouteTableType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
 	return MultyResource[RouteTable]{
 		p:          *(p.(*Provider)),
 		createFunc: createRouteTable,
 		updateFunc: updateRouteTable,
 		readFunc:   readRouteTable,
 		deleteFunc: deleteRouteTable,
-	}, nil
+		name:       "multy_route_table",
+		schema:     routeTableSchema,
+	}
 }
 
 func createRouteTable(ctx context.Context, p Provider, plan RouteTable) (RouteTable, error) {
@@ -159,33 +158,24 @@ func convertToRouteTable(res *resourcespb.RouteTableResource) RouteTable {
 	var routes []RouteTableRoute
 	for _, i := range res.Routes {
 		routes = append(routes, RouteTableRoute{
-			CidrBlock:   types.String{Value: i.CidrBlock},
+			CidrBlock:   types.StringValue(i.CidrBlock),
 			Destination: mtypes.RouteDestinationType.NewVal(i.Destination),
 		})
 	}
 
 	result := RouteTable{
-		Id:               types.String{Value: res.CommonParameters.ResourceId},
-		Name:             types.String{Value: res.Name},
+		Id:               types.StringValue(res.CommonParameters.ResourceId),
+		Name:             types.StringValue(res.Name),
 		Routes:           routes,
-		VirtualNetworkId: types.String{Value: res.VirtualNetworkId},
-		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"route_table_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetRouteTableId()),
-			},
-			AttrTypes: routeTableAwsOutputs,
+		VirtualNetworkId: types.StringValue(res.VirtualNetworkId),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, routeTableAwsOutputs, map[string]attr.Value{
+			"route_table_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetRouteTableId()),
 		}),
-		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"route_table_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetRouteTableId()),
-			},
-			AttrTypes: routeTableAzureOutputs,
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, routeTableAzureOutputs, map[string]attr.Value{
+			"route_table_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetRouteTableId()),
 		}),
-		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"compute_route_ids": common.TypesStringListToListType(res.GetGcpOutputs().GetComputeRouteId()),
-			},
-			AttrTypes: routeTableGcpOutputs,
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, routeTableGcpOutputs, map[string]attr.Value{
+			"compute_route_ids": common.TypesStringListToListType(res.GetGcpOutputs().GetComputeRouteId()),
 		}),
 		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
@@ -197,14 +187,14 @@ func convertFromRouteTable(plan RouteTable) *resourcespb.RouteTableArgs {
 	var routes []*resourcespb.Route
 	for _, i := range plan.Routes {
 		routes = append(routes, &resourcespb.Route{
-			CidrBlock:   i.CidrBlock.Value,
+			CidrBlock:   i.CidrBlock.ValueString(),
 			Destination: i.Destination.Value,
 		})
 	}
 
 	return &resourcespb.RouteTableArgs{
-		Name:             plan.Name.Value,
+		Name:             plan.Name.ValueString(),
 		Routes:           routes,
-		VirtualNetworkId: plan.VirtualNetworkId.Value,
+		VirtualNetworkId: plan.VirtualNetworkId.ValueString(),
 	}
 }
