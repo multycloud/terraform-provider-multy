@@ -165,15 +165,20 @@ type planUpdater[T any] interface {
 
 func (r MultyResource[T]) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	plan := new(T)
-	diags := req.Plan.Get(ctx, plan)
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if diags.HasError() {
 		tflog.Warn(ctx, "Unable to parse plan when modifying it")
 		return
 	}
 
+	if plan == nil {
+		tflog.Info(ctx, "Plan is empty")
+		return
+	}
+
 	config := new(T)
-	diags = req.Config.Get(ctx, config)
+	diags = req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if diags.HasError() {
 		tflog.Warn(ctx, "Unable to parse config when modifying it")
