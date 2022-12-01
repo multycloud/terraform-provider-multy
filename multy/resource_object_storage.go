@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -32,77 +31,77 @@ var objectStorageGcpOutputs = map[string]attr.Type{
 	"storage_bucket_id": types.StringType,
 }
 
-func (r ResourceObjectStorageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Object Storage resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"resource_group_id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"name": {
-				Type:          types.StringType,
-				Description:   "Name of Object Storage",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"versioning": {
-				Type:        types.BoolType,
-				Description: "If true, versioning will be enabled to `object_storage_object`",
-				Optional:    true,
-				Computed:    true,
-			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
-			"gcp_overrides": {
-				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"project": {
-						Type:          types.StringType,
-						Description:   fmt.Sprintf("The project to use for this resource."),
-						Optional:      true,
-						Computed:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
-						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
-					},
-				}),
-				Optional: true,
-				Computed: true,
-			},
-			"aws": {
-				Description: "AWS-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: objectStorageAwsOutputs},
-				Computed:    true,
-			},
-			"azure": {
-				Description: "Azure-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: objectStorageAzureOutputs},
-				Computed:    true,
-			},
-			"gcp": {
-				Description: "GCP-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: objectStorageGcpOutputs},
-				Computed:    true,
-			},
-			"resource_status": common.ResourceStatusSchema,
+var objectStorageSchema = tfsdk.Schema{
+	MarkdownDescription: "Provides Multy Object Storage resource",
+	Attributes: map[string]tfsdk.Attribute{
+		"id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
-	}, nil
+		"resource_group_id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
+		},
+		"name": {
+			Type:          types.StringType,
+			Description:   "Name of Object Storage",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"versioning": {
+			Type:        types.BoolType,
+			Description: "If true, versioning will be enabled to `object_storage_object`",
+			Optional:    true,
+			Computed:    true,
+		},
+		"cloud":    common.CloudsSchema,
+		"location": common.LocationSchema,
+		"gcp_overrides": {
+			Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+			Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+				"project": {
+					Type:          types.StringType,
+					Description:   fmt.Sprintf("The project to use for this resource."),
+					Optional:      true,
+					Computed:      true,
+					PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
+					Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+				},
+			}),
+			Optional: true,
+			Computed: true,
+		},
+		"aws": {
+			Description: "AWS-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: objectStorageAwsOutputs},
+			Computed:    true,
+		},
+		"azure": {
+			Description: "Azure-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: objectStorageAzureOutputs},
+			Computed:    true,
+		},
+		"gcp": {
+			Description: "GCP-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: objectStorageGcpOutputs},
+			Computed:    true,
+		},
+		"resource_status": common.ResourceStatusSchema,
+	},
 }
 
-func (r ResourceObjectStorageType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceObjectStorageType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
 	return MultyResource[ObjectStorage]{
 		p:          *(p.(*Provider)),
 		createFunc: createObjectStorage,
 		updateFunc: updateObjectStorage,
 		readFunc:   readObjectStorage,
 		deleteFunc: deleteObjectStorage,
-	}, nil
+		name:       "multy_object_storage",
+		schema:     objectStorageSchema,
+	}
 }
 
 func createObjectStorage(ctx context.Context, p Provider, plan ObjectStorage) (ObjectStorage, error) {
@@ -117,7 +116,7 @@ func createObjectStorage(ctx context.Context, p Provider, plan ObjectStorage) (O
 
 func updateObjectStorage(ctx context.Context, p Provider, plan ObjectStorage) (ObjectStorage, error) {
 	vn, err := p.Client.Client.UpdateObjectStorage(ctx, &resourcespb.UpdateObjectStorageRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromObjectStorage(plan),
 	})
 	if err != nil {
@@ -128,7 +127,7 @@ func updateObjectStorage(ctx context.Context, p Provider, plan ObjectStorage) (O
 
 func readObjectStorage(ctx context.Context, p Provider, state ObjectStorage) (ObjectStorage, error) {
 	vn, err := p.Client.Client.ReadObjectStorage(ctx, &resourcespb.ReadObjectStorageRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return ObjectStorage{}, err
@@ -138,7 +137,7 @@ func readObjectStorage(ctx context.Context, p Provider, state ObjectStorage) (Ob
 
 func deleteObjectStorage(ctx context.Context, p Provider, state ObjectStorage) error {
 	_, err := p.Client.Client.DeleteObjectStorage(ctx, &resourcespb.DeleteObjectStorageRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -160,32 +159,23 @@ type ObjectStorage struct {
 
 func convertToObjectStorage(res *resourcespb.ObjectStorageResource) ObjectStorage {
 	return ObjectStorage{
-		Id:                 types.String{Value: res.CommonParameters.ResourceId},
-		Name:               types.String{Value: res.Name},
-		Versioning:         types.Bool{Value: res.Versioning},
+		Id:                 types.StringValue(res.CommonParameters.ResourceId),
+		Name:               types.StringValue(res.Name),
+		Versioning:         types.BoolValue(res.Versioning),
 		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
+		ResourceGroupId:    types.StringValue(res.CommonParameters.ResourceGroupId),
 		GcpOverridesObject: convertToObjectStorageGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
-		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"s3_bucket_arn": common.DefaultToNull[types.String](res.GetAwsOutputs().GetS3BucketArn()),
-			},
-			AttrTypes: objectStorageAwsOutputs,
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, objectStorageAwsOutputs, map[string]attr.Value{
+			"s3_bucket_arn": common.DefaultToNull[types.String](res.GetAwsOutputs().GetS3BucketArn()),
 		}),
-		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"storage_account_id":           common.DefaultToNull[types.String](res.GetAzureOutputs().GetStorageAccountId()),
-				"public_storage_container_id":  common.DefaultToNull[types.String](res.GetAzureOutputs().GetPublicStorageContainerId()),
-				"private_storage_container_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetPrivateStorageContainerId()),
-			},
-			AttrTypes: objectStorageAzureOutputs,
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, objectStorageAzureOutputs, map[string]attr.Value{
+			"storage_account_id":           common.DefaultToNull[types.String](res.GetAzureOutputs().GetStorageAccountId()),
+			"public_storage_container_id":  common.DefaultToNull[types.String](res.GetAzureOutputs().GetPublicStorageContainerId()),
+			"private_storage_container_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetPrivateStorageContainerId()),
 		}),
-		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"storage_bucket_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetStorageBucketId()),
-			},
-			AttrTypes: objectStorageGcpOutputs,
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, objectStorageGcpOutputs, map[string]attr.Value{
+			"storage_bucket_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetStorageBucketId()),
 		}),
 		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
@@ -194,12 +184,12 @@ func convertToObjectStorage(res *resourcespb.ObjectStorageResource) ObjectStorag
 func convertFromObjectStorage(plan ObjectStorage) *resourcespb.ObjectStorageArgs {
 	return &resourcespb.ObjectStorageArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			ResourceGroupId: plan.ResourceGroupId.Value,
+			ResourceGroupId: plan.ResourceGroupId.ValueString(),
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
-		Name:        plan.Name.Value,
-		Versioning:  plan.Versioning.Value,
+		Name:        plan.Name.ValueString(),
+		Versioning:  plan.Versioning.ValueBool(),
 		GcpOverride: convertFromObjectStorageGcpOverrides(plan.GetGcpOverrides()),
 	}
 }
@@ -210,16 +200,12 @@ func (v ObjectStorage) UpdatePlan(_ context.Context, config ObjectStorage, p Pro
 	}
 	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
-	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+	if o := config.GetGcpOverrides(); o == nil || o.Project.IsUnknown() {
 		if gcpOverrides == nil {
 			gcpOverrides = &ObjectStorageGcpOverrides{}
 		}
 
-		gcpOverrides.Project = types.String{
-			Unknown: false,
-			Null:    false,
-			Value:   p.Client.Gcp.Project,
-		}
+		gcpOverrides.Project = types.StringValue(p.Client.Gcp.Project)
 
 		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
 		requiresReplace = append(requiresReplace, path.Root("gcp_overrides").AtName("project"))
@@ -228,32 +214,23 @@ func (v ObjectStorage) UpdatePlan(_ context.Context, config ObjectStorage, p Pro
 }
 
 func (v ObjectStorage) GetGcpOverrides() (o *ObjectStorageGcpOverrides) {
-	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+	if v.GcpOverridesObject.IsNull() || v.GcpOverridesObject.IsUnknown() {
 		return
 	}
 	o = &ObjectStorageGcpOverrides{
-		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+		Project: v.GcpOverridesObject.Attributes()["project"].(types.String),
 	}
 	return
 }
 
 func (o *ObjectStorageGcpOverrides) GcpOverridesToObj() types.Object {
-	result := types.Object{
-		Unknown: false,
-		Null:    false,
-		AttrTypes: map[string]attr.Type{
-			"project": types.StringType,
-		},
-		Attrs: map[string]attr.Value{
-			"project": types.String{Null: true},
-		},
+	attrTypes := map[string]attr.Type{
+		"project": types.StringType,
 	}
-	if o != nil {
-		result.Attrs = map[string]attr.Value{
-			"project": o.Project,
-		}
+	if o == nil {
+		return types.ObjectNull(attrTypes)
 	}
-
+	result, _ := types.ObjectValue(attrTypes, map[string]attr.Value{"project": o.Project})
 	return result
 }
 
@@ -266,7 +243,7 @@ func convertFromObjectStorageGcpOverrides(ref *ObjectStorageGcpOverrides) *resou
 		return nil
 	}
 
-	return &resourcespb.ObjectStorageGcpOverride{Project: ref.Project.Value}
+	return &resourcespb.ObjectStorageGcpOverride{Project: ref.Project.ValueString()}
 }
 
 func convertToObjectStorageGcpOverrides(ref *resourcespb.ObjectStorageGcpOverride) *ObjectStorageGcpOverrides {

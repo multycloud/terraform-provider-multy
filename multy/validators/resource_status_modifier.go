@@ -19,5 +19,5 @@ func (m ResourceStatusModifier) MarkdownDescription(_ context.Context) string {
 }
 
 func (m ResourceStatusModifier) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	resp.AttributePlan = types.Map{Null: true, ElemType: types.StringType}
+	resp.AttributePlan = types.MapNull(types.StringType)
 }

@@ -3,7 +3,6 @@ package multy
 import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -25,71 +24,71 @@ var networkInterfaceAzureOutputs = map[string]attr.Type{
 	"network_interface_id": types.StringType,
 }
 
-func (r ResourceNetworkInterfaceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Network Interface resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"resource_group_id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"name": {
-				Type:          types.StringType,
-				Description:   "Name of Network Interface",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
-			},
-			"subnet_id": {
-				Type:          types.StringType,
-				Description:   "ID of `subnet` resource",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"public_ip_id": {
-				Type:          types.StringType,
-				Description:   "ID of `public_ip` resource",
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"availability_zone": {
-				Type:          types.Int64Type,
-				Description:   "Availability zone where this machine should be placed",
-				Optional:      true,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-				Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyIntValidator},
-			},
-			"cloud":    common.CloudsSchema,
-			"location": common.LocationSchema,
-			"aws": {
-				Description: "AWS-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: networkInterfaceAwsOutputs},
-				Computed:    true,
-			},
-			"azure": {
-				Description: "Azure-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: networkInterfaceAzureOutputs},
-				Computed:    true,
-			},
-			"resource_status": common.ResourceStatusSchema,
+var networkInterfaceSchema = tfsdk.Schema{
+	MarkdownDescription: "Provides Multy Network Interface resource",
+	Attributes: map[string]tfsdk.Attribute{
+		"id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
-	}, nil
+		"resource_group_id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
+		},
+		"name": {
+			Type:          types.StringType,
+			Description:   "Name of Network Interface",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
+		},
+		"subnet_id": {
+			Type:          types.StringType,
+			Description:   "ID of `subnet` resource",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"public_ip_id": {
+			Type:          types.StringType,
+			Description:   "ID of `public_ip` resource",
+			Optional:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
+		},
+		"availability_zone": {
+			Type:          types.Int64Type,
+			Description:   "Availability zone where this machine should be placed",
+			Optional:      true,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+			Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyIntValidator},
+		},
+		"cloud":    common.CloudsSchema,
+		"location": common.LocationSchema,
+		"aws": {
+			Description: "AWS-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: networkInterfaceAwsOutputs},
+			Computed:    true,
+		},
+		"azure": {
+			Description: "Azure-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: networkInterfaceAzureOutputs},
+			Computed:    true,
+		},
+		"resource_status": common.ResourceStatusSchema,
+	},
 }
 
-func (r ResourceNetworkInterfaceType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceNetworkInterfaceType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
 	return MultyResource[NetworkInterface]{
 		p:          *(p.(*Provider)),
 		createFunc: createNetworkInterface,
 		updateFunc: updateNetworkInterface,
 		readFunc:   readNetworkInterface,
 		deleteFunc: deleteNetworkInterface,
-	}, nil
+		name:       "multy_network_interface",
+		schema:     networkInterfaceSchema,
+	}
 }
 
 func createNetworkInterface(ctx context.Context, p Provider, plan NetworkInterface) (NetworkInterface, error) {
@@ -104,7 +103,7 @@ func createNetworkInterface(ctx context.Context, p Provider, plan NetworkInterfa
 
 func updateNetworkInterface(ctx context.Context, p Provider, plan NetworkInterface) (NetworkInterface, error) {
 	vn, err := p.Client.Client.UpdateNetworkInterface(ctx, &resourcespb.UpdateNetworkInterfaceRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromNetworkInterface(plan),
 	})
 	if err != nil {
@@ -115,7 +114,7 @@ func updateNetworkInterface(ctx context.Context, p Provider, plan NetworkInterfa
 
 func readNetworkInterface(ctx context.Context, p Provider, state NetworkInterface) (NetworkInterface, error) {
 	vn, err := p.Client.Client.ReadNetworkInterface(ctx, &resourcespb.ReadNetworkInterfaceRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return NetworkInterface{}, err
@@ -125,7 +124,7 @@ func readNetworkInterface(ctx context.Context, p Provider, state NetworkInterfac
 
 func deleteNetworkInterface(ctx context.Context, p Provider, state NetworkInterface) error {
 	_, err := p.Client.Client.DeleteNetworkInterface(ctx, &resourcespb.DeleteNetworkInterfaceRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -146,26 +145,20 @@ type NetworkInterface struct {
 
 func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) NetworkInterface {
 	return NetworkInterface{
-		Id:               types.String{Value: res.CommonParameters.ResourceId},
-		ResourceGroupId:  types.String{Value: res.CommonParameters.ResourceGroupId},
-		Name:             types.String{Value: res.Name},
-		SubnetId:         types.String{Value: res.SubnetId},
+		Id:               types.StringValue(res.CommonParameters.ResourceId),
+		ResourceGroupId:  types.StringValue(res.CommonParameters.ResourceGroupId),
+		Name:             types.StringValue(res.Name),
+		SubnetId:         types.StringValue(res.SubnetId),
 		PublicIpId:       common.DefaultToNull[types.String](res.PublicIpId),
-		AvailabilityZone: types.Int64{Value: int64(res.AvailabilityZone)},
+		AvailabilityZone: types.Int64Value(int64(res.AvailabilityZone)),
 		Cloud:            mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:         mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"network_interface_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetNetworkInterfaceId()),
-				"eip_association_id":   common.DefaultToNull[types.String](res.GetAwsOutputs().GetEipAssociationId()),
-			},
-			AttrTypes: networkInterfaceAwsOutputs,
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, networkInterfaceAwsOutputs, map[string]attr.Value{
+			"network_interface_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetNetworkInterfaceId()),
+			"eip_association_id":   common.DefaultToNull[types.String](res.GetAwsOutputs().GetEipAssociationId()),
 		}),
-		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"network_interface_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetNetworkInterfaceId()),
-			},
-			AttrTypes: networkInterfaceAzureOutputs,
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, networkInterfaceAzureOutputs, map[string]attr.Value{
+			"network_interface_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetNetworkInterfaceId()),
 		}),
 		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
@@ -174,13 +167,13 @@ func convertToNetworkInterface(res *resourcespb.NetworkInterfaceResource) Networ
 func convertFromNetworkInterface(plan NetworkInterface) *resourcespb.NetworkInterfaceArgs {
 	return &resourcespb.NetworkInterfaceArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			ResourceGroupId: plan.ResourceGroupId.Value,
+			ResourceGroupId: plan.ResourceGroupId.ValueString(),
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
-		Name:             plan.Name.Value,
-		SubnetId:         plan.SubnetId.Value,
-		PublicIpId:       plan.PublicIpId.Value,
-		AvailabilityZone: int32(plan.AvailabilityZone.Value),
+		Name:             plan.Name.ValueString(),
+		SubnetId:         plan.SubnetId.ValueString(),
+		PublicIpId:       plan.PublicIpId.ValueString(),
+		AvailabilityZone: int32(plan.AvailabilityZone.ValueInt64()),
 	}
 }

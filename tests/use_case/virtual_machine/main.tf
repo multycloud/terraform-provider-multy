@@ -98,24 +98,22 @@ resource "multy_network_security_group" nsg {
 
 resource multy_virtual_machine vm {
   for_each        = var.clouds
-
   name            = "web-app-vm"
-  size            = each.key == "azure" ? "general_large" : "general_micro"
+  size            = "general_micro"
+#  size            = each.key == "azure" ? "general_large" : "general_micro"
   image_reference = {
     os      = "ubuntu"
     version = "18.04"
   }
   subnet_id          = multy_subnet.public_subnet[each.key].id
   generate_public_ip = true
-  user_data_base64   = base64encode(templatefile("./${each.key}_init.sh", {
-    vault_name : multy_vault.web_app_vault[each.key].name,
-    db_host_secret_name : multy_vault_secret.db_host[each.key].value,
-    db_username_secret_name : multy_vault_secret.db_username[each.key].value,
-    db_password_secret_name : multy_vault_secret.db_password[each.key].value,
+  user_data_base64   = base64encode(templatefile("./init.sh", {
+    cloud : each.key,
   }))
+
   network_security_group_ids = [multy_network_security_group.nsg[each.key].id]
 
-  public_ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCf3a02CbBVs6w3QVsf5yZ+WU+AAVpP86SufnMsSOV29DNXKmAGsB16jqJYq+znqDFTscOmf8WkR/AEKDwU+Q9auvBIWKtwB8aUrd5hCTC0EhC/2322PsOoOs0fEOki39xbaF9vWRXKPES/GM7lHR3xV5TFB4GBiq12mH7ALhHbcAjafxf+/Q3PzCYeJxRDSl7RvjihiMoOgjK9jy1DqlVLgOJUQuLgwxv1Nm1EwVygi5czBoYFXhDGszOuq4xpq8rUBTIGEczMn7glVLIyAIADLUkD0x+frjamI6I3BX1yn9GfJ3BPa8vC5GXsWnLelLeMg5SX8AiB4MfpTirQuvFeMfGPvFvKK6YwcuVHPDYd2/oisIf/wFlmjxXoTA1LEdH7o5/C5swIisEpppcaIO7F0v7gJwEdktpORzSxZEIirYGf8eTrmz2Mx3GH/vGUbUhJtwazx/7Lnv6FZH0ncqlV4DX0BCQZi3AHGWcPcFW/sGTv8EAS8PCQUZdnEptZLI8= joao@Joaos-MB"
+  public_ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4vxp+ZIuSTFfBU5XjCwoOr/Pz7sfEBkcjiV9lm8tcpC7HTjlN7VPaQvHiVRyKOdK5/I3CcE3jWi8rrkxmDeFxvLgmJLMrd1zANOlWmrr4+6DVPIGPnGru+p+/A+/fEO1sKb5W/2Zrpo7IrhpWI8hKHPN26OLZyze9vWLy+4aHeIyDPGzNcNQ8MUzvF5s/YuZj8s9Nx6xMNVwLzm1lPX37SGpg2p5mcGSShV5OQp9keYgMHfbpsloVU5Yq6yaZsL/nq0n0h84znLBT4WfNvtc8qN2SFTsOEDsFJ3ulIp2pvrstllujzM92KMl+ONpeDs0yVlMaVTth4CfC0ZY9FOR7PBZ0UWeHcXtZC5UUHcMyK6x/wUROt8WVaKpXHUKWhOxAROEnzMc5F/IRmw2h61JEf8764EmcAvFxL8GzzgQhWKr6I61TJZQYNOq+D5gLqHR567Ty8eXRhgF9EqKMKb6vGgIJ7iUpYi5UDpLJObHREwCDOk2a8AhD8QFld3VXXQGcb36b/ODrDlIP3AHl+7LNmgZFy9+6MFg/F92nPj5B971oG1e2nUWHna9Mp4wyJJQk5RK0DhQ+dxZnmrs3NKBXo58o1CXD6PLGZy0fhvXeBRqB/QbaexeBPviQuNv6gfKnX5AchcgrofK32nTsgA95tXoSu1Ci/4Ea0bLs0xkPSQ== joaocoelho@Joao-MBP"
   cloud          = each.key
   location       = var.location
 
@@ -125,44 +123,8 @@ resource multy_virtual_machine vm {
 
   depends_on = [multy_network_security_group.nsg]
 }
-
-resource "multy_vault" "web_app_vault" {
-  for_each = var.clouds
-  name     = "web-app-vault-test"
-  cloud    = each.key
-  location = var.location
-}
-resource "multy_vault_secret" "db_host" {
-  for_each = var.clouds
-  name     = "db-host"
-  vault_id = multy_vault.web_app_vault[each.key].id
-  value    = multy_database.example_db.hostname
-}
-resource "multy_vault_secret" "db_username" {
-  for_each = var.clouds
-  name     = "db-username"
-  vault_id = multy_vault.web_app_vault[each.key].id
-  value    = multy_database.example_db.username
-}
-resource "multy_vault_secret" "db_password" {
-  for_each = var.clouds
-  name     = "db-password"
-  vault_id = multy_vault.web_app_vault[each.key].id
-  value    = multy_database.example_db.password
-}
-resource "multy_vault_access_policy" "kv_ap" {
-  for_each = var.vm_clouds
-  vault_id = multy_vault.web_app_vault[each.key].id
-  identity = multy_virtual_machine.vm[each.key].identity
-  access   = "owner"
-}
-resource multy_object_storage app {
-  name     = "multy-web-app-test"
-  cloud    = var.db_cloud
-  location = var.location
-}
 output "endpoint" {
   value = {
-  for k, vm in multy_virtual_machine.vm : k => "http://${vm.public_ip}:4000"
+  for k, vm in multy_virtual_machine.vm : k => "http://${vm.public_ip}"
   }
 }

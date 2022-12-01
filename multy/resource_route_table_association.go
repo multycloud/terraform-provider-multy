@@ -3,7 +3,6 @@ package multy
 import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -18,45 +17,45 @@ var routeTableAssociationAwsOutputs = map[string]attr.Type{
 	"route_table_association_id_by_availability_zone": types.MapType{ElemType: types.StringType},
 }
 
-func (r ResourceRouteTableAssociationType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Route Table Association resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"subnet_id": {
-				Type:          types.StringType,
-				Description:   "ID of `subnet` resource",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"route_table_id": {
-				Type:          types.StringType,
-				Description:   "ID of `route_table` resource",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"aws": {
-				Description: "AWS-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: routeTableAssociationAwsOutputs},
-				Computed:    true,
-			},
-			"resource_status": common.ResourceStatusSchema,
+var rtaSchema = tfsdk.Schema{
+	MarkdownDescription: "Provides Multy Route Table Association resource",
+	Attributes: map[string]tfsdk.Attribute{
+		"id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
-	}, nil
+		"subnet_id": {
+			Type:          types.StringType,
+			Description:   "ID of `subnet` resource",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"route_table_id": {
+			Type:          types.StringType,
+			Description:   "ID of `route_table` resource",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"aws": {
+			Description: "AWS-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: routeTableAssociationAwsOutputs},
+			Computed:    true,
+		},
+		"resource_status": common.ResourceStatusSchema,
+	},
 }
 
-func (r ResourceRouteTableAssociationType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceRouteTableAssociationType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
 	return MultyResource[RouteTableAssociation]{
 		p:          *(p.(*Provider)),
 		createFunc: createRouteTableAssociation,
 		updateFunc: updateRouteTableAssociation,
 		readFunc:   readRouteTableAssociation,
 		deleteFunc: deleteRouteTableAssociation,
-	}, nil
+		name:       "multy_route_table_association",
+		schema:     rtaSchema,
+	}
 }
 
 func createRouteTableAssociation(ctx context.Context, p Provider, plan RouteTableAssociation) (RouteTableAssociation, error) {
@@ -71,7 +70,7 @@ func createRouteTableAssociation(ctx context.Context, p Provider, plan RouteTabl
 
 func updateRouteTableAssociation(ctx context.Context, p Provider, plan RouteTableAssociation) (RouteTableAssociation, error) {
 	vn, err := p.Client.Client.UpdateRouteTableAssociation(ctx, &resourcespb.UpdateRouteTableAssociationRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromRouteTableAssociation(plan),
 	})
 	if err != nil {
@@ -82,7 +81,7 @@ func updateRouteTableAssociation(ctx context.Context, p Provider, plan RouteTabl
 
 func readRouteTableAssociation(ctx context.Context, p Provider, state RouteTableAssociation) (RouteTableAssociation, error) {
 	vn, err := p.Client.Client.ReadRouteTableAssociation(ctx, &resourcespb.ReadRouteTableAssociationRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return RouteTableAssociation{}, err
@@ -92,7 +91,7 @@ func readRouteTableAssociation(ctx context.Context, p Provider, state RouteTable
 
 func deleteRouteTableAssociation(ctx context.Context, p Provider, state RouteTableAssociation) error {
 	_, err := p.Client.Client.DeleteRouteTableAssociation(ctx, &resourcespb.DeleteRouteTableAssociationRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -107,14 +106,11 @@ type RouteTableAssociation struct {
 
 func convertToRouteTableAssociation(res *resourcespb.RouteTableAssociationResource) RouteTableAssociation {
 	return RouteTableAssociation{
-		Id:           types.String{Value: res.CommonParameters.ResourceId},
-		SubnetId:     types.String{Value: res.SubnetId},
-		RouteTableId: types.String{Value: res.RouteTableId},
-		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"route_table_association_id_by_availability_zone": common.GoMapToMapType(res.GetAwsOutputs().GetRouteTableAssociationIdByAvailabilityZone()),
-			},
-			AttrTypes: routeTableAssociationAwsOutputs,
+		Id:           types.StringValue(res.CommonParameters.ResourceId),
+		SubnetId:     types.StringValue(res.SubnetId),
+		RouteTableId: types.StringValue(res.RouteTableId),
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, routeTableAssociationAwsOutputs, map[string]attr.Value{
+			"route_table_association_id_by_availability_zone": common.GoMapToMapType(res.GetAwsOutputs().GetRouteTableAssociationIdByAvailabilityZone()),
 		}),
 		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
@@ -122,7 +118,7 @@ func convertToRouteTableAssociation(res *resourcespb.RouteTableAssociationResour
 
 func convertFromRouteTableAssociation(plan RouteTableAssociation) *resourcespb.RouteTableAssociationArgs {
 	return &resourcespb.RouteTableAssociationArgs{
-		SubnetId:     plan.SubnetId.Value,
-		RouteTableId: plan.RouteTableId.Value,
+		SubnetId:     plan.SubnetId.ValueString(),
+		RouteTableId: plan.RouteTableId.ValueString(),
 	}
 }

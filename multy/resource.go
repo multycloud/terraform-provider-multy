@@ -2,8 +2,10 @@ package multy
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,6 +18,8 @@ type MultyResource[T any] struct {
 	updateFunc func(ctx context.Context, p Provider, plan T) (T, error)
 	readFunc   func(ctx context.Context, p Provider, state T) (T, error)
 	deleteFunc func(ctx context.Context, p Provider, state T) error
+	name       string
+	schema     tfsdk.Schema
 }
 
 func (r MultyResource[T]) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -147,21 +151,34 @@ func (r MultyResource[T]) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 }
 
+func (r MultyResource[T]) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = r.name
+}
+
+func (r MultyResource[T]) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+	return r.schema, nil
+}
+
 type planUpdater[T any] interface {
 	UpdatePlan(ctx context.Context, config T, p Provider) (T, []path.Path)
 }
 
 func (r MultyResource[T]) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	plan := new(T)
-	diags := req.Plan.Get(ctx, plan)
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if diags.HasError() {
 		tflog.Warn(ctx, "Unable to parse plan when modifying it")
 		return
 	}
 
+	if plan == nil {
+		tflog.Info(ctx, "Plan is empty")
+		return
+	}
+
 	config := new(T)
-	diags = req.Config.Get(ctx, config)
+	diags = req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if diags.HasError() {
 		tflog.Warn(ctx, "Unable to parse config when modifying it")

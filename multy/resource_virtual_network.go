@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -35,79 +34,78 @@ var virtualNetworkGcpOutputs = map[string]attr.Type{
 	"default_compute_firewall_id": types.StringType,
 }
 
-func (r ResourceVirtualNetworkType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Virtual Network resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"resource_group_id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"name": {
-				Type:          types.StringType,
-				Description:   "Name of Virtual Network",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
-			},
-			"cidr_block": {
-				Type:          types.StringType,
-				Description:   "CIDR Block of Virtual Network",
-				Required:      true,
-				Validators:    []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
-				PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
-			},
-			"gcp_overrides": {
-				Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"project": {
-						Type:          types.StringType,
-						Description:   fmt.Sprintf("The project to use for this resource."),
-						Optional:      true,
-						Computed:      true,
-						PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
-						Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
-					},
-				}),
-				Optional: true,
-				Computed: true,
-			},
-			"aws": {
-				Description: "AWS-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: virtualNetworkAwsOutputs},
-				Computed:    true,
-			},
-			"azure": {
-				Description: "Azure-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: virtualNetworkAzureOutputs},
-				Computed:    true,
-			},
-			"gcp": {
-				Description: "GCP-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: virtualNetworkGcpOutputs},
-				Computed:    true,
-			},
-			"resource_status": common.ResourceStatusSchema,
-			"cloud":           common.CloudsSchema,
-			"location":        common.LocationSchema,
+var virtualNetworkSchema = tfsdk.Schema{
+	MarkdownDescription: "Provides Multy Virtual Network resource",
+	Attributes: map[string]tfsdk.Attribute{
+		"id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
-	}, nil
+		"resource_group_id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
+		},
+		"name": {
+			Type:          types.StringType,
+			Description:   "Name of Virtual Network",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("azure")},
+		},
+		"cidr_block": {
+			Type:          types.StringType,
+			Description:   "CIDR Block of Virtual Network",
+			Required:      true,
+			Validators:    []tfsdk.AttributeValidator{validators.IsCidrValidator{}},
+			PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("aws")},
+		},
+		"gcp_overrides": {
+			Description: "GCP-specific attributes that will be set if this resource is deployed in GCP",
+			Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+				"project": {
+					Type:          types.StringType,
+					Description:   fmt.Sprintf("The project to use for this resource."),
+					Optional:      true,
+					Computed:      true,
+					PlanModifiers: []tfsdk.AttributePlanModifier{common.RequiresReplaceIfCloudEq("gcp"), resource.UseStateForUnknown()},
+					Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyStringValidator},
+				},
+			}),
+			Optional: true,
+			Computed: true,
+		},
+		"aws": {
+			Description: "AWS-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: virtualNetworkAwsOutputs},
+			Computed:    true,
+		},
+		"azure": {
+			Description: "Azure-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: virtualNetworkAzureOutputs},
+			Computed:    true,
+		},
+		"gcp": {
+			Description: "GCP-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: virtualNetworkGcpOutputs},
+			Computed:    true,
+		},
+		"resource_status": common.ResourceStatusSchema,
+		"cloud":           common.CloudsSchema,
+		"location":        common.LocationSchema,
+	},
 }
 
-func (r ResourceVirtualNetworkType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceVirtualNetworkType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
 	return MultyResource[VirtualNetwork]{
 		p:          *(p.(*Provider)),
 		createFunc: createVirtualNetwork,
 		updateFunc: updateVirtualNetwork,
 		readFunc:   readVirtualNetwork,
 		deleteFunc: deleteVirtualNetwork,
-	}, nil
+		name:       "multy_virtual_network",
+		schema:     virtualNetworkSchema,
+	}
 }
 
 func createVirtualNetwork(ctx context.Context, p Provider, plan VirtualNetwork) (VirtualNetwork, error) {
@@ -122,7 +120,7 @@ func createVirtualNetwork(ctx context.Context, p Provider, plan VirtualNetwork) 
 
 func updateVirtualNetwork(ctx context.Context, p Provider, plan VirtualNetwork) (VirtualNetwork, error) {
 	vn, err := p.Client.Client.UpdateVirtualNetwork(ctx, &resourcespb.UpdateVirtualNetworkRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromVirtualNetwork(plan),
 	})
 	if err != nil {
@@ -133,7 +131,7 @@ func updateVirtualNetwork(ctx context.Context, p Provider, plan VirtualNetwork) 
 
 func readVirtualNetwork(ctx context.Context, p Provider, state VirtualNetwork) (VirtualNetwork, error) {
 	vn, err := p.Client.Client.ReadVirtualNetwork(ctx, &resourcespb.ReadVirtualNetworkRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return VirtualNetwork{}, err
@@ -143,7 +141,7 @@ func readVirtualNetwork(ctx context.Context, p Provider, state VirtualNetwork) (
 
 func deleteVirtualNetwork(ctx context.Context, p Provider, state VirtualNetwork) error {
 	_, err := p.Client.Client.DeleteVirtualNetwork(ctx, &resourcespb.DeleteVirtualNetworkRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -170,16 +168,12 @@ func (v VirtualNetwork) UpdatePlan(_ context.Context, config VirtualNetwork, p P
 	}
 	var requiresReplace []path.Path
 	gcpOverrides := v.GetGcpOverrides()
-	if o := config.GetGcpOverrides(); o == nil || o.Project.Unknown {
+	if o := config.GetGcpOverrides(); o == nil || o.Project.IsUnknown() {
 		if gcpOverrides == nil {
 			gcpOverrides = &VirtualNetworkGcpOverrides{}
 		}
 
-		gcpOverrides.Project = types.String{
-			Unknown: false,
-			Null:    false,
-			Value:   p.Client.Gcp.Project,
-		}
+		gcpOverrides.Project = types.StringValue(p.Client.Gcp.Project)
 
 		v.GcpOverridesObject = gcpOverrides.GcpOverridesToObj()
 		requiresReplace = append(requiresReplace, path.Root("gcp_overrides").AtName("project"))
@@ -189,34 +183,27 @@ func (v VirtualNetwork) UpdatePlan(_ context.Context, config VirtualNetwork, p P
 
 func convertToVirtualNetwork(res *resourcespb.VirtualNetworkResource) VirtualNetwork {
 	return VirtualNetwork{
-		Id:                 types.String{Value: res.CommonParameters.ResourceId},
-		ResourceGroupId:    types.String{Value: res.CommonParameters.ResourceGroupId},
-		Name:               types.String{Value: res.Name},
-		CidrBlock:          types.String{Value: res.CidrBlock},
+		Id:                 types.StringValue(res.CommonParameters.ResourceId),
+		ResourceGroupId:    types.StringValue(res.CommonParameters.ResourceGroupId),
+		Name:               types.StringValue(res.Name),
+		CidrBlock:          types.StringValue(res.CidrBlock),
 		GcpOverridesObject: convertToVirtualNetworkGcpOverrides(res.GcpOverride).GcpOverridesToObj(),
 		Cloud:              mtypes.CloudType.NewVal(res.CommonParameters.CloudProvider),
 		Location:           mtypes.LocationType.NewVal(res.CommonParameters.Location),
-		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
-			Attrs: map[string]attr.Value{
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, virtualNetworkAwsOutputs,
+			map[string]attr.Value{
 				"vpc_id":                    common.DefaultToNull[types.String](res.GetAwsOutputs().GetVpcId()),
 				"internet_gateway_id":       common.DefaultToNull[types.String](res.GetAwsOutputs().GetInternetGatewayId()),
 				"default_security_group_id": common.DefaultToNull[types.String](res.GetAwsOutputs().GetDefaultSecurityGroupId()),
 			},
-			AttrTypes: virtualNetworkAwsOutputs,
+		),
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, virtualNetworkAzureOutputs, map[string]attr.Value{
+			"virtual_network_id":   common.DefaultToNull[types.String](res.GetAzureOutputs().GetVirtualNetworkId()),
+			"local_route_table_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetLocalRouteTableId()),
 		}),
-		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"virtual_network_id":   common.DefaultToNull[types.String](res.GetAzureOutputs().GetVirtualNetworkId()),
-				"local_route_table_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetLocalRouteTableId()),
-			},
-			AttrTypes: virtualNetworkAzureOutputs,
-		}),
-		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"compute_network_id":          common.DefaultToNull[types.String](res.GetGcpOutputs().GetComputeNetworkId()),
-				"default_compute_firewall_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetDefaultComputeFirewallId()),
-			},
-			AttrTypes: virtualNetworkGcpOutputs,
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, virtualNetworkGcpOutputs, map[string]attr.Value{
+			"compute_network_id":          common.DefaultToNull[types.String](res.GetGcpOutputs().GetComputeNetworkId()),
+			"default_compute_firewall_id": common.DefaultToNull[types.String](res.GetGcpOutputs().GetDefaultComputeFirewallId()),
 		}),
 		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
@@ -225,12 +212,12 @@ func convertToVirtualNetwork(res *resourcespb.VirtualNetworkResource) VirtualNet
 func convertFromVirtualNetwork(plan VirtualNetwork) *resourcespb.VirtualNetworkArgs {
 	return &resourcespb.VirtualNetworkArgs{
 		CommonParameters: &commonpb.ResourceCommonArgs{
-			ResourceGroupId: plan.ResourceGroupId.Value,
+			ResourceGroupId: plan.ResourceGroupId.ValueString(),
 			Location:        plan.Location.Value,
 			CloudProvider:   plan.Cloud.Value,
 		},
-		Name:        plan.Name.Value,
-		CidrBlock:   plan.CidrBlock.Value,
+		Name:        plan.Name.ValueString(),
+		CidrBlock:   plan.CidrBlock.ValueString(),
 		GcpOverride: convertFromVirtualNetworkGcpOverrides(plan.GetGcpOverrides()),
 	}
 }
@@ -240,7 +227,7 @@ func convertFromVirtualNetworkGcpOverrides(ref *VirtualNetworkGcpOverrides) *res
 		return nil
 	}
 
-	return &resourcespb.VirtualNetworkGcpOverride{Project: ref.Project.Value}
+	return &resourcespb.VirtualNetworkGcpOverride{Project: ref.Project.ValueString()}
 }
 
 func convertToVirtualNetworkGcpOverrides(ref *resourcespb.VirtualNetworkGcpOverride) *VirtualNetworkGcpOverrides {
@@ -252,32 +239,23 @@ func convertToVirtualNetworkGcpOverrides(ref *resourcespb.VirtualNetworkGcpOverr
 }
 
 func (v VirtualNetwork) GetGcpOverrides() (o *VirtualNetworkGcpOverrides) {
-	if v.GcpOverridesObject.Null || v.GcpOverridesObject.Unknown {
+	if v.GcpOverridesObject.IsNull() || v.GcpOverridesObject.IsUnknown() {
 		return
 	}
 	o = &VirtualNetworkGcpOverrides{
-		Project: v.GcpOverridesObject.Attrs["project"].(types.String),
+		Project: v.GcpOverridesObject.Attributes()["project"].(types.String),
 	}
 	return
 }
 
 func (o *VirtualNetworkGcpOverrides) GcpOverridesToObj() types.Object {
-	result := types.Object{
-		Unknown: false,
-		Null:    false,
-		AttrTypes: map[string]attr.Type{
-			"project": types.StringType,
-		},
-		Attrs: map[string]attr.Value{
-			"project": types.String{Null: true},
-		},
+	attrTypes := map[string]attr.Type{
+		"project": types.StringType,
 	}
-	if o != nil {
-		result.Attrs = map[string]attr.Value{
-			"project": o.Project,
-		}
+	if o == nil {
+		return types.ObjectNull(attrTypes)
 	}
-
+	result, _ := types.ObjectValue(attrTypes, map[string]attr.Value{"project": o.Project})
 	return result
 }
 

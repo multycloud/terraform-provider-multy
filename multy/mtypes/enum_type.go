@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/multycloud/multy/api/proto/commonpb"
 	"github.com/multycloud/multy/api/proto/resourcespb"
@@ -76,15 +77,23 @@ func (n EnumType[T]) ZeroVal() EnumValue[T] {
 	return EnumValue[T]{Typ: n}
 }
 
+// ValueType should return the attr.Value type returned by
+// ValueFromTerraform. The returned attr.Value can be any null, unknown,
+// or known value for the type, as this is intended for type detection
+// and improving error diagnostics.
+func (n EnumType[T]) ValueType(context.Context) attr.Value {
+	return types.String{}
+}
+
 func (s EnumValue[T]) Type(_ context.Context) attr.Type {
 	return s.Typ
 }
 
 func (s EnumValue[T]) ToTerraformValue(_ context.Context) (tftypes.Value, error) {
-	if s.Null {
+	if s.IsNull() {
 		return tftypes.NewValue(tftypes.String, nil), nil
 	}
-	if s.Unknown {
+	if s.IsUnknown() {
 		return tftypes.NewValue(tftypes.String, tftypes.UnknownValue), nil
 	}
 	if s.strValue != nil {
@@ -114,17 +123,17 @@ func (s EnumValue[T]) Equal(other attr.Value) bool {
 	if !ok {
 		return false
 	}
-	if s.Null != o.Null {
+	if s.IsNull() != o.IsNull() {
 		return false
 	}
-	if s.Unknown != o.Unknown {
+	if s.IsUnknown() != o.IsUnknown() {
 		return false
 	}
 	return s.Typ.Equal(o.Typ) && s.Value.String() == o.Value.String()
 }
 
 func (s EnumValue[T]) Validate() error {
-	if s.Unknown || s.Null {
+	if s.IsUnknown() || s.IsNull() {
 		return nil
 	}
 
@@ -194,15 +203,19 @@ func (n EnumType[T]) ValueFromTerraform(_ context.Context, in tftypes.Value) (at
 }
 
 func (n EnumType[T]) Equal(t attr.Type) bool {
-	o, ok := t.(EnumType[T])
+	// TODO: fix this
+	_, ok := t.(EnumType[T])
 	if !ok {
 		return false
 	}
-	return maps.Equal(n.ValueMap, o.ValueMap)
+	//return maps.Equal(n.ValueMap, o.ValueMap)
+
+	return true
 }
 
 func (n EnumType[T]) String() string {
-	return "types.EnumType"
+
+	return fmt.Sprintf("types.EnumType[%v]", maps.Keys(n.ValueMap))
 }
 
 func (n EnumType[T]) ApplyTerraform5AttributePathStep(_ tftypes.AttributePathStep) (interface{}, error) {

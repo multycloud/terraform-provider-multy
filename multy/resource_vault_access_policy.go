@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -29,61 +28,61 @@ var vaultAccessPolicyGcpOutputs = map[string]attr.Type{
 	"secret_manager_secret_iam_membership_ids": types.ListType{ElemType: types.StringType},
 }
 
-func (r ResourceVaultAccessPolicyType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		MarkdownDescription: "Provides Multy Object Storage resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:          types.StringType,
-				Computed:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
-			},
-			"vault_id": {
-				Type:          types.StringType,
-				Description:   "Id of the associated vault",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"identity": {
-				Type:          types.StringType,
-				Description:   "Identity of the resource that is being granted access to the `vault`",
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			},
-			"access": {
-				Type:        mtypes.VaultAclType,
-				Description: fmt.Sprintf("Access control, available values are %v", mtypes.VaultAclType.GetAllValues()),
-				Required:    true,
-				Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.VaultAclType)},
-			},
-			"aws": {
-				Description: "AWS-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: vaultAccessPolicyAwsOutputs},
-				Computed:    true,
-			},
-			"azure": {
-				Description: "Azure-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: vaultAccessPolicyAzureOutputs},
-				Computed:    true,
-			},
-			"gcp": {
-				Description: "GCP-specific ids of the underlying generated resources",
-				Type:        types.ObjectType{AttrTypes: vaultAccessPolicyGcpOutputs},
-				Computed:    true,
-			},
-			"resource_status": common.ResourceStatusSchema,
+var vapSchema = tfsdk.Schema{
+	MarkdownDescription: "Provides Multy Object Storage resource",
+	Attributes: map[string]tfsdk.Attribute{
+		"id": {
+			Type:          types.StringType,
+			Computed:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.UseStateForUnknown()},
 		},
-	}, nil
+		"vault_id": {
+			Type:          types.StringType,
+			Description:   "Id of the associated vault",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"identity": {
+			Type:          types.StringType,
+			Description:   "Identity of the resource that is being granted access to the `vault`",
+			Required:      true,
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+		},
+		"access": {
+			Type:        mtypes.VaultAclType,
+			Description: fmt.Sprintf("Access control, available values are %v", mtypes.VaultAclType.GetAllValues()),
+			Required:    true,
+			Validators:  []tfsdk.AttributeValidator{validators.NewValidator(mtypes.VaultAclType)},
+		},
+		"aws": {
+			Description: "AWS-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: vaultAccessPolicyAwsOutputs},
+			Computed:    true,
+		},
+		"azure": {
+			Description: "Azure-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: vaultAccessPolicyAzureOutputs},
+			Computed:    true,
+		},
+		"gcp": {
+			Description: "GCP-specific ids of the underlying generated resources",
+			Type:        types.ObjectType{AttrTypes: vaultAccessPolicyGcpOutputs},
+			Computed:    true,
+		},
+		"resource_status": common.ResourceStatusSchema,
+	},
 }
 
-func (r ResourceVaultAccessPolicyType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
+func (r ResourceVaultAccessPolicyType) NewResource(_ context.Context, p provider.Provider) resource.Resource {
 	return MultyResource[VaultAccessPolicy]{
 		p:          *(p.(*Provider)),
 		createFunc: createVaultAccessPolicy,
 		updateFunc: updateVaultAccessPolicy,
 		readFunc:   readVaultAccessPolicy,
 		deleteFunc: deleteVaultAccessPolicy,
-	}, nil
+		name:       "multy_vault_access_policy",
+		schema:     vapSchema,
+	}
 }
 
 func createVaultAccessPolicy(ctx context.Context, p Provider, plan VaultAccessPolicy) (VaultAccessPolicy, error) {
@@ -98,7 +97,7 @@ func createVaultAccessPolicy(ctx context.Context, p Provider, plan VaultAccessPo
 
 func updateVaultAccessPolicy(ctx context.Context, p Provider, plan VaultAccessPolicy) (VaultAccessPolicy, error) {
 	vn, err := p.Client.Client.UpdateVaultAccessPolicy(ctx, &resourcespb.UpdateVaultAccessPolicyRequest{
-		ResourceId: plan.Id.Value,
+		ResourceId: plan.Id.ValueString(),
 		Resource:   convertFromVaultAccessPolicy(plan),
 	})
 	if err != nil {
@@ -109,7 +108,7 @@ func updateVaultAccessPolicy(ctx context.Context, p Provider, plan VaultAccessPo
 
 func readVaultAccessPolicy(ctx context.Context, p Provider, state VaultAccessPolicy) (VaultAccessPolicy, error) {
 	vn, err := p.Client.Client.ReadVaultAccessPolicy(ctx, &resourcespb.ReadVaultAccessPolicyRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	if err != nil {
 		return VaultAccessPolicy{}, err
@@ -119,7 +118,7 @@ func readVaultAccessPolicy(ctx context.Context, p Provider, state VaultAccessPol
 
 func deleteVaultAccessPolicy(ctx context.Context, p Provider, state VaultAccessPolicy) error {
 	_, err := p.Client.Client.DeleteVaultAccessPolicy(ctx, &resourcespb.DeleteVaultAccessPolicyRequest{
-		ResourceId: state.Id.Value,
+		ResourceId: state.Id.ValueString(),
 	})
 	return err
 }
@@ -137,27 +136,18 @@ type VaultAccessPolicy struct {
 
 func convertToVaultAccessPolicy(res *resourcespb.VaultAccessPolicyResource) VaultAccessPolicy {
 	return VaultAccessPolicy{
-		Id:       types.String{Value: res.CommonParameters.ResourceId},
-		VaultId:  types.String{Value: res.VaultId},
-		Identity: types.String{Value: res.Identity},
+		Id:       types.StringValue(res.CommonParameters.ResourceId),
+		VaultId:  types.StringValue(res.VaultId),
+		Identity: types.StringValue(res.Identity),
 		Access:   mtypes.VaultAclType.NewVal(res.Access),
-		AwsOutputs: common.OptionallyObj(res.AwsOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"iam_policy_arn": common.DefaultToNull[types.String](res.GetAwsOutputs().GetIamPolicyArn()),
-			},
-			AttrTypes: vaultAccessPolicyAwsOutputs,
+		AwsOutputs: common.OptionallyObj(res.AwsOutputs, vaultAccessPolicyAwsOutputs, map[string]attr.Value{
+			"iam_policy_arn": common.DefaultToNull[types.String](res.GetAwsOutputs().GetIamPolicyArn()),
 		}),
-		AzureOutputs: common.OptionallyObj(res.AzureOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"key_vault_access_policy_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetKeyVaultAccessPolicyId()),
-			},
-			AttrTypes: vaultAccessPolicyAzureOutputs,
+		AzureOutputs: common.OptionallyObj(res.AzureOutputs, vaultAccessPolicyAzureOutputs, map[string]attr.Value{
+			"key_vault_access_policy_id": common.DefaultToNull[types.String](res.GetAzureOutputs().GetKeyVaultAccessPolicyId()),
 		}),
-		GcpOutputs: common.OptionallyObj(res.GcpOutputs, types.Object{
-			Attrs: map[string]attr.Value{
-				"secret_manager_secret_iam_membership_ids": common.TypesStringListToListType(res.GetGcpOutputs().GetSecretManagerSecretIamMembershipId()),
-			},
-			AttrTypes: vaultAccessPolicyGcpOutputs,
+		GcpOutputs: common.OptionallyObj(res.GcpOutputs, vaultAccessPolicyGcpOutputs, map[string]attr.Value{
+			"secret_manager_secret_iam_membership_ids": common.TypesStringListToListType(res.GetGcpOutputs().GetSecretManagerSecretIamMembershipId()),
 		}),
 		ResourceStatus: common.GetResourceStatus(res.CommonParameters.GetResourceStatus()),
 	}
@@ -165,8 +155,8 @@ func convertToVaultAccessPolicy(res *resourcespb.VaultAccessPolicyResource) Vaul
 
 func convertFromVaultAccessPolicy(plan VaultAccessPolicy) *resourcespb.VaultAccessPolicyArgs {
 	return &resourcespb.VaultAccessPolicyArgs{
-		VaultId:  plan.VaultId.Value,
-		Identity: plan.Identity.Value,
+		VaultId:  plan.VaultId.ValueString(),
+		Identity: plan.Identity.ValueString(),
 		Access:   plan.Access.Value,
 	}
 }

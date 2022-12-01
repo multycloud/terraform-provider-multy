@@ -27,17 +27,17 @@ func (v IsCidrValidator) Validate(ctx context.Context, req tfsdk.ValidateAttribu
 		return
 	}
 
-	if str.Unknown || str.Null {
+	if str.IsUnknown() || str.IsNull() {
 		return
 	}
 
-	if _, _, err := net.ParseCIDR(str.Value); err == nil {
+	if _, _, err := net.ParseCIDR(str.ValueString()); err == nil {
 		return
 	}
 
 	resp.Diagnostics.AddAttributeError(
 		req.AttributePath,
 		"Invalid value",
-		fmt.Sprintf("%s is not a valid CIDR", str.Value),
+		fmt.Sprintf("%s is not a valid CIDR", str.ValueString()),
 	)
 }

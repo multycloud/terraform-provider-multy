@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/mitchellh/go-homedir"
 	"google.golang.org/grpc/credentials"
 	"io/ioutil"
@@ -176,7 +178,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, resp *provider.ConfigureResponse) {
 	var apiKey string
 	var err error
-	if config.ApiKey.Unknown {
+	if config.ApiKey.IsUnknown() {
 		resp.Diagnostics.AddWarning(
 			"Unable to create Client",
 			"Cannot use unknown value as api_key",
@@ -184,10 +186,10 @@ func (p *Provider) ConfigureProvider(ctx context.Context, config providerData, r
 		return
 	}
 
-	if config.ApiKey.Null {
+	if config.ApiKey.IsNull() {
 		apiKey = os.Getenv("MULTY_API_KEY")
 	} else {
-		apiKey = config.ApiKey.Value
+		apiKey = config.ApiKey.ValueString()
 	}
 
 	if apiKey == "" {
@@ -266,8 +268,8 @@ func (p *Provider) getConnToServer(config providerData, resp *provider.Configure
 	defer connCache.Unlock()
 
 	endpoint := "api.multy.dev:443"
-	if !config.ServerEndpoint.Null {
-		endpoint = config.ServerEndpoint.Value
+	if !config.ServerEndpoint.IsNull() {
+		endpoint = config.ServerEndpoint.ValueString()
 	}
 	if _, ok := connCache.cache[endpoint]; !ok {
 		creds := insecure.NewCredentials()
@@ -299,50 +301,50 @@ func (p *Provider) getConnToServer(config providerData, resp *provider.Configure
 	return client
 }
 
-func (p *Provider) GetResources(_ context.Context) (map[string]provider.ResourceType, diag.Diagnostics) {
-	return map[string]provider.ResourceType{
-		"multy_virtual_network":                              ResourceVirtualNetworkType{},
-		"multy_subnet":                                       ResourceSubnetType{},
-		"multy_virtual_machine":                              ResourceVirtualMachineType{},
-		"multy_network_security_group":                       ResourceNetworkSecurityGroupType{},
-		"multy_network_interface":                            ResourceNetworkInterfaceType{},
-		"multy_network_interface_security_group_association": ResourceNetworkInterfaceSecurityGroupAssociationType{},
-		"multy_public_ip":                                    ResourcePublicIpType{},
-		"multy_route_table":                                  ResourceRouteTableType{},
-		"multy_route_table_association":                      ResourceRouteTableAssociationType{},
-		"multy_object_storage_object":                        ResourceObjectStorageObjectType{},
-		"multy_object_storage":                               ResourceObjectStorageType{},
-		"multy_database":                                     ResourceDatabaseType{},
-		"multy_vault":                                        ResourceVaultType{},
-		"multy_vault_secret":                                 ResourceVaultSecretType{},
-		"multy_vault_access_policy":                          ResourceVaultAccessPolicyType{},
-		"multy_kubernetes_cluster":                           ResourceKubernetesClusterType{},
-		"multy_kubernetes_node_pool":                         ResourceKubernetesNodePoolType{},
-	}, nil
+func (p *Provider) Resources(ctx context.Context) []func() resource.Resource {
+	return []func() resource.Resource{
+		func() resource.Resource { return ResourceDatabaseType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceKubernetesClusterType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceKubernetesNodePoolType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceNetworkInterfaceType{}.NewResource(ctx, p) },
+		func() resource.Resource {
+			return ResourceNetworkInterfaceSecurityGroupAssociationType{}.NewResource(ctx, p)
+		},
+		func() resource.Resource { return ResourceNetworkSecurityGroupType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceObjectStorageType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceObjectStorageObjectType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourcePublicIpType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceRouteTableType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceRouteTableAssociationType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceSubnetType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceVaultType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceVaultAccessPolicyType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceVaultSecretType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceVirtualMachineType{}.NewResource(ctx, p) },
+		func() resource.Resource { return ResourceVirtualNetworkType{}.NewResource(ctx, p) },
+	}
 }
 
 // GetDataSources - Defines Provider data sources
-func (p *Provider) GetDataSources(_ context.Context) (map[string]provider.DataSourceType, diag.Diagnostics) {
-	return map[string]provider.DataSourceType{
-		//"multy_virtual_network": data.DataVirtualNetwork(),
-	}, nil
+func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource {
+	return nil
 }
 
 func (p *Provider) validateAwsConfig(ctx context.Context, config *providerAwsConfig) (*common.AwsConfig, error) {
 	var awsConfig common.AwsConfig
-	if config.AccessKeyId.Unknown {
+	if config.AccessKeyId.IsUnknown() {
 		return nil, fmt.Errorf("cannot use unknown value as access_key_id")
 	}
-	if config.AccessKeySecret.Unknown {
+	if config.AccessKeySecret.IsUnknown() {
 		return nil, fmt.Errorf("cannot use unknown value as access_key_secret")
 	}
-	if config.SessionToken.Unknown {
+	if config.SessionToken.IsUnknown() {
 		return nil, fmt.Errorf("cannot use unknown value as session_token")
 	}
 	awsConfig = common.AwsConfig{
-		AccessKeyId:     config.AccessKeyId.Value,
-		AccessKeySecret: config.AccessKeySecret.Value,
-		SessionToken:    config.SessionToken.Value,
+		AccessKeyId:     config.AccessKeyId.ValueString(),
+		AccessKeySecret: config.AccessKeySecret.ValueString(),
+		SessionToken:    config.SessionToken.ValueString(),
 	}
 	if len(awsConfig.AccessKeyId) > 0 && len(awsConfig.AccessKeyId) > 0 {
 		return &awsConfig, nil
@@ -369,24 +371,24 @@ func (p *Provider) validateAwsConfig(ctx context.Context, config *providerAwsCon
 
 func (p *Provider) validateAzureConfig(config *providerAzureConfig) (*common.AzureConfig, error) {
 	var azureConfig common.AzureConfig
-	if config.SubscriptionId.Unknown {
+	if config.SubscriptionId.IsUnknown() {
 		return nil, fmt.Errorf("cannot use unknown value as subscription_id")
 	}
-	if config.ClientId.Unknown {
+	if config.ClientId.IsUnknown() {
 		return nil, fmt.Errorf("cannot use unknown value as client_id")
 	}
-	if config.ClientSecret.Unknown {
+	if config.ClientSecret.IsUnknown() {
 		return nil, fmt.Errorf("cannot use unknown value as client_secret")
 	}
-	if config.TenantId.Unknown {
+	if config.TenantId.IsUnknown() {
 		return nil, fmt.Errorf("cannot use unknown value as tenant_id")
 	}
 
 	azureConfig = common.AzureConfig{
-		SubscriptionId: config.SubscriptionId.Value,
-		ClientId:       config.ClientId.Value,
-		ClientSecret:   config.ClientSecret.Value,
-		TenantId:       config.TenantId.Value,
+		SubscriptionId: config.SubscriptionId.ValueString(),
+		ClientId:       config.ClientId.ValueString(),
+		ClientSecret:   config.ClientSecret.ValueString(),
+		TenantId:       config.TenantId.ValueString(),
 	}
 
 	if azureConfig.SubscriptionId != "" && azureConfig.ClientId != "" && azureConfig.ClientSecret != "" && azureConfig.TenantId != "" {
@@ -416,8 +418,8 @@ func (p *Provider) validateAzureConfig(config *providerAzureConfig) (*common.Azu
 	azureConfig.ClientId = creds.ClientID
 	azureConfig.TenantId = creds.TenantID
 
-	if config != nil && !config.ClientSecret.Unknown && !config.ClientSecret.Null && config.ClientSecret.Value != "" {
-		azureConfig.ClientSecret = config.ClientSecret.Value
+	if config != nil && !config.ClientSecret.IsUnknown() && !config.ClientSecret.IsNull() && config.ClientSecret.ValueString() != "" {
+		azureConfig.ClientSecret = config.ClientSecret.ValueString()
 	} else if os.Getenv("ARM_CLIENT_SECRET") != "" {
 		azureConfig.ClientSecret = os.Getenv("ARM_CLIENT_SECRET")
 	} else {
@@ -435,23 +437,23 @@ func (p *Provider) validateAzureConfig(config *providerAzureConfig) (*common.Azu
 func (p *Provider) validateGcpConfig(config *providerGcpConfig) (*common.GcpConfig, error) {
 	var c common.GcpConfig
 
-	if config.Credentials.Unknown {
+	if config.Credentials.IsUnknown() {
 		return nil, fmt.Errorf("cannot use unknown value as credentials")
 	}
-	if config.Project.Unknown {
+	if config.Project.IsUnknown() {
 		return nil, fmt.Errorf("cannot use unknown value as project")
 	}
 
-	if !config.Project.Null {
-		c.Project = config.Project.Value
+	if !config.Project.IsNull() {
+		c.Project = config.Project.ValueString()
 	} else if project, ok := os.LookupEnv("GOOGLE_PROJECT"); ok {
 		c.Project = project
 	} else {
 		return nil, fmt.Errorf("google project is not set")
 	}
 
-	if !config.Credentials.Null {
-		contents, _, err := pathOrContents(config.Credentials.Value)
+	if !config.Credentials.IsNull() {
+		contents, _, err := pathOrContents(config.Credentials.ValueString())
 		if err != nil {
 			return nil, err
 		}

@@ -8,16 +8,15 @@ import (
 
 func GetResourceStatus(params *commonpb.ResourceStatus) types.Map {
 	if params == nil || len(params.GetStatuses()) == 0 {
-		return types.Map{Null: true, ElemType: types.StringType}
+		return types.MapNull(types.StringType)
 	}
 
 	elems := map[string]attr.Value{}
 	for k, v := range params.GetStatuses() {
-		elems[k] = types.String{Value: v.String()}
+		elems[k] = types.StringValue(v.String())
 	}
 
-	return types.Map{
-		Elems:    elems,
-		ElemType: types.StringType,
-	}
+	value, _ := types.MapValue(types.StringType, elems)
+
+	return value
 }

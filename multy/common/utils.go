@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/multycloud/multy/api/proto/errorspb"
@@ -78,14 +79,17 @@ func DefaultToNull[OutT attr.Value](t any) OutT {
 	var s attr.Value
 	switch t.(type) {
 	case string:
-		s = types.String{
-			Null:  t.(string) == "",
-			Value: t.(string),
+		if t.(string) == "" {
+			s = types.StringNull()
+		} else {
+			s = types.StringValue(t.(string))
 		}
 	case int, int64, int32:
-		s = types.Int64{
-			Null:  t.(int64) == 0,
-			Value: t.(int64),
+
+		if t.(int64) == 0 {
+			s = types.Int64Null()
+		} else {
+			s = types.Int64Value(t.(int64))
 		}
 	}
 	return s.(OutT)
@@ -116,9 +120,15 @@ func DefaultSliceToNull[T attr.Value](t []T) []T {
 	return t
 }
 
-func OptionallyObj[A any](obj *A, transformed types.Object) types.Object {
+func OptionallyObj[A any](obj *A, attributeTypes map[string]attr.Type, attributes map[string]attr.Value) types.Object {
 	if obj == nil {
-		return types.Object{Null: true, AttrTypes: transformed.AttrTypes}
+		return types.ObjectNull(attributeTypes)
 	}
-	return transformed
+
+	o, diags := types.ObjectValue(attributeTypes, attributes)
+	if diags.HasError() {
+		panic(fmt.Sprintf("unexpected error found, %+v", diags.Errors()))
+	}
+
+	return o
 }
