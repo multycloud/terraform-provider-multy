@@ -72,8 +72,8 @@ var virtualMachineSchema = tfsdk.Schema{
 			Description:   "Availability zone where this machine should be placed",
 			Optional:      true,
 			Computed:      true,
-			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-			Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyIntValidator},
+			PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace(), resource.UseStateForUnknown()},
+			//Validators:    []tfsdk.AttributeValidator{mtypes.NonEmptyIntValidator},
 		},
 		"public_ssh_key": {
 			Type:          types.StringType,
